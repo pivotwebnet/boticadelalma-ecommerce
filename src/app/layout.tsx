@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Inter, Cormorant_Garamond, Fraunces, Manrope, Work_Sans, Libre_Caslon_Text, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import ThemeApplier from '@/components/shell/ThemeApplier';
 import Header from '@/components/shell/Header';
@@ -8,6 +9,14 @@ import CartDrawer from '@/components/shell/CartDrawer';
 import Toast from '@/components/ui/Toast';
 import FloatingActions from '@/components/ui/FloatingActions';
 
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const cormorant = Cormorant_Garamond({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-serif' });
+const fraunces = Fraunces({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-fraunces' });
+const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-modern' });
+const workSans = Work_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-work' });
+const libreCaslon = Libre_Caslon_Text({ subsets: ['latin'], weight: ['400', '700'], variable: '--font-editorial' });
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400'], variable: '--font-mono' });
+
 export const metadata: Metadata = {
   title: 'La Botica del Alma — Joyas con alma',
   description: 'Cristales, velas y amuletos seleccionados uno por uno. Envíos a todo el país.',
@@ -15,15 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Manrope:wght@300;400;500;600&family=Work+Sans:wght@300;400;500&family=Libre+Caslon+Text:wght@400;700&family=JetBrains+Mono:wght@300;400&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="es" suppressHydrationWarning className={`${inter.variable} ${cormorant.variable} ${fraunces.variable} ${manrope.variable} ${workSans.variable} ${libreCaslon.variable} ${jetbrains.variable}`}>
       <body>
         <ThemeApplier />
         <Header />

@@ -15,7 +15,7 @@ export default function ComoComprar() {
           <ol className="steps" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <li>
               <b>1. Navegá el catálogo</b>
-              <p>Explorá nuestras categorías y seleccioná los objetos que más te gusten. Hacé clic en "Agregar al carrito" para sumarlos a tu orden.</p>
+              <p>Explorá nuestras categorías y seleccioná los objetos que más te gusten. Hacé clic en &quot;Agregar al carrito&quot; para sumarlos a tu orden.</p>
             </li>
             <li>
               <b>2. Revisá tu carrito</b>
@@ -23,7 +23,7 @@ export default function ComoComprar() {
             </li>
             <li>
               <b>3. Iniciá el pago</b>
-              <p>Hacé clic en "Finalizar compra". Completá tus datos de contacto, elegí el método de envío y la forma de pago (Mercado Pago, transferencia o efectivo al retirar).</p>
+              <p>Hacé clic en &quot;Finalizar compra&quot;. Completá tus datos de contacto, elegí el método de envío y la forma de pago (Mercado Pago, transferencia o efectivo al retirar).</p>
             </li>
             <li>
               <b>4. Confirmación</b>

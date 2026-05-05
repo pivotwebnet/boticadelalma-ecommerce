@@ -1,15 +1,17 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
-import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 
 export default function Hero() {
   return (
     <section className="hero">
       <div className="hero-media">
-        <img 
+        <Image 
           src="/banner.png" 
           alt="La Botica del Alma Banner" 
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
+          fill
+          priority
+          style={{ objectFit: 'cover' }} 
         />
       </div>
       <div className="hero-overlay">
