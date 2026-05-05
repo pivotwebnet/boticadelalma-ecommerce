@@ -1,0 +1,36 @@
+import Link from 'next/link';
+import { CATEGORIES } from '@/lib/data';
+import Icon from '@/components/ui/Icon';
+import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
+
+const TONES = ['sage', 'clay', 'indigo', 'moss', 'cream', 'ember'];
+
+export default function CategoryGrid() {
+  return (
+    <section className="section">
+      <header className="section-head">
+        <span className="eyebrow">Categorías</span>
+        <h2>Elegí por tu intención</h2>
+      </header>
+      <div className="cat-grid">
+        {CATEGORIES.map((c, i) => (
+          <Link key={c.id} href={`/categoria/${c.id}`} className="cat-tile">
+            <div className="cat-media">
+              <ProductPlaceholder
+                tone={TONES[i % TONES.length]}
+                label={c.name.toLowerCase()}
+                aspectRatio={4 / 5}
+              />
+            </div>
+            <div className="cat-caption">
+              <span className="cat-name">{c.name}</span>
+              <span className="cat-count">
+                {c.count} piezas <Icon name="arrow-r" size={12} />
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
