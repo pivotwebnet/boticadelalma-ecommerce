@@ -51,6 +51,21 @@ export interface PriceRange {
   max: number;
 }
 
+export interface Comment {
+  id: string;
+  text: string;
+  rating: number;
+  createdAt: string;
+  buyerName: string;
+}
+
+export interface Purchase {
+  paymentId: string;
+  buyerName: string;
+  products: string[];
+  confirmedAt: string;
+}
+
 export interface Theme {
   palette: 'sage' | 'clay' | 'stone' | 'indigo';
   typography: 'default' | 'serif' | 'modern' | 'editorial';

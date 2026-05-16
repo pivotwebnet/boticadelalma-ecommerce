@@ -11,6 +11,7 @@ import Stars from '@/components/ui/Stars';
 import Button from '@/components/ui/Button';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 import ProductCard from '@/components/ui/ProductCard';
+import CommentSection from '@/components/comments/CommentSection';
 
 type Tab = 'desc' | 'ritual' | 'care' | 'ship';
 
@@ -212,6 +213,9 @@ export default function PDPClient({ product }: PDPClientProps) {
           )}
         </div>
       </div>
+
+      {/* Opiniones */}
+      <CommentSection productId={product.id} />
 
       {/* Relacionados */}
       <section className="section">
