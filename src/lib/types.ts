@@ -51,6 +51,14 @@ export interface PriceRange {
   max: number;
 }
 
+export interface Comment {
+  id: string;
+  text: string;
+  rating: number;
+  createdAt: string;
+  userName: string;
+}
+
 export interface Theme {
   palette: 'sage' | 'clay' | 'stone' | 'indigo';
   typography: 'default' | 'serif' | 'modern' | 'editorial';
