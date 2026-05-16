@@ -90,7 +90,7 @@ function PLPInner({ cat }: PLPClientProps) {
     { label: category.name, href: sub ? `/categoria/${cat}` : undefined },
   ];
   if (subCategory) {
-    breadcrumbItems.push({ label: subCategory.name });
+    breadcrumbItems.push({ label: subCategory.name, href: undefined });
   }
 
   return (
