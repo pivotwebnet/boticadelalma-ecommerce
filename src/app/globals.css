@@ -980,3 +980,116 @@ em { font-style: italic; color: var(--accent-ink); }
   .comment-verified { display: none; }
   .auth-box { padding: 24px 20px; }
 }
+
+/* ─── Intention Carousel ─── */
+@keyframes intCardIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes intFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+.intention-section {
+  max-width: var(--max-w); margin: 48px auto 0; padding: 0 var(--gutter);
+}
+.intention-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.intention-arrows { display: flex; gap: 6px; }
+.int-arrow {
+  width: 32px; height: 32px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--fg); transition: all .15s; cursor: pointer;
+}
+.int-arrow:hover { background: var(--surface-2); border-color: var(--fg-soft); }
+.int-arrow--off { opacity: 0.3; pointer-events: none; }
+
+.intention-track-wrap { overflow: hidden; }
+.intention-track {
+  display: flex; gap: 20px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  scrollbar-width: none; -ms-overflow-style: none;
+  padding-bottom: 6px;
+}
+.intention-track::-webkit-scrollbar { display: none; }
+
+.int-card {
+  flex: 0 0 calc((100% - 60px) / 4);
+  scroll-snap-align: start;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 16px; padding: 28px 16px 20px;
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  background: var(--ib, var(--surface));
+  cursor: pointer; text-align: center;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .2s, background .2s;
+  position: relative; overflow: hidden;
+  animation: intCardIn 0.45s ease backwards;
+}
+.int-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  border-color: var(--ic, var(--line));
+}
+.int-card--on {
+  border-color: var(--ic, var(--accent));
+  background: var(--ib, var(--surface));
+  box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+}
+.int-card--on::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--ib, transparent);
+  opacity: 1.5; pointer-events: none;
+}
+
+.int-symbol {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ic, var(--accent));
+  transition: transform .3s ease;
+}
+.int-symbol svg { width: 100%; height: 100%; }
+.int-card:hover .int-symbol { animation: intFloat 1.8s ease-in-out infinite; }
+.int-card--on .int-symbol { animation: intFloat 2.4s ease-in-out infinite; }
+
+.int-info { display: flex; flex-direction: column; gap: 4px; }
+.int-info strong {
+  font-family: var(--font-serif); font-size: 17px; font-weight: 500;
+  color: var(--fg); letter-spacing: 0.01em;
+}
+.int-info span {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--fg-soft);
+}
+
+.int-check {
+  position: absolute; top: 10px; right: 10px;
+  width: 20px; height: 20px; border-radius: 999px;
+  background: var(--ic, var(--accent)); color: #fff;
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+}
+
+/* Featured grid animation on intention change */
+@keyframes featuredIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.featured-animated { animation: featuredIn 0.35s ease; }
+.featured-empty {
+  padding: 60px 20px; text-align: center; color: var(--fg-muted);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.featured-empty p { margin: 0; font-size: 15px; }
+.featured-empty svg { color: var(--fg-soft); opacity: 0.5; }
+
+@media (max-width: 1024px) {
+  .int-card { flex: 0 0 calc((100% - 20px) / 2); }
+}
+@media (max-width: 640px) {
+  .int-card { flex: 0 0 72%; }
+  .intention-section { margin-top: 32px; }
+}
