@@ -14,12 +14,13 @@ function relativeDate(dateStr: string): string {
 }
 
 export default function CommentCard({ comment }: { comment: Comment }) {
+  const initial = comment.buyerName[0]?.toUpperCase() ?? '?'
   return (
     <article className="comment-card">
       <div className="comment-meta">
         <div className="comment-author">
-          <span className="comment-avatar">{comment.userName[0].toUpperCase()}</span>
-          <span className="comment-name">{comment.userName}</span>
+          <span className="comment-avatar">{initial}</span>
+          <span className="comment-name">{comment.buyerName}</span>
           <span className="comment-verified">Compra verificada</span>
         </div>
         <div className="comment-right">

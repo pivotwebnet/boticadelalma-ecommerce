@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 interface Props {
   productId: string
+  paymentId: string
   onSuccess: () => void
 }
 
@@ -30,7 +31,7 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
 
 const MAX = 300
 
-export default function CommentForm({ productId, onSuccess }: Props) {
+export default function CommentForm({ productId, paymentId, onSuccess }: Props) {
   const [text, setText] = useState('')
   const [rating, setRating] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -39,7 +40,7 @@ export default function CommentForm({ productId, onSuccess }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (rating === 0) { setError('Seleccioná una calificación'); return }
-    if (text.trim().length < 10) { setError('El comentario debe tener al menos 10 caracteres'); return }
+    if (text.trim().length < 10) { setError('Escribí al menos 10 caracteres'); return }
 
     setLoading(true)
     setError('')
@@ -47,7 +48,7 @@ export default function CommentForm({ productId, onSuccess }: Props) {
     const res = await fetch(`/api/comments/${productId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, rating }),
+      body: JSON.stringify({ text, rating, paymentId }),
     })
 
     setLoading(false)

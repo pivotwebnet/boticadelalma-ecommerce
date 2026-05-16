@@ -1,37 +1,40 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useStore } from '@/store/useStore'
 import Stars from '@/components/ui/Stars'
 import Icon from '@/components/ui/Icon'
 import CommentCard from './CommentCard'
 import CommentForm from './CommentForm'
-import AuthModal from '@/components/auth/AuthModal'
 import { Comment } from '@/lib/types'
 
 interface CommentsData {
   comments: Comment[]
   avgRating: number
   total: number
-  hasPurchased: boolean
+  canComment: boolean
   hasCommented: boolean
 }
 
 export default function CommentSection({ productId }: { productId: string }) {
-  const { data: session, status } = useSession()
+  const purchase = useStore(s => s.purchase)
   const [data, setData] = useState<CommentsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showAuth, setShowAuth] = useState(false)
+
+  const hasPurchasedThis = purchase?.products.includes(productId) ?? false
 
   const fetchComments = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/comments/${productId}`)
+      const url = hasPurchasedThis
+        ? `/api/comments/${productId}?paymentId=${purchase!.paymentId}`
+        : `/api/comments/${productId}`
+      const res = await fetch(url)
       if (res.ok) setData(await res.json())
     } finally {
       setLoading(false)
     }
-  }, [productId, session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productId, purchase?.paymentId, hasPurchasedThis]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchComments() }, [fetchComments])
 
@@ -70,39 +73,24 @@ export default function CommentSection({ productId }: { productId: string }) {
       </div>
 
       <div className="comments-action">
-        {status === 'unauthenticated' && (
-          <div className="comment-gate">
-            <Icon name="user" size={16} stroke={1.3} />
-            <p>
-              ¿Compraste este producto?{' '}
-              <button className="gate-link" onClick={() => setShowAuth(true)}>
-                Iniciá sesión
-              </button>{' '}
-              para dejar tu opinión.
-            </p>
-          </div>
+        {hasPurchasedThis && data?.canComment && !data.hasCommented && (
+          <CommentForm productId={productId} paymentId={purchase!.paymentId} onSuccess={fetchComments} />
         )}
 
-        {status === 'authenticated' && data && !data.hasPurchased && (
-          <div className="comment-gate">
-            <Icon name="shield" size={16} stroke={1.3} />
-            <p>Solo quienes compraron este producto pueden dejar una opinión.</p>
-          </div>
-        )}
-
-        {status === 'authenticated' && data?.hasPurchased && !data.hasCommented && (
-          <CommentForm productId={productId} onSuccess={fetchComments} />
-        )}
-
-        {status === 'authenticated' && data?.hasCommented && (
+        {hasPurchasedThis && data?.hasCommented && (
           <div className="comment-gate comment-gate--done">
             <Icon name="check" size={16} stroke={2} />
             <p>Ya dejaste tu opinión sobre este producto. ¡Gracias!</p>
           </div>
         )}
-      </div>
 
-      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
+        {!hasPurchasedThis && (
+          <div className="comment-gate">
+            <Icon name="shield" size={16} stroke={1.3} />
+            <p>Las opiniones son de compradores verificados. Completá tu compra para comentar.</p>
+          </div>
+        )}
+      </div>
     </section>
   )
 }

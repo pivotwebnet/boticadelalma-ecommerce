@@ -7,37 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  name      String?
-  createdAt DateTime  @default(now())
-  orders    Order[]
-  comments  Comment[]
+// Orden creada por el webhook de MercadoPago al confirmar el pago
+model Order {
+  id          String      @id @default(cuid())
+  mpPaymentId String      @unique
+  buyerName   String
+  buyerEmail  String
+  status      String      @default("approved")
+  createdAt   DateTime    @default(now())
+  items       OrderItem[]
+  comments    Comment[]
 }
 
-model Order {
-  id        String   @id @default(cuid())
-  userId    String
+// Cada producto dentro de una orden
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
   productId String
-  quantity  Int      @default(1)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quantity  Int    @default(1)
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([orderId])
   @@index([productId])
 }
 
+// Comentario de un comprador verificado sobre un producto
 model Comment {
   id        String   @id @default(cuid())
   text      String   @db.VarChar(300)
   rating    Int
-  userId    String
+  orderId   String
   productId String
+  buyerName String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, productId])
+  @@unique([orderId, productId])
   @@index([productId])
 }

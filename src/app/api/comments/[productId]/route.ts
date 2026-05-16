@@ -1,40 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/authOptions'
 import { prisma } from '@/lib/prisma'
 
 type Params = { params: Promise<{ productId: string }> }
 
-function formatName(name: string | null, email: string): string {
-  if (name) {
-    const parts = name.trim().split(' ')
-    return parts.length > 1 ? `${parts[0]} ${parts[1][0]}.` : parts[0]
-  }
-  return email.split('@')[0]
-}
-
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params }: Params) {
   const { productId } = await params
-  const session = await getServerSession(authOptions)
+  const paymentId = req.nextUrl.searchParams.get('paymentId')
 
   const comments = await prisma.comment.findMany({
     where: { productId },
-    include: { user: { select: { name: true, email: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
-  let hasPurchased = false
+  let canComment = false
   let hasCommented = false
 
-  if (session?.user?.id) {
-    const [order, comment] = await Promise.all([
-      prisma.order.findFirst({ where: { userId: session.user.id, productId } }),
-      prisma.comment.findUnique({
-        where: { userId_productId: { userId: session.user.id, productId } },
-      }),
-    ])
-    hasPurchased = !!order
-    hasCommented = !!comment
+  if (paymentId) {
+    const order = await prisma.order.findUnique({
+      where: { mpPaymentId: paymentId },
+      include: { items: true },
+    })
+
+    if (order?.status === 'approved') {
+      const hasBought = order.items.some(i => i.productId === productId)
+      if (hasBought) {
+        canComment = true
+        hasCommented = comments.some(c => c.orderId === order.id)
+      }
+    }
   }
 
   const avgRating = comments.length
@@ -47,24 +40,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
       text: c.text,
       rating: c.rating,
       createdAt: c.createdAt.toISOString(),
-      userName: formatName(c.user.name, c.user.email),
+      buyerName: c.buyerName,
     })),
     avgRating,
     total: comments.length,
-    hasPurchased,
+    canComment,
     hasCommented,
   })
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
   const { productId } = await params
-  const session = await getServerSession(authOptions)
+  const { text, rating, paymentId } = await req.json()
 
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+  if (!paymentId) {
+    return NextResponse.json({ error: 'Se requiere el ID de pago' }, { status: 400 })
   }
-
-  const { text, rating } = await req.json()
 
   const trimmed = typeof text === 'string' ? text.trim() : ''
   if (trimmed.length < 10 || trimmed.length > 300) {
@@ -75,27 +66,38 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return NextResponse.json({ error: 'La calificación debe ser entre 1 y 5' }, { status: 400 })
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { mpPaymentId: paymentId },
+    include: { items: true },
+  })
+
+  if (!order || order.status !== 'approved') {
     return NextResponse.json(
-      { error: 'La calificación debe ser entre 1 y 5' },
-      { status: 400 }
+      { error: 'No se encontró un pago aprobado con ese ID' },
+      { status: 403 }
     )
   }
 
-  const order = await prisma.order.findFirst({
-    where: { userId: session.user.id, productId },
-  })
-
-  if (!order) {
+  const hasBought = order.items.some(i => i.productId === productId)
+  if (!hasBought) {
     return NextResponse.json(
-      { error: 'Solo compradores verificados pueden comentar' },
+      { error: 'Este producto no está en tu compra' },
       { status: 403 }
     )
   }
 
   try {
     const comment = await prisma.comment.create({
-      data: { text: trimmed, rating, userId: session.user.id, productId },
-      include: { user: { select: { name: true, email: true } } },
+      data: {
+        text: trimmed,
+        rating,
+        orderId: order.id,
+        productId,
+        buyerName: order.buyerName,
+      },
     })
 
     return NextResponse.json({
@@ -103,7 +105,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       text: comment.text,
       rating: comment.rating,
       createdAt: comment.createdAt.toISOString(),
-      userName: formatName(comment.user.name, comment.user.email),
+      buyerName: comment.buyerName,
     })
   } catch (err: unknown) {
     if (

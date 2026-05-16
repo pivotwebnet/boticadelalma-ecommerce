@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, Product, Theme } from '@/lib/types';
+import { CartItem, Product, Theme, Purchase } from '@/lib/types';
 
 interface StoreState {
   cart: CartItem[];
@@ -9,6 +9,8 @@ interface StoreState {
   cartOpen: boolean;
   toast: { msg: string } | null;
   theme: Theme;
+  purchase: Purchase | null;
+  cartLocked: boolean;
 
   addToCart: (product: Product, qty?: number) => void;
   updateQty: (id: string, qty: number) => void;
@@ -18,6 +20,9 @@ interface StoreState {
   setCartOpen: (open: boolean) => void;
   showToast: (msg: string) => void;
   setTheme: <K extends keyof Theme>(key: K, value: Theme[K]) => void;
+  setPurchase: (p: Purchase) => void;
+  clearPurchase: () => void;
+  lockCart: () => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -28,6 +33,8 @@ export const useStore = create<StoreState>()(
       drawerOpen: false,
       cartOpen: false,
       toast: null,
+      purchase: null,
+      cartLocked: false,
       theme: {
         palette: 'sage',
         typography: 'default',
@@ -37,6 +44,7 @@ export const useStore = create<StoreState>()(
       },
 
       addToCart: (product, qty = 1) => {
+        if (get().cartLocked) return;
         set((state) => {
           const existing = state.cart.find(i => i.product.id === product.id);
           const cart = existing
@@ -50,15 +58,19 @@ export const useStore = create<StoreState>()(
         setTimeout(() => set({ cartOpen: true }), 120);
       },
 
-      updateQty: (id, qty) =>
+      updateQty: (id, qty) => {
+        if (get().cartLocked) return;
         set(state => ({
           cart: state.cart.map(i => (i.product.id === id ? { ...i, qty } : i)),
-        })),
+        }));
+      },
 
-      removeFromCart: (id) =>
+      removeFromCart: (id) => {
+        if (get().cartLocked) return;
         set(state => ({
           cart: state.cart.filter(i => i.product.id !== id),
-        })),
+        }));
+      },
 
       toggleFav: (id) =>
         set(state => ({
@@ -77,6 +89,10 @@ export const useStore = create<StoreState>()(
 
       setTheme: (key, value) =>
         set(state => ({ theme: { ...state.theme, [key]: value } })),
+
+      setPurchase: (p) => set({ purchase: p }),
+      clearPurchase: () => set({ purchase: null, cartLocked: false }),
+      lockCart: () => set({ cartLocked: true }),
     }),
     {
       name: 'la-botica-store',
@@ -84,6 +100,8 @@ export const useStore = create<StoreState>()(
         cart: state.cart,
         favs: state.favs,
         theme: state.theme,
+        purchase: state.purchase,
+        cartLocked: state.cartLocked,
       }),
     }
   )

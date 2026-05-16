@@ -56,7 +56,14 @@ export interface Comment {
   text: string;
   rating: number;
   createdAt: string;
-  userName: string;
+  buyerName: string;
+}
+
+export interface Purchase {
+  paymentId: string;
+  buyerName: string;
+  products: string[];
+  confirmedAt: string;
 }
 
 export interface Theme {
