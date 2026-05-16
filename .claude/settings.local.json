@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\" -Force)",
+      "Bash(Select-Object Name, FullName)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(findstr /i \"env\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npm uninstall *)",
+      "Bash(Remove-Item -Recurse -Force \"src\\\\app\\\\api\\\\auth\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"src\\\\lib\\\\authOptions.ts\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"src\\\\types\\\\next-auth.d.ts\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"src\\\\components\\\\auth\\\\AuthModal.tsx\" -ErrorAction SilentlyContinue)",
+      "Bash(Remove-Item -Force \"src\\\\components\\\\auth\\\\SessionProviderWrapper.tsx\" -ErrorAction SilentlyContinue)"
+    ]
+  }
+}
