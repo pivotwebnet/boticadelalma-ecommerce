@@ -2,88 +2,355 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+
 import { useStore } from '@/store/useStore';
+
 import Icon from '@/components/ui/Icon';
 import SearchBox from './SearchBox';
 
 export default function Header() {
-  const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const setDrawerOpen = useStore(s => s.setDrawerOpen);
-  const setCartOpen = useStore(s => s.setCartOpen);
-  const cart = useStore(s => s.cart);
-  const favs = useStore(s => s.favs);
 
-  useEffect(() => setMounted(true), []);
+  const router = useRouter();
+
+  const [mounted, setMounted] =
+    useState(false);
+
+  const [scrolled, setScrolled] =
+    useState(false);
+
+  const setDrawerOpen = useStore(
+    (s) => s.setDrawerOpen
+  );
+
+  const setCartOpen = useStore(
+    (s) => s.setCartOpen
+  );
+
+  const cart = useStore(
+    (s) => s.cart
+  );
+
+  const favs = useStore(
+    (s) => s.favs
+  );
+
+  // =========================
+  // MOUNT
+  // =========================
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    setMounted(true);
   }, []);
 
-  const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
+  // =========================
+  // SCROLL EFFECT
+  // =========================
+
+  useEffect(() => {
+
+    const onScroll = () => {
+      setScrolled(
+        window.scrollY > 24
+      );
+    };
+
+    window.addEventListener(
+      'scroll',
+      onScroll,
+      { passive: true }
+    );
+
+    return () =>
+      window.removeEventListener(
+        'scroll',
+        onScroll
+      );
+
+  }, []);
+
+  // =========================
+  // CART COUNT
+  // =========================
+
+  const cartCount = cart.reduce(
+    (sum, i) => sum + i.qty,
+    0
+  );
 
   return (
-    <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
-      <div className="announcebar">
-        <span>· ENVÍO GRATIS DESDE $120.000 ·</span>
-        <span>· 3 cuotas sin interés ·</span>
-        <span>· PUNTO DE RETIRO EN RAFAELA, SANTA FE ·</span>
-      </div>
-      <div className="header-main">
-        <button
-          className="icon-btn menu-btn"
-          onClick={() => setDrawerOpen(true)}
-          aria-label="Menú"
-        >
-          <Icon name="menu" size={20} />
-          <span>Categorías</span>
-        </button>
 
-        <button className="brand" onClick={() => router.push('/')} aria-label="Inicio">
-          <span className="brand-mark">
-            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-              <circle cx="15" cy="15" r="13" stroke="currentColor" strokeWidth="0.8" />
-              <path d="M15 6c-3 3-3 12 0 18M15 6c3 3 3 12 0 18" stroke="currentColor" strokeWidth="0.8" fill="none" />
-              <circle cx="15" cy="15" r="2" fill="currentColor" />
-            </svg>
-          </span>
-          <span className="brand-name">
-            <span className="brand-line1">La Botica</span>
-            <span className="brand-line2">del Alma</span>
-          </span>
-        </button>
+    <header
+      className={`
+        fixed
+        top-0
+        left-0
+        z-50
+        w-full
+        premium-transition
+        border-b
+        ${
+          scrolled
+            ? `
+              border-black/5
+              bg-[#f7f1e7]/88
+              backdrop-blur-md
+              shadow-[0_10px_35px_rgba(0,0,0,0.04)]
+            `
+            : `
+              border-black/5
+              bg-[#f7f1e7]/92
+              backdrop-blur-md
+            `
+        }
+      `}
+    >
 
-        <div className="header-search">
-          <SearchBox />
+      {/* ANNOUNCE BAR */}
+
+      <div
+        className={`
+          overflow-hidden
+          premium-transition
+          ${
+            scrolled
+              ? 'max-h-0 opacity-0'
+              : 'max-h-12 opacity-100'
+          }
+        `}
+      >
+
+        <div className="announcebar">
+
+          <span>
+            · ENVÍO GRATIS DESDE
+            $120.000 ·
+          </span>
+
+          <span>
+            · 3 cuotas sin interés ·
+          </span>
+
+          <span>
+            · PUNTO DE RETIRO EN
+            RAFAELA, SANTA FE ·
+          </span>
+
         </div>
 
-        <div className="header-actions">
-          <button className="hdr-link" aria-label="Mi cuenta">
-            <Icon name="user" size={18} />
-            <span>Mi cuenta</span>
-          </button>
-          <button className="hdr-link" aria-label="Favoritos">
-            <Icon name="heart" size={18} />
-            {mounted && favs.length > 0 && (
-              <span className="count-badge">{favs.length}</span>
-            )}
-          </button>
+      </div>
+
+      {/* MAIN */}
+
+      <div
+        className={`
+          premium-transition
+          ${
+            scrolled
+              ? 'py-2.5'
+              : 'py-4'
+          }
+        `}
+      >
+
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5">
+
+          {/* LEFT */}
+
           <button
-            className="hdr-link bag-link"
-            onClick={() => setCartOpen(true)}
-            aria-label="Carrito"
+            className="
+              icon-btn
+              menu-btn
+              premium-transition
+              hover:opacity-60
+            "
+            onClick={() =>
+              setDrawerOpen(true)
+            }
+            aria-label="Menú"
           >
-            <Icon name="bag" size={18} />
-            <span>Carrito</span>
-            {mounted && cartCount > 0 && (
-              <span className="count-badge">{cartCount}</span>
-            )}
+
+            <Icon
+              name="menu"
+              size={20}
+            />
+
+            <span>
+              Categorías
+            </span>
+
           </button>
+
+          {/* BRAND */}
+
+          <button
+            className="
+              brand
+              premium-transition
+              hover:opacity-80
+              drop-shadow-[0_2px_10px_rgba(0,0,0,0.05)]
+            "
+            onClick={() =>
+              router.push('/')
+            }
+            aria-label="Inicio"
+          >
+
+            <span className="brand-mark">
+
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 30 30"
+                fill="none"
+              >
+
+                <circle
+                  cx="15"
+                  cy="15"
+                  r="13"
+                  stroke="currentColor"
+                  strokeWidth="0.8"
+                />
+
+                <path
+                  d="M15 6c-3 3-3 12 0 18M15 6c3 3 3 12 0 18"
+                  stroke="currentColor"
+                  strokeWidth="0.8"
+                  fill="none"
+                />
+
+                <circle
+                  cx="15"
+                  cy="15"
+                  r="2"
+                  fill="currentColor"
+                />
+
+              </svg>
+
+            </span>
+
+            <span className="brand-name">
+
+              <span className="brand-line1">
+                La Botica
+              </span>
+
+              <span className="brand-line2">
+                del Alma
+              </span>
+
+            </span>
+
+          </button>
+
+          {/* SEARCH */}
+
+          <div
+            className="
+              hidden
+              lg:block
+              flex-1
+              max-w-[420px]
+            "
+          >
+
+            <SearchBox />
+
+          </div>
+
+          {/* ACTIONS */}
+
+          <div className="header-actions flex items-center gap-5">
+
+            {/* ACCOUNT */}
+
+            <button
+              className="
+                hdr-link
+                premium-transition
+                hover:opacity-60
+              "
+              aria-label="Mi cuenta"
+            >
+
+              <Icon
+                name="user"
+                size={18}
+              />
+
+              <span>
+                Mi cuenta
+              </span>
+
+            </button>
+
+            {/* FAVORITES */}
+
+            <button
+              className="
+                hdr-link
+                premium-transition
+                hover:opacity-60
+                relative
+              "
+              aria-label="Favoritos"
+            >
+
+              <Icon
+                name="heart"
+                size={18}
+              />
+
+              {mounted &&
+                favs.length > 0 && (
+                  <span className="count-badge">
+                    {favs.length}
+                  </span>
+                )}
+
+            </button>
+
+            {/* CART */}
+
+            <button
+              className="
+                hdr-link
+                bag-link
+                premium-transition
+                hover:opacity-60
+                relative
+              "
+              onClick={() =>
+                setCartOpen(true)
+              }
+              aria-label="Carrito"
+            >
+
+              <Icon
+                name="bag"
+                size={18}
+              />
+
+              <span>
+                Carrito
+              </span>
+
+              {mounted &&
+                cartCount > 0 && (
+                  <span className="count-badge">
+                    {cartCount}
+                  </span>
+                )}
+
+            </button>
+
+          </div>
+
         </div>
+
       </div>
+
     </header>
   );
 }
