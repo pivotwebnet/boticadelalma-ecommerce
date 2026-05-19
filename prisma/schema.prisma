@@ -9,39 +9,40 @@ datasource db {
 
 // Orden creada por el webhook de MercadoPago al confirmar el pago
 model Order {
-  id          String      @id @default(cuid())
-  mpPaymentId String      @unique
-  buyerName   String
-  buyerEmail  String
-  status      String      @default("approved")
-  createdAt   DateTime    @default(now())
+  id          String      @id @default(uuid())
+  status      String      @default("pending") // pending, paid, shipped, cancelled
+  total       Int
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  address     String?
+  city        String?
+  notes       String?
   items       OrderItem[]
-  comments    Comment[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt // <-- NUEVA LÍNEA: Auditoría de cambios de estado
 }
 
-// Cada producto dentro de una orden
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int    @default(1)
-  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@index([orderId])
-  @@index([productId])
+  id          String  @id @default(uuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  productName String  // <-- NUEVA LÍNEA: Guarda el nombre del producto al momento de compra
+  pricePaid   Int     // <-- NUEVA LÍNEA: Guarda el precio histórico cobrado
+  quantity    Int
 }
 
-// Comentario de un comprador verificado sobre un producto
 model Comment {
-  id        String   @id @default(cuid())
-  text      String   @db.VarChar(300)
-  rating    Int
-  orderId   String
+  id        String   @id @default(uuid())
   productId String
-  buyerName String
-  createdAt DateTime @default(now())
+  orderId   String   // <-- Volvemos a vincularlo a la orden para validar la compra
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author    String
+  text      String   @db.VarChar(300) // Limita los caracteres en Postgres para evitar textos gigantes
+  rating    Int      
+  createdAt DateTime @default(now())
 
-  @@unique([orderId, productId])
+  @@unique([orderId, productId]) // <-- Evita que la misma persona comente dos veces el mismo producto por la misma compra
   @@index([productId])
 }
