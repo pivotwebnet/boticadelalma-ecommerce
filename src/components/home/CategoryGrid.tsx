@@ -10,7 +10,7 @@ export default function CategoryGrid() {
     <section className="section">
       <header className="section-head">
         <span className="eyebrow">Categorías</span>
-        <h2>Elegí por tu intención</h2>
+        <h2>Elegí por categoría</h2>
       </header>
       <div className="cat-grid">
         {CATEGORIES.map((c, i) => (

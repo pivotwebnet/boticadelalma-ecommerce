@@ -96,4 +96,6 @@ export const PRICE_RANGES: PriceRange[] = [
 ];
 
 export const MATERIALS = ['Plata 925', 'Bronce', 'Cuarzo', 'Amatista', 'Obsidiana', 'Cerámica', 'Lino'];
-export const INTENTIONS = ['Protección', 'Abundancia', 'Amor', 'Limpieza', 'Intuición', 'Anclaje'];
+
+// Intenciones normalizadas en minúsculas para los filtros del catálogo
+export const INTENTIONS = ['amor', 'protección', 'calma', 'anclaje', 'abundancia', 'limpieza'];

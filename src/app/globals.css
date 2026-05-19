@@ -1,3 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
 /* La Botica del Alma — estilos
    Estética: natural/orgánico — crema, verde salvia, beige
 */
@@ -1085,4 +1090,56 @@ em { font-style: italic; color: var(--accent-ink); }
 
 @media (max-width: 640px) {
   .intention-section { margin-top: 32px; }
+}
+
+
+
+/* ========= */
+/* INTENTION CAROUSEL */
+/* ========= */
+
+.intent-card {
+  height: 250px;
+  border-radius: 28px;
+  padding: 1.5rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transition:
+    transform .5s ease,
+    box-shadow .5s ease;
+}
+
+.intent-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.08);
+}
+
+.intent-arrow-btn {
+  width: 48px;
+  height: 48px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,.9);
+
+  backdrop-filter: blur(10px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  transition:
+    transform .3s ease,
+    background .3s ease;
+}
+
+.intent-arrow-btn:hover {
+  transform: scale(1.05);
+
+  background: white;
 }
