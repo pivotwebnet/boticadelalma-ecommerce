@@ -7,7 +7,6 @@ interface StoreState {
   favs: string[];
   drawerOpen: boolean;
   cartOpen: boolean;
-  toast: { msg: string } | null;
   theme: Theme;
   purchase: Purchase | null;
   cartLocked: boolean;
@@ -18,7 +17,6 @@ interface StoreState {
   toggleFav: (id: string) => void;
   setDrawerOpen: (open: boolean) => void;
   setCartOpen: (open: boolean) => void;
-  showToast: (msg: string) => void;
   setTheme: <K extends keyof Theme>(key: K, value: Theme[K]) => void;
   setPurchase: (p: Purchase) => void;
   clearPurchase: () => void;
@@ -32,7 +30,6 @@ export const useStore = create<StoreState>()(
       favs: [],
       drawerOpen: false,
       cartOpen: false,
-      toast: null,
       purchase: null,
       cartLocked: false,
       theme: {
@@ -45,6 +42,7 @@ export const useStore = create<StoreState>()(
 
       addToCart: (product, qty = 1) => {
         if (get().cartLocked) return;
+        
         set((state) => {
           const existing = state.cart.find(i => i.product.id === product.id);
           const cart = existing
@@ -52,10 +50,11 @@ export const useStore = create<StoreState>()(
                 i.product.id === product.id ? { ...i, qty: i.qty + qty } : i
               )
             : [...state.cart, { product, qty }];
-          return { cart };
+          return { 
+            cart,
+            cartOpen: true // Mantenemos la apertura inmediata del carrito
+          };
         });
-        get().showToast(`${product.name} agregado`);
-        setTimeout(() => set({ cartOpen: true }), 120);
       },
 
       updateQty: (id, qty) => {
@@ -81,11 +80,6 @@ export const useStore = create<StoreState>()(
 
       setDrawerOpen: (open) => set({ drawerOpen: open }),
       setCartOpen: (open) => set({ cartOpen: open }),
-
-      showToast: (msg) => {
-        set({ toast: { msg } });
-        setTimeout(() => set({ toast: null }), 2400);
-      },
 
       setTheme: (key, value) =>
         set(state => ({ theme: { ...state.theme, [key]: value } })),
