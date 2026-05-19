@@ -15,7 +15,15 @@
       "Bash(Remove-Item -Force \"src\\\\lib\\\\authOptions.ts\" -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Force \"src\\\\types\\\\next-auth.d.ts\" -ErrorAction SilentlyContinue)",
       "Bash(Remove-Item -Force \"src\\\\components\\\\auth\\\\AuthModal.tsx\" -ErrorAction SilentlyContinue)",
-      "Bash(Remove-Item -Force \"src\\\\components\\\\auth\\\\SessionProviderWrapper.tsx\" -ErrorAction SilentlyContinue)"
+      "Bash(Remove-Item -Force \"src\\\\components\\\\auth\\\\SessionProviderWrapper.tsx\" -ErrorAction SilentlyContinue)",
+      "Bash(git checkout *)",
+      "Bash(git cherry-pick *)",
+      "Bash(git stash *)",
+      "Bash(git push *)",
+      "Bash(npx next *)",
+      "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
+      "Bash(npm run *)",
+      "Bash(Select-Object -First 20)"
     ]
   }
 }
