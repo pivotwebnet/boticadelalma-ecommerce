@@ -56,13 +56,14 @@ export interface Comment {
   text: string;
   rating: number;
   createdAt: string;
-  buyerName: string;
+  author: string;
 }
 
 export interface Purchase {
-  paymentId: string;
+  orderId: string;       // ID de la orden en el backend .NET
+  paymentId?: string;    // ID de MercadoPago (integración futura)
   buyerName: string;
-  products: string[];
+  products: string[];    // IDs de productos comprados
   confirmedAt: string;
 }
 

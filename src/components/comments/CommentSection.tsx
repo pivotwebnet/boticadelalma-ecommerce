@@ -27,14 +27,14 @@ export default function CommentSection({ productId }: { productId: string }) {
     setLoading(true)
     try {
       const url = hasPurchasedThis
-        ? `/api/comments/${productId}?paymentId=${purchase!.paymentId}`
+        ? `/api/comments/${productId}?orderId=${purchase!.orderId}`
         : `/api/comments/${productId}`
       const res = await fetch(url)
       if (res.ok) setData(await res.json())
     } finally {
       setLoading(false)
     }
-  }, [productId, purchase?.paymentId, hasPurchasedThis]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [productId, purchase?.orderId, hasPurchasedThis]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { fetchComments() }, [fetchComments])
 
@@ -74,7 +74,7 @@ export default function CommentSection({ productId }: { productId: string }) {
 
       <div className="comments-action">
         {hasPurchasedThis && data?.canComment && !data.hasCommented && (
-          <CommentForm productId={productId} paymentId={purchase!.paymentId} onSuccess={fetchComments} />
+          <CommentForm productId={productId} orderId={purchase!.orderId} author={purchase!.buyerName} onSuccess={fetchComments} />
         )}
 
         {hasPurchasedThis && data?.hasCommented && (

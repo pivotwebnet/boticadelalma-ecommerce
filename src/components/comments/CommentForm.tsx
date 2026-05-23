@@ -4,7 +4,8 @@ import { useState } from 'react'
 
 interface Props {
   productId: string
-  paymentId: string
+  orderId: string
+  author: string
   onSuccess: () => void
 }
 
@@ -31,7 +32,7 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
 
 const MAX = 300
 
-export default function CommentForm({ productId, paymentId, onSuccess }: Props) {
+export default function CommentForm({ productId, orderId, author, onSuccess }: Props) {
   const [text, setText] = useState('')
   const [rating, setRating] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -48,7 +49,7 @@ export default function CommentForm({ productId, paymentId, onSuccess }: Props) 
     const res = await fetch(`/api/comments/${productId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, rating, paymentId }),
+      body: JSON.stringify({ text, rating, orderId, author }),
     })
 
     setLoading(false)

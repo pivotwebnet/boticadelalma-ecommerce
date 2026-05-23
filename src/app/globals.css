@@ -1045,7 +1045,7 @@ em { font-style: italic; color: var(--accent-ink); }
 .int-card--on::before {
   content: ''; position: absolute; inset: 0;
   background: var(--ib, transparent);
-  opacity: 1.5; pointer-events: none;
+  opacity: 1; pointer-events: none;
 }
 
 .int-symbol {
@@ -1142,4 +1142,118 @@ em { font-style: italic; color: var(--accent-ink); }
   transform: scale(1.05);
 
   background: white;
+}
+
+/* =========================
+   PREMIUM MOTION SYSTEM
+========================= */
+
+:root {
+
+  --ease-premium:
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+
+  --duration-fast: 250ms;
+  --duration-medium: 450ms;
+  --duration-slow: 800ms;
+
+}
+
+/* =========================
+   GLOBAL TRANSITIONS
+========================= */
+
+.premium-transition {
+
+  transition:
+    all
+    var(--duration-medium)
+    var(--ease-premium);
+
+}
+
+.hover-lift {
+
+  transition:
+    transform var(--duration-medium)
+    var(--ease-premium),
+
+    box-shadow var(--duration-medium)
+    var(--ease-premium);
+
+}
+
+.hover-lift:hover {
+
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    0 18px 40px
+    rgba(0,0,0,0.08);
+
+}
+
+/* =========================
+   IMAGE MICROZOOM
+========================= */
+
+.hover-image {
+
+  overflow: hidden;
+
+}
+
+hover-image img
+.hover-image:hover img {
+
+  transform: scale(1.04);
+
+}
+
+/* =========================
+   BUTTON FEEDBACK
+========================= */
+
+.hover-button {
+
+  transition:
+    all
+    var(--duration-fast)
+    var(--ease-premium);
+
+}
+
+.hover-button:hover {
+
+  opacity: .82;
+
+  transform:
+    translateY(-1px);
+
+}
+
+/* =========================
+   ICON MICRO MOTION
+========================= */
+
+.hover-icon {
+
+  transition:
+    transform
+    var(--duration-medium)
+    var(--ease-premium);
+
+}
+
+.group:hover .hover-icon {
+
+  transform:
+    translateX(3px);
+
 }

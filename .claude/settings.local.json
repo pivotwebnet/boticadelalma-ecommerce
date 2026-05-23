@@ -23,7 +23,11 @@
       "Bash(npx next *)",
       "Bash(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue)",
       "Bash(npm run *)",
-      "Bash(Select-Object -First 20)"
+      "Bash(Select-Object -First 20)",
+      "Bash(dotnet *)",
+      "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\orders\\\\[id]\")",
+      "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\orders\\\\[id]\\\\status\")",
+      "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\comments\\\\[id]\")"
     ]
   }
 }
