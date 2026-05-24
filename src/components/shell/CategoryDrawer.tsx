@@ -3,7 +3,8 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
-import { CATEGORIES, COLLECTIONS } from '@/lib/data';
+import { COLLECTIONS } from '@/lib/data';
+import { useCategories } from '@/hooks/useApiData';
 import { Category } from '@/lib/types';
 import Icon from '@/components/ui/Icon';
 
@@ -13,6 +14,7 @@ export default function CategoryDrawer() {
   const drawerOpen = useStore(s => s.drawerOpen);
   const setDrawerOpen = useStore(s => s.setDrawerOpen);
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
+  const categories = useCategories();
 
   // Reset expanded categories when drawer closes
   useEffect(() => {
@@ -79,7 +81,7 @@ export default function CategoryDrawer() {
               >
                 <span className="dl-name">Todos los productos</span>
                 <span className="dl-meta">
-                  {CATEGORIES.reduce((s, c) => s + c.count, 0)} <Icon name="chev-r" size={14} />
+                  {categories.reduce((s, c) => s + c.count, 0)} <Icon name="chev-r" size={14} />
                 </span>
               </button>
             </li>
@@ -87,7 +89,7 @@ export default function CategoryDrawer() {
 
           <div className="drawer-divider">Categorías</div>
           <ul>
-            {CATEGORIES.map(c => {
+            {categories.map(c => {
               const isExpanded = expandedCats.has(c.id);
               const hasSubs = c.subcategories && c.subcategories.length > 0;
 
@@ -116,7 +118,7 @@ export default function CategoryDrawer() {
                         <ul>
                           <li>
                             <button
-                              className="drawer-link subtle"
+                              className="drawer-link subtle ver-todo"
                               onClick={() => goTo(`/categoria/${c.id}`)}
                             >
                               <span className="dl-name">Ver todo</span>

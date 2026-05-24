@@ -20,7 +20,7 @@ export default function Contacto() {
             <div className="pdp-perks" style={{ background: 'transparent', padding: '0', marginTop: '32px' }}>
               <div style={{ marginBottom: '16px' }}>
                 <Icon name="bag" size={18} />
-                <span><strong>WhatsApp:</strong> +54 9 11 1234 5678</span>
+                <span><strong>WhatsApp:</strong> +54 3492 123456</span>
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <Icon name="user" size={18} />
@@ -28,7 +28,7 @@ export default function Contacto() {
               </div>
               <div>
                 <Icon name="truck" size={18} />
-                <span><strong>Showroom:</strong> Palermo, CABA.</span>
+                <span><strong>Showroom:</strong> Rafaela, Santa fe.</span>
               </div>
             </div>
           </div>
@@ -46,7 +46,7 @@ export default function Contacto() {
               <label style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>Mensaje</label>
               <textarea placeholder="¿En qué podemos ayudarte?" style={{ width: '100%', background: 'var(--bg)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--line)', minHeight: '100px', fontFamily: 'inherit' }}></textarea>
             </div>
-            <button className="btn btn-primary btn-md btn-full" type="button">Enviar mensaje</button>
+            <button className="btn btn-primary btn-md btn-full" type="button" style={{ width: '100%' }}>Enviar mensaje</button>
           </form>
         </div>
       </article>

@@ -147,7 +147,9 @@ export async function getProducts(params?: { categoryId?: string; search?: strin
     const qs = new URLSearchParams()
     if (params?.categoryId) qs.set('categoryId', params.categoryId)
     if (params?.search) qs.set('search', params.search)
-    const res = await fetch(`${API_URL}/api/products?${qs}`)
+    const res = await fetch(`${API_URL}/api/products?${qs}`, {
+      next: { revalidate: 60, tags: ['products'] },
+    })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }
@@ -155,7 +157,9 @@ export async function getProducts(params?: { categoryId?: string; search?: strin
 
 export async function getCategories(): Promise<ApiCategory[]> {
   try {
-    const res = await fetch(`${API_URL}/api/categories`)
+    const res = await fetch(`${API_URL}/api/categories`, {
+      next: { revalidate: 60, tags: ['categories'] },
+    })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }

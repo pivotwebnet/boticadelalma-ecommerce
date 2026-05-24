@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { getProducts, createProduct } from '@/lib/api'
 
 export async function GET(req: NextRequest) {
@@ -13,5 +14,6 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json()
   const result = await createProduct(body)
+  if (result.ok) revalidateTag('products')
   return NextResponse.json(result.data, { status: result.ok ? 201 : 400 })
 }

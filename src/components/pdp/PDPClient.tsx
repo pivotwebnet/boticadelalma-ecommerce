@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '@/store/useStore';
-import { CATEGORIES, PRODUCTS } from '@/lib/data';
+import { CATEGORIES } from '@/lib/data';
+import { useProducts } from '@/hooks/useApiData';
 import { fmt } from '@/lib/utils';
 import { Product } from '@/lib/types';
 import Breadcrumb from '@/components/ui/Breadcrumb';
@@ -31,11 +32,15 @@ export default function PDPClient({ product }: PDPClientProps) {
   const addToCart = useStore(s => s.addToCart);
   const toggleFav = useStore(s => s.toggleFav);
   const favs = useStore(s => s.favs);
+  const allProducts = useProducts();
 
   useEffect(() => setMounted(true), []);
 
   const category = CATEGORIES.find(c => c.id === product.cat)!;
-  const related = PRODUCTS.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
+  const liveProduct = allProducts.find(p => p.id === product.id);
+  const related = allProducts.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
+  const displayRating = liveProduct?.rating ?? product.rating;
+  const displayReviews = liveProduct?.reviews ?? product.reviews;
   const images = [product.tone, 'cream', 'stone', 'sage'];
 
   const isFav = mounted && favs.includes(product.id);
@@ -112,10 +117,10 @@ export default function PDPClient({ product }: PDPClientProps) {
           </div>
           <h1>{product.name}</h1>
           <div className="pdp-rating">
-            <Stars value={product.rating} size={14} />
-            <span>{product.rating.toFixed(1)}</span>
+            <Stars value={displayRating} size={14} />
+            <span>{displayRating.toFixed(1)}</span>
             <span className="sep">·</span>
-            <a>{product.reviews} reseñas</a>
+            <a>{displayReviews} reseñas</a>
           </div>
           <div className="pdp-price">
             <strong>{fmt(product.price)}</strong>

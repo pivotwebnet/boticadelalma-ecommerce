@@ -43,7 +43,7 @@ export default function CommentSection({ productId }: { productId: string }) {
       <header className="comments-hd">
         <div>
           <span className="eyebrow">Compradores verificados</span>
-          <h2>Opiniones</h2>
+          <h2>Reseñas</h2>
         </div>
         {data && data.total > 0 && (
           <div className="comments-summary">
@@ -58,12 +58,12 @@ export default function CommentSection({ productId }: { productId: string }) {
 
       <div className="comments-list">
         {loading && (
-          <div className="comments-loading">Cargando opiniones…</div>
+          <div className="comments-loading">Cargando reseñas…</div>
         )}
         {!loading && data?.comments.length === 0 && (
           <div className="comments-empty">
             <Icon name="star" size={28} />
-            <p>Todavía no hay opiniones.</p>
+            <p>Todavía no hay reseñas.</p>
             <span>Sé el primero en compartir tu experiencia.</span>
           </div>
         )}
@@ -80,14 +80,14 @@ export default function CommentSection({ productId }: { productId: string }) {
         {hasPurchasedThis && data?.hasCommented && (
           <div className="comment-gate comment-gate--done">
             <Icon name="check" size={16} stroke={2} />
-            <p>Ya dejaste tu opinión sobre este producto. ¡Gracias!</p>
+            <p>Ya dejaste tu reseña sobre este producto. ¡Gracias!</p>
           </div>
         )}
 
         {!hasPurchasedThis && (
           <div className="comment-gate">
             <Icon name="shield" size={16} stroke={1.3} />
-            <p>Las opiniones son de compradores verificados. Completá tu compra para comentar.</p>
+            <p>Las reseñas son de compradores verificados. Completá tu compra para dejar la tuya.</p>
           </div>
         )}
       </div>

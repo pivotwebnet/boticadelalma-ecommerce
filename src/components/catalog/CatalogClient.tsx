@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CATEGORIES, INTENTIONS, MATERIALS, PRICE_RANGES, PRODUCTS } from '@/lib/data';
+import { INTENTIONS, MATERIALS, PRICE_RANGES } from '@/lib/data';
+import { useCategories, useProducts } from '@/hooks/useApiData';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Icon from '@/components/ui/Icon';
 import ProductCard from '@/components/ui/ProductCard';
@@ -10,6 +11,8 @@ type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
 type ViewMode = 'grid' | 'rows';
 
 export default function CatalogClient() {
+  const categories = useCategories();
+  const products = useProducts();
   const [catSel, setCatSel] = useState<string[]>([]);
   const [sort, setSort] = useState<SortKey>('relevance');
   const [priceSel, setPriceSel] = useState<string[]>([]);
@@ -22,7 +25,7 @@ export default function CatalogClient() {
     set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
 
   const filtered = useMemo(() => {
-    let list = PRODUCTS;
+    let list = products;
 
     if (catSel.length) {
       list = list.filter(p => catSel.includes(p.cat));
@@ -51,7 +54,7 @@ export default function CatalogClient() {
     if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
 
     return list;
-  }, [catSel, priceSel, matSel, intSel, onlyNew, sort]);
+  }, [products, catSel, priceSel, matSel, intSel, onlyNew, sort]);
 
   const activeFilters =
     catSel.length + priceSel.length + matSel.length + intSel.length + (onlyNew ? 1 : 0);
@@ -89,7 +92,7 @@ export default function CatalogClient() {
           {/* Categorías */}
           <div className="filter-group">
             <h4>Categoría</h4>
-            {CATEGORIES.map(c => (
+            {categories.map(c => (
               <label key={c.id} className="check-row">
                 <input
                   type="checkbox"
@@ -189,7 +192,7 @@ export default function CatalogClient() {
           {catSel.length > 0 && (
             <div className="active-cats">
               {catSel.map(id => {
-                const cat = CATEGORIES.find(c => c.id === id)!;
+                const cat = categories.find(c => c.id === id)!;
                 return (
                   <button
                     key={id}

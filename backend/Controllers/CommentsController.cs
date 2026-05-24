@@ -61,6 +61,8 @@ public class CommentsController(BoticaDbContext db) : ControllerBase
         db.Comments.Add(comment);
         await db.SaveChangesAsync();
 
+        await UpdateProductStatsAsync(dto.ProductId);
+
         return CreatedAtAction(null, new CommentResponseDto(
             comment.Id, comment.ProductId, comment.OrderId,
             comment.Author, comment.Text, comment.Rating, comment.CreatedAt));
@@ -71,8 +73,26 @@ public class CommentsController(BoticaDbContext db) : ControllerBase
     {
         var comment = await db.Comments.FindAsync(id);
         if (comment is null) return NotFound();
+        var productId = comment.ProductId;
         db.Comments.Remove(comment);
         await db.SaveChangesAsync();
+        await UpdateProductStatsAsync(productId);
         return NoContent();
+    }
+
+    private async Task UpdateProductStatsAsync(string productId)
+    {
+        var product = await db.Products.FindAsync(productId);
+        if (product is null) return;
+        var ratings = await db.Comments
+            .Where(c => c.ProductId == productId)
+            .Select(c => c.Rating)
+            .ToListAsync();
+        product.Reviews = ratings.Count;
+        product.Rating = ratings.Count > 0
+            ? Math.Round((decimal)ratings.Average(), 1)
+            : 0;
+        product.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
     }
 }

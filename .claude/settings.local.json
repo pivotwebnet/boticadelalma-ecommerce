@@ -27,7 +27,16 @@
       "Bash(dotnet *)",
       "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\orders\\\\[id]\")",
       "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\orders\\\\[id]\\\\status\")",
-      "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\comments\\\\[id]\")"
+      "Bash(mkdir \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\\\\src\\\\app\\\\api\\\\admin\\\\comments\\\\[id]\")",
+      "Bash(Get-ChildItem -Path src -Recurse -Filter \"*.tsx\" -o File)",
+      "Bash(grep -E \"\\\\.\\(tsx|ts\\)$\")",
+      "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList '/c cd \"C:\\\\Users\\\\Usuario\\\\OneDrive\\\\Escritorio\\\\PIVOT PROJECTS\\\\BOTICA DEL ALMA\\\\boticadelalma-ecommerce\" && npm run dev' -WindowStyle Hidden; Start-Sleep -Seconds 8; Write-Host \"Dev server started\")",
+      "PowerShell($url = \"http://localhost:3000/preguntas-frecuentes\"; try { $r = Invoke-WebRequest -Uri $url -TimeoutSec 10 -UseBasicParsing; Write-Host \"Status: $\\($r.StatusCode\\)\"; $r.Content | Select-String -Pattern \"accordion|collapse|faq\" -AllMatches | Select-Object -First 20 } catch { Write-Host \"Error: $_\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3001/preguntas-frecuentes\" -TimeoutSec 5 -UseBasicParsing; Write-Host \"3001 OK: $\\($r.StatusCode\\)\" } catch { Write-Host \"3001: $_\" }; try { $r = Invoke-WebRequest -Uri \"http://localhost:3000\" -TimeoutSec 5 -UseBasicParsing; Write-Host \"3000 OK: $\\($r.StatusCode\\)\" } catch { Write-Host \"3000: $_\" })",
+      "PowerShell(Start-Sleep -Seconds 3; $r = Invoke-WebRequest -Uri \"http://localhost:3001/preguntas-frecuentes\" -TimeoutSec 10 -UseBasicParsing; Write-Host \"Status: $\\($r.StatusCode\\)\"; if \\($r.Content -match 'faq-btn'\\) { Write-Host \"OK: faq-btn found\" } else { Write-Host \"MISSING: faq-btn not found\" }; if \\($r.Content -match 'faq-panel'\\) { Write-Host \"OK: faq-panel found\" } else { Write-Host \"MISSING: faq-panel\" })",
+      "PowerShell(New-Item *)",
+      "PowerShell(Start-Sleep -Seconds 3; try { $r = Invoke-WebRequest -Uri \"http://localhost:3001\" -TimeoutSec 8 -UseBasicParsing; Write-Host \"OK $\\($r.StatusCode\\)\" } catch { Write-Host \"Error: $_\" })",
+      "PowerShell(try { $r = Invoke-WebRequest -Uri \"http://localhost:3000\" -TimeoutSec 8 -UseBasicParsing; Write-Host \"OK $\\($r.StatusCode\\)\" } catch { Write-Host \"Error: $_\" })"
     ]
   }
 }

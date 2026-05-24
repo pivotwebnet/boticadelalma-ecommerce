@@ -263,28 +263,6 @@ export default function Header() {
 
           <div className="header-actions flex items-center gap-5">
 
-            {/* ACCOUNT */}
-
-            <button
-              className="
-                hdr-link
-                premium-transition
-                hover:opacity-60
-              "
-              aria-label="Mi cuenta"
-            >
-
-              <Icon
-                name="user"
-                size={18}
-              />
-
-              <span>
-                Mi cuenta
-              </span>
-
-            </button>
-
             {/* FAVORITES */}
 
             <button

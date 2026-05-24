@@ -1,23 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { useStore } from '@/store/useStore';
-import Icon from '@/components/ui/Icon';
 
 export default function Footer() {
-  const [email, setEmail] = useState('');
-  const showToast = useStore(s => s.showToast);
-
-  const handleSubscribe = () => {
-    if (!email || !email.includes('@')) {
-      showToast('Por favor ingresá un email válido');
-      return;
-    }
-    showToast('¡Gracias por suscribirte!');
-    setEmail('');
-  };
-
   return (
     <footer className="site-footer">
       <div className="footer-grid">
@@ -40,8 +25,7 @@ export default function Footer() {
         <div>
           <h4>Ayuda</h4>
           <ul>
-            <li><Link href="/envios-y-devoluciones">Envíos y devoluciones</Link></li>
-            <li><Link href="/como-comprar">Cómo comprar</Link></li>
+            <li><Link href="/envios">Envíos</Link></li>
             <li><Link href="/preguntas-frecuentes">Preguntas frecuentes</Link></li>
             <li><Link href="/contacto">Contacto</Link></li>
           </ul>
@@ -54,21 +38,14 @@ export default function Footer() {
           </ul>
         </div>
 
-        <div className="foot-news">
-          <h4>Newsletter</h4>
-          <p>Lunas nuevas, nuevos ingresos y ofertas.</p>
-          <div className="news-field">
-            <input 
-              type="email" 
-              placeholder="tu@email.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
-            />
-            <button aria-label="Suscribirse" onClick={handleSubscribe}>
-              <Icon name="arrow-r" size={14} />
-            </button>
-          </div>
+        <div>
+          <h4>Cuidados</h4>
+          <ul>
+            <li><Link href="/cuidados/joyas">Cuidado de joyas</Link></li>
+            <li><Link href="/cuidados/cristales">Cuidado de cristales</Link></li>
+            <li><Link href="/cuidados/sahumerios">Cuidado de sahumerios</Link></li>
+            <li><Link href="/cuidados/velas">Cuidado de velas</Link></li>
+          </ul>
         </div>
       </div>
       <div className="foot-base">

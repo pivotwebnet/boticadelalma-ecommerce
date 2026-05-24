@@ -1,11 +1,14 @@
+'use client';
+
 import Link from 'next/link';
-import { CATEGORIES } from '@/lib/data';
+import { useCategories } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 
 const TONES = ['sage', 'clay', 'indigo', 'moss', 'cream', 'ember'];
 
 export default function CategoryGrid() {
+  const categories = useCategories();
   return (
     <section className="section">
       <header className="section-head">
@@ -13,7 +16,7 @@ export default function CategoryGrid() {
         <h2>Elegí por categoría</h2>
       </header>
       <div className="cat-grid">
-        {CATEGORIES.map((c, i) => (
+        {categories.map((c, i) => (
           <Link key={c.id} href={`/categoria/${c.id}`} className="cat-tile">
             <div className="cat-media">
               <ProductPlaceholder
