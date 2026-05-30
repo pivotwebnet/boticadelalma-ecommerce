@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
 
 const ITEMS = [
   {
@@ -10,42 +11,48 @@ const ITEMS = [
     title: "Amor",
     subtitle: "Conectar emocionalmente",
     iconSrc: "/icons/amor.svg",
-    bg: "#fdf3f0",
+    hoverBg: "#FDF1F0",
+    hoverText: "#8A5A55",
   },
   {
     id: "proteccion",
     title: "Protección",
     subtitle: "Resguardar tu energía",
     iconSrc: "/icons/proteccion.svg",
-    bg: "#eff5fa",
+    hoverBg: "#F0F4F8",
+    hoverText: "#3A4D5C",
   },
   {
     id: "abundancia",
     title: "Abundancia",
     subtitle: "Expandir prosperidad",
     iconSrc: "/icons/abundancia.svg",
-    bg: "#fefae8",
+    hoverBg: "#F9F6E5",
+    hoverText: "#7A6335",
   },
   {
     id: "calma",
     title: "Calma",
     subtitle: "Bajar el ruido mental",
     iconSrc: "/icons/calma.svg",
-    bg: "#d6ede0",
+    hoverBg: "#E8F2EE",
+    hoverText: "#3E5C52",
   },
   {
     id: "limpieza",
     title: "Limpieza",
     subtitle: "Purificar ambientes",
     iconSrc: "/icons/limpieza.svg",
-    bg: "#f0f8f3",
+    hoverBg: "#F1F5F1",
+    hoverText: "#4A5D4A",
   },
   {
     id: "anclaje",
     title: "Anclaje",
     subtitle: "Volver al centro",
     iconSrc: "/icons/anclaje.svg",
-    bg: "#fdf5ea",
+    hoverBg: "#F5F0E8",
+    hoverText: "#5C4D3A",
   },
 ];
 
@@ -114,21 +121,21 @@ export default function IntentionCarousel() {
   const cardW = 100 / visibleCards;
 
   return (
-    <section className="py-20">
+    <section className="py-20 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4">
         {/* Header */}
-        <div className="mb-10">
-          <span className="mb-2 block text-[11px] uppercase tracking-[0.3em] text-stone-400">
-            Intenciones
+        <div className="mb-10 text-center">
+          <span className="mb-2 block text-[11px] uppercase tracking-[0.4em] text-stone-400 font-medium">
+            Propósito & Intención
           </span>
-          <h2 className="font-serif text-3xl text-stone-800 md:text-4xl">
-            Elegí por intención
+          <h2 className="font-serif text-4xl text-stone-800 md:text-5xl italic tracking-tight">
+            Elegí tu camino
           </h2>
         </div>
 
         {/* Row: arrow | viewport | arrow */}
         <div
-          className="flex items-center gap-2"
+          className="flex items-center gap-4"
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
@@ -138,7 +145,7 @@ export default function IntentionCarousel() {
             className="intent-arrow-btn flex-shrink-0"
             aria-label="Anterior"
           >
-            <ChevronLeft size={22} strokeWidth={1.5} />
+            <ChevronLeft size={26} strokeWidth={1.5} />
           </button>
 
           {/* Viewport — overflow hidden + edge fade via mask */}
@@ -157,11 +164,11 @@ export default function IntentionCarousel() {
           >
             {/* Track */}
             <div
-              className="flex py-3"
+              className="flex py-10"
               style={{
                 transform: `translateX(-${idx * cardW}%)`,
                 transition: animated
-                  ? "transform 650ms cubic-bezier(0.22, 1, 0.36, 1)"
+                  ? "transform 800ms cubic-bezier(0.2, 1, 0.2, 1)"
                   : "none",
               }}
               onTransitionEnd={handleTransitionEnd}
@@ -169,45 +176,51 @@ export default function IntentionCarousel() {
               {CLONED.map((item, i) => (
                 <div
                   key={`${item.id}-${i}`}
-                  className="flex-shrink-0 px-2"
-                  style={{ width: `${cardW}%` }}
+                  className="flex-shrink-0 px-3"
+                  style={{ 
+                    width: `${cardW}%`,
+                    // Injecting variables for CSS hover
+                    '--hover-bg': item.hoverBg,
+                    '--hover-text': item.hoverText,
+                  } as React.CSSProperties}
                 >
                   <Link
                     href={`/catalogo?intencion=${item.id}`}
                     className="group block"
                   >
                     <article
-                      className="intent-card"
-                      style={{ backgroundColor: item.bg }}
+                      className={`intent-card-elite ${item.id}`}
                     >
-                      <div className="intent-glow absolute inset-0 bg-gradient-to-b from-white/40 to-transparent" />
-                      <div className="relative flex h-full flex-col justify-between p-6">
+                      <div className="relative flex h-full flex-col justify-between p-8 text-center items-center z-10">
                         <div>
-                          <div className="intent-icon-box">
-                            <img
+                          <div className="intent-icon-box mb-8">
+                            <Image
                               src={item.iconSrc}
                               alt={item.title}
-                              width={26}
-                              height={26}
+                              width={44}
+                              height={42}
                               style={{ objectFit: "contain" }}
+                              className="intent-icon"
                             />
                           </div>
-                          <h3 className="mt-5 font-serif text-2xl text-stone-800">
+                          <h3 className="intent-title font-serif text-3xl italic tracking-tight">
                             {item.title}
                           </h3>
-                          <p className="mt-3 max-w-[220px] text-sm leading-relaxed text-stone-600">
+                          <p className="intent-subtitle mt-4 max-w-[200px] text-[12px] leading-relaxed font-light tracking-[0.1em] uppercase opacity-40">
                             {item.subtitle}
                           </p>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] uppercase tracking-[0.25em] text-stone-500">
-                            Explorar
+                        <div className="mt-8 flex flex-col items-center gap-4">
+                          <div className="intent-divider h-px w-8 bg-stone-300" />
+                          <span className="intent-discover text-[10px] uppercase tracking-[0.4em] font-medium">
+                            Descubrir
                           </span>
-                          <div className="intent-mini-arrow">
-                            <ArrowRight size={18} className="text-stone-700" />
-                          </div>
                         </div>
                       </div>
+                      
+                      {/* Interactive Layers */}
+                      <div className="intent-bg-overlay absolute inset-0 bg-[var(--hover-bg)] opacity-0 transition-opacity duration-700" />
+                      <div className="intent-gold-border absolute inset-0 border border-[#D4AF37]/0 transition-all duration-700 pointer-events-none" />
                     </article>
                   </Link>
                 </div>
@@ -221,21 +234,21 @@ export default function IntentionCarousel() {
             className="intent-arrow-btn flex-shrink-0"
             aria-label="Siguiente"
           >
-            <ChevronRight size={22} strokeWidth={1.5} />
+            <ChevronRight size={26} strokeWidth={1.5} />
           </button>
         </div>
 
         {/* Dots */}
-        <div className="mt-8 flex justify-center gap-2">
+        <div className="mt-4 flex justify-center gap-3">
           {ITEMS.map((_, i) => (
             <button
               key={i}
               onClick={() => setIdx(N + i)}
               aria-label={`Ir a ${ITEMS[i].title}`}
-              className={`rounded-full transition-all duration-500 ${
+              className={`h-px transition-all duration-700 ${
                 idx % N === i
-                  ? "h-1.5 w-8 bg-stone-600"
-                  : "h-1.5 w-1.5 bg-stone-300"
+                  ? "w-12 bg-stone-800"
+                  : "w-4 bg-stone-200 hover:bg-stone-400"
               }`}
             />
           ))}

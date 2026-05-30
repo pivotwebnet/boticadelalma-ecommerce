@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CATEGORIES, PRODUCTS } from '@/lib/data';
+import { useCategories, useProducts } from '@/hooks/useApiData';
 import { fmt } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
@@ -11,6 +11,8 @@ const TRENDING = ['palo santo', 'amatista', 'tarot', 'vela ritual'];
 
 export default function SearchBox() {
   const router = useRouter();
+  const categories = useCategories();
+  const products = useProducts();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -25,14 +27,14 @@ export default function SearchBox() {
 
   const needle = q.trim().toLowerCase();
   const prodMatches = needle
-    ? PRODUCTS.filter(
+    ? products.filter(
         p =>
           p.name.toLowerCase().includes(needle) ||
           p.tags.some(t => t.toLowerCase().includes(needle))
       ).slice(0, 5)
     : [];
   const catMatches = needle
-    ? CATEGORIES.filter(c => c.name.toLowerCase().includes(needle)).slice(0, 3)
+    ? categories.filter(c => c.name.toLowerCase().includes(needle)).slice(0, 3)
     : [];
 
   const goToProduct = (id: string) => {

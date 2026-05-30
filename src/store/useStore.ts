@@ -10,6 +10,7 @@ interface StoreState {
   theme: Theme;
   purchase: Purchase | null;
   cartLocked: boolean;
+  toast: { msg: string } | null;
 
   addToCart: (product: Product, qty?: number) => void;
   updateQty: (id: string, qty: number) => void;
@@ -21,6 +22,7 @@ interface StoreState {
   setPurchase: (p: Purchase) => void;
   clearPurchase: () => void;
   lockCart: () => void;
+  showToast: (msg: string) => void;
 }
 
 export const useStore = create<StoreState>()(
@@ -32,6 +34,7 @@ export const useStore = create<StoreState>()(
       cartOpen: false,
       purchase: null,
       cartLocked: false,
+      toast: null,
       theme: {
         palette: 'sage',
         typography: 'default',
@@ -55,6 +58,8 @@ export const useStore = create<StoreState>()(
             cartOpen: true // Mantenemos la apertura inmediata del carrito
           };
         });
+
+        get().showToast('Agregado al carrito');
       },
 
       updateQty: (id, qty) => {
@@ -87,6 +92,11 @@ export const useStore = create<StoreState>()(
       setPurchase: (p) => set({ purchase: p }),
       clearPurchase: () => set({ purchase: null, cartLocked: false }),
       lockCart: () => set({ cartLocked: true }),
+
+      showToast: (msg) => {
+        set({ toast: { msg } });
+        setTimeout(() => set({ toast: null }), 3000);
+      },
     }),
     {
       name: 'la-botica-store',

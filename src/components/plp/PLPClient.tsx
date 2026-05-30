@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState, Suspense } from 'react';
+import { useMemo, useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { INTENTIONS, MATERIALS, PRICE_RANGES } from '@/lib/data';
+import { INTENTIONS, MATERIALS } from '@/lib/data';
 import { useCategories, useProducts } from '@/hooks/useApiData';
+import { fmt } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Icon from '@/components/ui/Icon';
 import ProductCard from '@/components/ui/ProductCard';
@@ -33,11 +34,22 @@ function PLPInner({ cat }: PLPClientProps) {
   const subCategory = category?.subcategories?.find(s => s.id === sub);
 
   const [sort, setSort] = useState<SortKey>('relevance');
-  const [priceSel, setPriceSel] = useState<string[]>([]);
+  const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [matSel, setMatSel] = useState<string[]>([]);
   const [intSel, setIntSel] = useState<string[]>([]);
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
+
+  const absoluteMax = useMemo(() => {
+    const prices = products.filter(p => p.cat === cat).map(p => p.price);
+    return prices.length > 0 ? Math.ceil(Math.max(...prices) / 1000) * 1000 : 100000;
+  }, [products, cat]);
+
+  useEffect(() => {
+    if (maxPrice === 100000 && absoluteMax !== 100000) {
+      setMaxPrice(absoluteMax);
+    }
+  }, [absoluteMax, maxPrice]);
 
   const toggle = <T,>(arr: T[], val: T, set: (v: T[]) => void) =>
     set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
@@ -53,14 +65,8 @@ function PLPInner({ cat }: PLPClientProps) {
       );
     }
 
-    if (priceSel.length) {
-      list = list.filter(p =>
-        priceSel.some(id => {
-          const r = PRICE_RANGES.find(x => x.id === id)!;
-          return p.price >= r.min && p.price < r.max;
-        })
-      );
-    }
+    list = list.filter(p => p.price <= maxPrice);
+
     if (matSel.length) {
       list = list.filter(p =>
         matSel.some(m => p.tags.some(t => t.toLowerCase().includes(m.toLowerCase())))
@@ -76,13 +82,13 @@ function PLPInner({ cat }: PLPClientProps) {
     if (sort === 'price-desc') list = [...list].sort((a, b) => b.price - a.price);
     if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
     return list;
-  }, [products, cat, subCategory, priceSel, matSel, intSel, onlyNew, sort]);
+  }, [products, cat, subCategory, maxPrice, matSel, intSel, onlyNew, sort]);
 
   const activeFilters =
-    priceSel.length + matSel.length + intSel.length + (onlyNew ? 1 : 0);
+    (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + (onlyNew ? 1 : 0);
 
   const clearFilters = () => {
-    setPriceSel([]);
+    setMaxPrice(absoluteMax);
     setMatSel([]);
     setIntSel([]);
     setOnlyNew(false);
@@ -118,17 +124,31 @@ function PLPInner({ cat }: PLPClientProps) {
           </div>
 
           <div className="filter-group">
-            <h4>Precio</h4>
-            {PRICE_RANGES.map(r => (
-              <label key={r.id} className="check-row">
-                <input
-                  type="checkbox"
-                  checked={priceSel.includes(r.id)}
-                  onChange={() => toggle(priceSel, r.id, setPriceSel)}
-                />
-                <span>{r.label}</span>
-              </label>
-            ))}
+            <div className="flex justify-between items-end mb-4">
+              <h4>Precio</h4>
+              <span className="text-[13px] font-medium text-stone-900 bg-stone-100/80 px-2 py-0.5 rounded border border-stone-200">
+                Hasta {fmt(maxPrice)}
+              </span>
+            </div>
+            <div className="relative px-1 pt-2 pb-6">
+              {/* Native Price Slider */}
+              <input
+                type="range"
+                min={0}
+                max={absoluteMax}
+                step={500}
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(Number(e.target.value))}
+                className="elite-price-slider"
+                style={{ 
+                  '--progress': `${(maxPrice / absoluteMax) * 100}%` 
+                } as React.CSSProperties}
+              />
+              <div className="flex justify-between mt-3 text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold">
+                <span>$0</span>
+                <span>{fmt(absoluteMax)}</span>
+              </div>
+            </div>
           </div>
 
           <div className="filter-group">

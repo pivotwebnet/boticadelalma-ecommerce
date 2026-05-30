@@ -13,14 +13,32 @@ function relativeDate(dateStr: string): string {
   return `hace ${Math.floor(days / 365)} años`
 }
 
+function maskName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length === 0) return '?'
+  
+  if (parts.length === 1) {
+    const name = parts[0]
+    return name.length > 2 
+      ? `${name.slice(0, 2)}***` 
+      : `${name}***`
+  }
+
+  const firstName = parts[0]
+  const lastName = parts[parts.length - 1]
+  return `${firstName} ${lastName[0]}***`
+}
+
 export default function CommentCard({ comment }: { comment: Comment }) {
   const initial = comment.author[0]?.toUpperCase() ?? '?'
+  const displayName = maskName(comment.author)
+  
   return (
     <article className="comment-card">
       <div className="comment-meta">
         <div className="comment-author">
           <span className="comment-avatar">{initial}</span>
-          <span className="comment-name">{comment.author}</span>
+          <span className="comment-name">{displayName}</span>
           <span className="comment-verified">Compra verificada</span>
         </div>
         <div className="comment-right">

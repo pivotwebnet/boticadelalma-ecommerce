@@ -31,6 +31,7 @@ export default function CartPage() {
     city: '',
     notes: '',
   });
+  const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFields, string>>>({});
 
   const items = useStore(s => s.cart);
   const updateQty = useStore(s => s.updateQty);
@@ -46,30 +47,67 @@ export default function CartPage() {
   const freeShipGap = Math.max(0, 25000 - subtotal);
   const freeShipPct = Math.min(100, (subtotal / 25000) * 100);
 
-  const setField = (key: keyof CheckoutFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setFields(f => ({ ...f, [key]: e.target.value }));
+  const validateField = (key: keyof CheckoutFields, val: string) => {
+    let err = '';
+    if (key !== 'notes' && !val.trim()) {
+      err = 'Este campo es obligatorio';
+    } else if (key === 'customerName') {
+      if (val.trim().split(/\s+/).length < 2) err = 'Ingresá nombre y apellido';
+    } else if (key === 'customerEmail') {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim())) err = 'Email no válido';
+    } else if (key === 'customerPhone') {
+      if (val.replace(/\D/g, '').length < 10) err = 'Mínimo 10 números';
+    }
+    setErrors(prev => ({ ...prev, [key]: err }));
+    return !err;
+  };
+
+  const setField = (key: keyof CheckoutFields) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    let val = e.target.value;
+    
+    // Filtros en tiempo real
+    if (key === 'customerName') {
+      val = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').slice(0, 35);
+    }
+    if (key === 'customerPhone') {
+      val = val.replace(/[^0-9+]/g, '').slice(0, 15);
+    }
+    if (key === 'address') val = val.slice(0, 30);
+    if (key === 'notes') val = val.slice(0, 200);
+
+    setFields(f => ({ ...f, [key]: val }));
+    
+    // Validación al toque
+    validateField(key, val);
+  };
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
-    if (!fields.customerName.trim() || !fields.customerEmail.trim()) {
-      setFormError('El nombre y el email son obligatorios.');
+    // Validar todo antes de mandar
+    const keys = Object.keys(fields) as (keyof CheckoutFields)[];
+    const isAllValid = keys.every(k => validateField(k, fields[k]));
+
+    if (!isAllValid) {
+      setFormError('Revisá los campos marcados en rojo.');
       return;
     }
 
     setStep('submitting');
+    
+    const { customerName, customerEmail, customerPhone, address, city, notes } = fields;
 
     const res = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        customerName: fields.customerName.trim(),
-        customerEmail: fields.customerEmail.trim(),
-        customerPhone: fields.customerPhone.trim() || undefined,
-        address: fields.address.trim() || undefined,
-        city: fields.city.trim() || undefined,
-        notes: fields.notes.trim() || undefined,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
+        address: address.trim(),
+        city: city.trim(),
+        notes: notes.trim() || undefined,
         items: items.map(it => ({
           productId: it.product.id,
           productName: it.product.name,
@@ -248,7 +286,9 @@ export default function CartPage() {
                     placeholder="María García"
                     required
                     disabled={step === 'submitting'}
+                    style={errors.customerName ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.customerName && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.customerName}</span>}
                 </div>
 
                 <div className="form-field" style={{ marginBottom: 12 }}>
@@ -261,43 +301,54 @@ export default function CartPage() {
                     placeholder="maria@ejemplo.com"
                     required
                     disabled={step === 'submitting'}
+                    style={errors.customerEmail ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.customerEmail && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.customerEmail}</span>}
                 </div>
 
                 <div className="form-field" style={{ marginBottom: 12 }}>
-                  <label htmlFor="co-phone">Teléfono</label>
+                  <label htmlFor="co-phone">Teléfono *</label>
                   <input
                     id="co-phone"
                     type="tel"
                     value={fields.customerPhone}
                     onChange={setField('customerPhone')}
                     placeholder="11 1234-5678"
+                    required
                     disabled={step === 'submitting'}
+                    style={errors.customerPhone ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.customerPhone && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.customerPhone}</span>}
                 </div>
 
                 <div className="form-field" style={{ marginBottom: 12 }}>
-                  <label htmlFor="co-address">Dirección</label>
+                  <label htmlFor="co-address">Dirección *</label>
                   <input
                     id="co-address"
                     type="text"
                     value={fields.address}
                     onChange={setField('address')}
                     placeholder="Av. Corrientes 1234"
+                    required
                     disabled={step === 'submitting'}
+                    style={errors.address ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.address && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.address}</span>}
                 </div>
 
                 <div className="form-field" style={{ marginBottom: 12 }}>
-                  <label htmlFor="co-city">Ciudad</label>
+                  <label htmlFor="co-city">Ciudad *</label>
                   <input
                     id="co-city"
                     type="text"
                     value={fields.city}
                     onChange={setField('city')}
                     placeholder="Buenos Aires"
+                    required
                     disabled={step === 'submitting'}
+                    style={errors.city ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.city && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.city}</span>}
                 </div>
 
                 <div className="form-field" style={{ marginBottom: 16 }}>
@@ -309,8 +360,14 @@ export default function CartPage() {
                     placeholder="Instrucciones de entrega, aclaraciones…"
                     rows={2}
                     disabled={step === 'submitting'}
+                    style={errors.notes ? { borderColor: 'var(--danger)', backgroundColor: 'rgba(169, 74, 60, 0.02)' } : {}}
                   />
+                  {errors.notes && <span style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{errors.notes}</span>}
                 </div>
+
+                <p style={{ fontSize: 11, color: 'var(--fg-soft)', marginBottom: 16, fontStyle: 'italic' }}>
+                  (*) Los campos marcados son obligatorios.
+                </p>
 
                 {formError && (
                   <p className="auth-error" style={{ marginBottom: 12 }}>{formError}</p>

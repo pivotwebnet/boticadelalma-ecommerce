@@ -155,6 +155,16 @@ export async function getProducts(params?: { categoryId?: string; search?: strin
   } catch { return [] }
 }
 
+export async function getProduct(id: string): Promise<ApiProduct | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/${id}`, {
+      next: { revalidate: 60, tags: [`product-${id}`] },
+    })
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
 export async function getCategories(): Promise<ApiCategory[]> {
   try {
     const res = await fetch(`${API_URL}/api/categories`, {
