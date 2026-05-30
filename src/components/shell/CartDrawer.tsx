@@ -16,10 +16,7 @@ export default function CartDrawer() {
   const removeFromCart = useStore(s => s.removeFromCart);
 
   const subtotal = items.reduce((s, it) => s + it.product.price * it.qty, 0);
-  const shipping = subtotal > 25000 || subtotal === 0 ? 0 : 2500;
-  const total = subtotal + shipping;
-  const freeShipGap = Math.max(0, 25000 - subtotal);
-  const freeShipPct = Math.min(100, (subtotal / 25000) * 100);
+  const total = subtotal;
 
   return (
     <>
@@ -43,14 +40,7 @@ export default function CartDrawer() {
 
         {items.length > 0 && (
           <div className="freeship">
-            {freeShipGap > 0 ? (
-              <p>Te faltan <b>{fmt(freeShipGap)}</b> para envío gratis</p>
-            ) : (
-              <p><Icon name="check" size={14} /> ¡Tenés envío gratis!</p>
-            )}
-            <div className="freeship-bar">
-              <div style={{ width: `${freeShipPct}%` }} />
-            </div>
+            <p><Icon name="info" size={14} /> Envío a coordinar por WhatsApp (Gratis en Rafaela)</p>
           </div>
         )}
 
@@ -96,7 +86,7 @@ export default function CartDrawer() {
         {items.length > 0 && (
           <footer className="cart-foot">
             <div className="cart-line"><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
-            <div className="cart-line"><span>Envío</span><span>{shipping === 0 ? 'Gratis' : fmt(shipping)}</span></div>
+            <div className="cart-line"><span>Envío</span><span style={{ color: 'var(--brand-orange)', fontWeight: 600 }}>A coordinar*</span></div>
             <div className="cart-line cart-total"><span>Total</span><span>{fmt(total)}</span></div>
             <Button
               variant="primary"

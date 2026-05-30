@@ -32,7 +32,7 @@ export function ApiDataProvider({ children, initialCategories = [], initialProdu
 
   const categories = CATEGORIES.map(c => ({
     ...c,
-    count: catCountMap[c.id] ?? c.count,
+    count: catCountMap[c.id] ?? 0, // Si no está en el backend, el contador real es 0
   }))
 
   const products = PRODUCTS.map(p => ({

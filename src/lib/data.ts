@@ -4,7 +4,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'collares',
     name: 'Collares',
-    count: 42,
+    count: 0,
     icon: 'necklace',
     subcategories: [
       { id: 'collares-plata', name: 'Plata 925' },
@@ -15,7 +15,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'cristales',
     name: 'Cristales & Piedras',
-    count: 68,
+    count: 0,
     icon: 'crystal',
     subcategories: [
       { id: 'cristales-bruto', name: 'En Bruto' },
@@ -26,7 +26,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'inciensos',
     name: 'Inciensos & Sahumerios',
-    count: 31,
+    count: 0,
     icon: 'incense',
     subcategories: [
       { id: 'inciensos-atados', name: 'Atados de Hierbas' },
@@ -34,9 +34,9 @@ export const CATEGORIES: Category[] = [
       { id: 'inciensos-varitas', name: 'Varitas Clásicas' },
     ]
   },
-  { id: 'velas',     name: 'Velas Rituales',        count: 24, icon: 'candle'   },
-  { id: 'tarot',     name: 'Tarot & Oráculos',      count: 19, icon: 'tarot'    },
-  { id: 'accesorios',name: 'Accesorios',            count: 37, icon: 'accessory'},
+  { id: 'velas',     name: 'Velas Rituales',        count: 0, icon: 'candle'   },
+  { id: 'tarot',     name: 'Tarot & Oráculos',      count: 0, icon: 'tarot'    },
+  { id: 'accesorios',name: 'Accesorios',            count: 0, icon: 'accessory'},
 ];
 
 export const COLLECTIONS: Collection[] = [

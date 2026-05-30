@@ -42,10 +42,14 @@ export default function CartPage() {
   useEffect(() => setMounted(true), []);
 
   const subtotal = items.reduce((s, it) => s + it.product.price * it.qty, 0);
-  const shipping = subtotal > 25000 || subtotal === 0 ? 0 : 2500;
-  const total = subtotal + shipping;
-  const freeShipGap = Math.max(0, 25000 - subtotal);
-  const freeShipPct = Math.min(100, (subtotal / 25000) * 100);
+  const isRafaela = fields.city.toLowerCase().trim() === 'rafaela';
+  
+  // Si es Rafaela es gratis (0). Si no, es a coordinar (no sumamos nada al total aquí).
+  const shippingCost = isRafaela ? 0 : 0; 
+  const total = subtotal + shippingCost;
+  
+  const freeShipGap = isRafaela ? 0 : 0;
+  const freeShipPct = isRafaela ? 100 : 0;
 
   const validateField = (key: keyof CheckoutFields, val: string) => {
     let err = '';
@@ -185,14 +189,16 @@ export default function CartPage() {
           {/* Columna izquierda — items */}
           <div className="cart-page-items">
             <div className="freeship" style={{ borderRadius: 8, marginBottom: 24 }}>
-              {freeShipGap > 0 ? (
-                <p>Te faltan <b>{fmt(freeShipGap)}</b> para envío gratis</p>
+              {isRafaela ? (
+                <p><Icon name="truck" size={14} /> ¡Envío gratis por ser de Rafaela!</p>
               ) : (
-                <p><Icon name="check" size={14} /> ¡Tenés envío gratis!</p>
+                <p><Icon name="info" size={14} /> Envío a coordinar por WhatsApp (Gratis en Rafaela)</p>
               )}
-              <div className="freeship-bar">
-                <div style={{ width: `${freeShipPct}%` }} />
-              </div>
+              {isRafaela && (
+                <div className="freeship-bar">
+                  <div style={{ width: `100%` }} />
+                </div>
+              )}
             </div>
 
             {items.map(it => (
@@ -242,7 +248,7 @@ export default function CartPage() {
           </div>
 
           {/* Columna derecha — resumen + formulario */}
-          <div className="cart-summary-box">
+            <div className="cart-summary-box">
             <h3>Resumen de compra</h3>
 
             <div className="summary-line">
@@ -251,12 +257,20 @@ export default function CartPage() {
             </div>
             <div className="summary-line">
               <span>Envío</span>
-              <span>{shipping === 0 ? 'Gratis' : fmt(shipping)}</span>
+              <span style={{ color: isRafaela ? 'var(--success)' : 'var(--brand-orange)', fontWeight: 600 }}>
+                {isRafaela ? 'Gratis' : 'A coordinar'}
+              </span>
             </div>
             <div className="summary-total">
               <span>Total</span>
               <span>{fmt(total)}</span>
             </div>
+
+            {!isRafaela && (
+              <p style={{ fontSize: 12, color: 'var(--fg-muted)', marginBottom: 20, lineHeight: 1.4, fontStyle: 'italic' }}>
+                * Al no ser de Rafaela, el costo de envío se coordinará por WhatsApp luego de realizar la orden.
+              </p>
+            )}
 
             {step === 'cart' && (
               <>
