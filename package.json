@@ -12,6 +12,7 @@
     "@prisma/client": "^5.22.0",
     "bootstrap": "^5.3.8",
     "embla-carousel-react": "^8.6.0",
+    "framer-motion": "^12.40.0",
     "lucide-react": "^1.16.0",
     "next": "^15.0.0",
     "react": "^19.0.0",

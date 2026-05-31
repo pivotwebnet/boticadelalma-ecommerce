@@ -30,38 +30,57 @@ export default function ProductCard({ product, density }: ProductCardProps) {
     : 0;
 
   return (
-    <article className={`product-card density-${d}`}>
+    <article className={`product-card group density-${d}`}>
       <div className="product-media" onClick={() => router.push(`/producto/${product.id}`)}>
-        <ProductPlaceholder tone={product.tone} label={product.label} />
+        <div className="product-image-wrap">
+          <ProductPlaceholder tone={product.tone} label={product.label} />
+        </div>
+        
         <button
           className={`fav-btn${isFav ? ' is-active' : ''}`}
           aria-label="Favorito"
           onClick={e => { e.stopPropagation(); toggleFav(product.id); }}
         >
-          <Icon name={isFav ? 'heart-fill' : 'heart'} size={16} />
+          <Icon name={isFav ? 'heart-fill' : 'heart'} size={18} />
         </button>
+
         <div className="product-badges">
-          {product.new && <span className="badge badge-new">Nuevo</span>}
-          {discount > 0 && <span className="badge badge-sale">-{discount}%</span>}
+          {product.new && <span className="badge-elite badge-new">Novedad</span>}
+          {discount > 0 && <span className="badge-elite badge-sale">-{discount}%</span>}
         </div>
-        <button
-          className="quick-add"
-          onClick={e => { e.stopPropagation(); addToCart(product); }}
-        >
-          <Icon name="bag" size={14} /> <span>Agregar</span>
-        </button>
+
+        <div className="quick-add-wrap">
+          <button
+            className="btn-quick-add"
+            onClick={e => { e.stopPropagation(); addToCart(product); }}
+          >
+            <Icon name="plus" size={16} /> <span>Añadir al carrito</span>
+          </button>
+        </div>
       </div>
+
       <div className="product-body">
-        <h3 onClick={() => router.push(`/producto/${product.id}`)}>{product.name}</h3>
-        <div className="product-meta">
-          <Icon name="star" size={11} />
-          <span>{product.rating.toFixed(1)}</span>
-          <span className="sep">·</span>
-          <span className="reviews">{product.reviews} reseñas</span>
+        <div className="product-info-top">
+          <span className="product-category-label">{product.label}</span>
+          <div className="product-rating-mini">
+            <Icon name="star" size={10} />
+            <span>{product.rating.toFixed(1)}</span>
+          </div>
         </div>
-        <div className="product-price">
-          <strong>{fmt(product.price)}</strong>
-          {product.was && <span className="price-was">{fmt(product.was)}</span>}
+
+        <h3 
+          className="product-title font-serif text-2xl italic tracking-tight cursor-pointer"
+          onClick={() => router.push(`/producto/${product.id}`)}
+        >
+          {product.name}
+        </h3>
+
+        <div className="product-footer">
+          <div className="product-price-elite">
+            <span className="price-current">{fmt(product.price)}</span>
+            {product.was && <span className="price-old">{fmt(product.was)}</span>}
+          </div>
+          <span className="product-reviews-count">{product.reviews} reseñas</span>
         </div>
       </div>
     </article>
