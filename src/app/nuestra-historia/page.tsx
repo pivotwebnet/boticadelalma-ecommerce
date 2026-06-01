@@ -1,34 +1,58 @@
-import Breadcrumb from '@/components/ui/Breadcrumb';
+import InfoPageLayout from '@/components/ui/InfoPageLayout';
+import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 
-export default function NuestraHistoria() {
+export default function NuestraHistoriaPage() {
   return (
-    <main className="info-page">
-      <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Nuestra historia' }]} />
-      
-      <article className="section" style={{ maxWidth: '800px', margin: '40px auto' }}>
-        <header className="section-head" style={{ textAlign: 'center' }}>
-          <span className="eyebrow">Sobre nosotras</span>
-          <h1>Nuestra historia</h1>
-        </header>
-        
-        <div className="tabs-body" style={{ fontSize: '16px', lineHeight: '1.8' }}>
-          <p>
-            La Botica del Alma nació en 2018 como un pequeño proyecto de curaduría de objetos
-            con alma. Nuestra fundadora, buscaba piezas que no solo fueran bellas, sino que
-            tuvieran un propósito y una historia que contar.
+    <InfoPageLayout 
+      eyebrow="Nuestra Esencia"
+      title="Nuestra Historia"
+      subtitle="Donde lo natural se vuelve sagrado y cada objeto cuenta una historia única de conexión."
+    >
+      <div className="flex flex-col gap-16">
+        {/* Editorial Section 1 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1">
+            <ProductPlaceholder tone="sage" label="alma · boutique" aspectRatio={4/5} />
+          </div>
+          <div className="order-1 md:order-2 flex flex-col gap-6">
+            <h2 className="font-serif text-3xl italic text-stone-800">El origen de un ritual</h2>
+            <p className="text-stone-600 leading-relaxed font-light">
+              La Botica del Alma nació de una búsqueda personal por reconectar con la tierra y sus secretos. Lo que comenzó como una curiosidad por los cristales y las resinas, se convirtió en una curaduría dedicada a encontrar piezas que no solo decoran, sino que elevan el espíritu.
+            </p>
+            <p className="text-stone-600 leading-relaxed font-light">
+              Cada objeto que seleccionamos ha sido elegido por su vibración, su procedencia y la historia de las manos que lo crearon.
+            </p>
+          </div>
+        </div>
+
+        {/* Editorial Section 2 */}
+        <div className="flex flex-col gap-8 text-center max-w-2xl mx-auto py-12">
+          <h2 className="font-serif text-4xl italic text-stone-800">Artesanía & Alma</h2>
+          <p className="text-stone-600 leading-relaxed font-light">
+            Creemos en el valor de lo lento. En un mundo acelerado, proponemos objetos que invitan a la pausa, al ritual diario de encender una vela o meditar con una piedra entre las manos. Trabajamos codo a codo con artesanos latinoamericanos que mantienen vivas técnicas ancestrales.
           </p>
-          <p>
-            Creemos en la belleza de lo imperfecto, en la huella de lo artesanal y en el
-            valor de lo que perdura en el tiempo. Cada cristal, cada vela y cada amuleto
-            que encontrás en nuestra tienda ha sido seleccionado personalmente por su energía
-            y su calidad.
-          </p>
-          <p>
-            Hoy, somos una comunidad de personas que buscan rodearse de objetos que eleven
-            la vibración de sus espacios y acompañen sus rituales cotidianos.
+          <div className="h-px w-20 bg-stone-200 mx-auto" />
+          <p className="font-serif text-xl italic text-stone-500">
+            &ldquo;No vendemos objetos, ofrecemos herramientas para tu propia medicina.&rdquo;
           </p>
         </div>
-      </article>
-    </main>
+
+        {/* Curation Values */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-12 border-t border-stone-200">
+          <div>
+            <span className="block text-[10px] uppercase tracking-[0.3em] text-stone-400 font-bold mb-4">01. Curaduría</span>
+            <p className="text-sm text-stone-600 font-light leading-relaxed">Seleccionamos cada cristal y amuleto uno por uno, asegurando su pureza y origen ético.</p>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-[0.3em] text-stone-400 font-bold mb-4">02. Intención</span>
+            <p className="text-sm text-stone-600 font-light leading-relaxed">Nuestras velas y sahumerios son creados bajo ciclos lunares específicos para potenciar su energía.</p>
+          </div>
+          <div>
+            <span className="block text-[10px] uppercase tracking-[0.3em] text-stone-400 font-bold mb-4">03. Comunidad</span>
+            <p className="text-sm text-stone-600 font-light leading-relaxed">Apoyamos a pequeños productores locales, fomentando un comercio justo y consciente.</p>
+          </div>
+        </div>
+      </div>
+    </InfoPageLayout>
   );
 }

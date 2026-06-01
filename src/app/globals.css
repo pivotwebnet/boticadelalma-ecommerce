@@ -834,6 +834,8 @@ em { font-style: italic; color: var(--accent-ink); }
   background: var(--surface);
   cursor: pointer;
   aspect-ratio: 4/5;
+  border: 1px solid var(--line-soft);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.01);
 }
 
 .product-image-wrap {
@@ -882,7 +884,11 @@ em { font-style: italic; color: var(--accent-ink); }
 }
 .btn-quick-add:hover { background: white; transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,0.15); }
 
-.product-body { padding: 20px 4px 0; display: flex; flex-direction: column; gap: 8px; }
+.product-body { padding: 20px 12px 0; display: flex; flex-direction: column; gap: 8px; }
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
 
 .product-info-top { display: flex; justify-content: space-between; align-items: center; }
 .product-category-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--fg-soft); font-weight: 600; }
@@ -1038,8 +1044,9 @@ em { font-style: italic; color: var(--accent-ink); }
 }
 @media (max-width: 768px) {
   body { padding-top: 80px; }
-  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 12px; }       
+  .product-grid { grid-template-columns: repeat(2, 1fr); gap: 16px 16px; }
 }
+
 @media (max-width: 640px) {
   :root { --gutter: 16px; }
   .intent-card-elite { height: 300px; }

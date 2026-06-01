@@ -1,78 +1,63 @@
-'use client';
+import InfoPageLayout from '@/components/ui/InfoPageLayout';
+import Accordion from '@/components/ui/Accordion';
 
-import { useState } from 'react';
-import Breadcrumb from '@/components/ui/Breadcrumb';
-
-const faqs = [
-  {
-    q: '¿Tienen local físico?',
-    a: 'Contamos con un showroom en Rafaela, Santa Fe, donde podés ver todas las piezas y retirar tus compras online. Atendemos de lunes a viernes de 11 a 19hs.'
-  },
-  {
-    q: '¿Qué medios de pago aceptan?',
-    a: 'Aceptamos todas las tarjetas de crédito y débito a través de Mercado Pago, transferencia bancaria (con 10% de descuento) y efectivo al retirar.'
-  },
-  {
-    q: '¿Hacen ventas por mayor?',
-    a: 'Sí, realizamos ventas mayoristas para locales de decoración y curaduría. Escribinos a nuestro mail o WhatsApp para solicitar el catálogo mayorista.'
-  },
-  {
-    q: '¿Cómo cuido mis cristales?',
-    a: 'Recomendamos limpiarlos energéticamente con sahumerios de salvia o palo santo. Físicamente, podés usar un paño suave apenas húmedo. Evitá el contacto directo con químicos.'
-  },
-  {
-    q: '¿Hacen envíos a todo el país?',
-    a: 'Sí, enviamos a todo el territorio argentino. El envío es gratis a partir de $120.000.'
-  },
-  {
-    q: '¿Cuánto tarda en llegar mi pedido?',
-    a: 'Los pedidos se preparan en 1 a 2 días hábiles. La entrega tarda entre 3 y 7 días hábiles según tu ubicación.'
-  },
-];
-
-export default function FAQ() {
-  const [open, setOpen] = useState<number | null>(null);
+export default function FAQPage() {
+  const faqItems = [
+    {
+      title: "¿Cómo elijo el cristal adecuado para mí?",
+      children: (
+        <p>Creemos que el cristal te elige a vos. Te recomendamos navegar por nuestra colección y prestar atención a cuál capta tu mirada o resuena con tu energía en este momento. También podés leer las propiedades de cada uno en la descripción o escribirnos por WhatsApp para que te asesoremos personalmente.</p>
+      )
+    },
+    {
+      title: "¿Cómo debo limpiar mis cristales al recibirlos?",
+      children: (
+        <p>Al recibir un cristal, es ideal limpiarlo energéticamente. Podés pasarlo por el humo de un sahumerio (como sándalo o palo santo), dejarlo bajo la luz de la luna llena o colocarlo sobre una selenite. Evitá el agua con sal en cristales porosos como la malaquita o la turquesa.</p>
+      )
+    },
+    {
+      title: "¿Hacen ventas por mayor?",
+      children: (
+        <p>Sí, realizamos ventas mayoristas para tiendas y emprendimientos que resuenen con nuestra filosofía. Por favor, contactanos a través del formulario o por WhatsApp para recibir nuestro catálogo de mayoristas y condiciones.</p>
+      )
+    },
+    {
+      title: "¿Tienen showroom o tienda física?",
+      children: (
+        <p>Actualmente operamos como tienda online con base en Rafaela, Santa Fe. Contamos con un punto de retiro para pedidos locales, pero no tenemos atención al público general de forma presencial por el momento.</p>
+      )
+    },
+    {
+      title: "¿Qué medios de pago aceptan?",
+      children: (
+        <p>Aceptamos todas las tarjetas de crédito y débito a través de MercadoPago. También podés abonar mediante transferencia bancaria (con un descuento especial) o en efectivo al momento del retiro en Rafaela.</p>
+      )
+    },
+    {
+      title: "¿Cómo cuido mis velas de intención?",
+      children: (
+        <p>Para una quemado parejo, dejá la vela encendida hasta que la capa superior se derrita por completo. Cortá el pabilo a 0.5cm antes de cada uso. Nunca dejes una vela encendida sin supervisión y mantenela lejos de corrientes de aire.</p>
+      )
+    }
+  ];
 
   return (
-    <main className="info-page">
-      <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Preguntas frecuentes' }]} />
+    <InfoPageLayout 
+      eyebrow="Resolvé tus dudas"
+      title="Preguntas Frecuentes"
+      subtitle="Aquí encontrarás las respuestas a las consultas más comunes sobre nuestros productos, envíos y rituales."
+    >
+      <div className="mb-12">
+        <Accordion items={faqItems} />
+      </div>
 
-      <article className="section" style={{ maxWidth: '800px', margin: '40px auto' }}>
-        <header className="section-head">
-          <span className="eyebrow">Ayuda</span>
-          <h1>Preguntas frecuentes</h1>
-        </header>
-
-        <div className="faq-list">
-          {faqs.map((f, i) => {
-            const isOpen = open === i;
-            return (
-              <div key={i} className={`faq-row${isOpen ? ' faq-row--open' : ''}`}>
-                <button
-                  className="faq-btn"
-                  onClick={() => setOpen(isOpen ? null : i)}
-                  aria-expanded={isOpen}
-                >
-                  <span>{f.q}</span>
-                  <svg
-                    className="faq-arrow"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <div className="faq-panel" style={{ maxHeight: isOpen ? '400px' : '0' }}>
-                  <p className="faq-answer">{f.a}</p>
-                </div>
-              </div>
-            );
-          })}
+      <div className="text-center py-12 border-t border-stone-200">
+        <p className="text-stone-500 font-light italic mb-8">¿No encontraste lo que buscabas?</p>
+        <div className="flex flex-col md:flex-row justify-center gap-6">
+          <a href="/contacto" className="btn btn-ghost">Ir a Contacto</a>
+          <a href="https://wa.me/3492274535" target="_blank" rel="noopener noreferrer" className="btn btn-primary">Chatear por WhatsApp</a>
         </div>
-      </article>
-    </main>
+      </div>
+    </InfoPageLayout>
   );
 }
