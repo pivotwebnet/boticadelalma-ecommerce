@@ -155,18 +155,47 @@ em { font-style: italic; color: var(--accent-ink); }
 }
 .bc-sep { opacity: 0.3; }
 
-/* ─── Botones ─── */
+/* ─── Botones Soft Luxury ─── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;  
   border: 1px solid transparent; border-radius: 999px;
-  font-weight: 700; letter-spacing: 0.02em;
-  cursor: pointer; transition: all .4s var(--ease-premium);
+  font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; transition: all .4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   font-family: var(--font-sans);
   text-decoration: none;
+  position: relative;
 }
-.btn-sm { height: 40px; padding: 0 20px; font-size: 12px; }
-.btn-md { height: 52px; padding: 0 32px; font-size: 14px; }
-.btn-lg { height: 64px; padding: 0 44px; font-size: 16px; }
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-sm { height: 38px; padding: 0 20px; font-size: 10px; }
+.btn-md { height: 50px; padding: 0 30px; font-size: 12px; }
+.btn-lg { height: 62px; padding: 0 42px; font-size: 14px; }
+
+.btn-primary {
+  background: var(--brand-orange);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--fg); /* Elegant shift to dark stone/black */
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+}
+.btn-ghost:hover {
+  border-color: var(--fg);
+  background: var(--surface);
+}
 .btn-full { width: 100%; }
 .btn-primary { background: var(--brand-orange); color: #fff; border-color: var(--brand-orange); }
 .btn-primary:hover { background: var(--brand-navy); transform: translateY(-2px); }
