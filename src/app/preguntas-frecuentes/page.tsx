@@ -16,12 +16,6 @@ export default function FAQPage() {
       )
     },
     {
-      title: "¿Hacen ventas por mayor?",
-      children: (
-        <p>Sí, realizamos ventas mayoristas para tiendas y emprendimientos que resuenen con nuestra filosofía. Por favor, contactanos a través del formulario o por WhatsApp para recibir nuestro catálogo de mayoristas y condiciones.</p>
-      )
-    },
-    {
       title: "¿Tienen showroom o tienda física?",
       children: (
         <p>Actualmente operamos como tienda online con base en Rafaela, Santa Fe. Contamos con un punto de retiro para pedidos locales, pero no tenemos atención al público general de forma presencial por el momento.</p>

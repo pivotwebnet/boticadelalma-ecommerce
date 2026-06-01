@@ -59,16 +59,17 @@ export default function EnviosDevolucionesPage() {
         <Accordion items={infoItems} />
       </div>
       
-      <div className="bg-accent/5 border border-accent/20 p-8 rounded-[2rem] text-center">
-        <h3 className="font-serif text-2xl italic text-stone-800 mb-4">¿Tenés una duda específica?</h3>
-        <p className="text-stone-600 font-light mb-6">Estamos en línea para ayudarte con cualquier consulta sobre tu envío.</p>
+      <div className="bg-accent/5 border border-accent/10 p-12 rounded-[3rem] text-center flex flex-col items-center gap-6">
+        <h3 className="font-serif text-3xl italic text-stone-800">¿Tenés una duda específica?</h3>
+        <p className="text-stone-600 font-light max-w-md">Nuestro equipo está en línea para ayudarte con cualquier consulta sobre el estado de tu envío o cambios.</p>
         <a 
           href="https://wa.me/3492274535" 
           target="_blank" 
           rel="noopener noreferrer"
           className="btn btn-primary"
         >
-          Consultar por WhatsApp
+          <Icon name="whatsapp" size={20} stroke={2} />
+          Chatear por WhatsApp
         </a>
       </div>
     </InfoPageLayout>

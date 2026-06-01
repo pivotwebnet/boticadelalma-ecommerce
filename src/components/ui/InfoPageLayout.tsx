@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
+import Breadcrumb from './Breadcrumb';
 
 interface InfoPageLayoutProps {
   title: string;
@@ -14,7 +15,11 @@ export default function InfoPageLayout({ title, subtitle, eyebrow, children }: I
   return (
     <main className="min-h-screen pt-32 pb-24">
       {/* Header Section */}
-      <header className="max-w-7xl mx-auto px-6 mb-20 text-center">
+      <header className="max-w-7xl mx-auto px-6 mb-20 text-left">
+        <div className="mb-12">
+          <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: title }]} />
+        </div>
+        
         {eyebrow && (
           <motion.span 
             initial={{ opacity: 0, y: 10 }}

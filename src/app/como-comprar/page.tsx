@@ -45,24 +45,24 @@ export default function ComoComprarPage() {
         ))}
       </div>
 
-      <div className="mt-20 p-12 rounded-[3rem] bg-stone-900 text-white text-center flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden">
+      <div className="mt-24 p-12 rounded-[3rem] bg-accent/5 border border-accent/10 text-center flex flex-col items-center gap-8 relative overflow-hidden">
         {/* Decorative Watermark */}
         <div className="absolute inset-0 opacity-[0.03] pointer-events-none flex items-center justify-center">
-          <Icon name="sparkle" size={400} />
+          <Icon name="sparkle" size={400} className="text-accent" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center gap-6 max-w-xl">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-brand-orange font-bold">Atención Personalizada</span>
-          <h2 className="font-serif text-3xl md:text-5xl italic leading-tight">¿Preferís que te ayudemos nosotras?</h2>
-          <p className="text-stone-400 font-light">Escribinos directamente y realizá tu pedido de forma manual. Estamos para asesorarte en la elección de tus cristales.</p>
+          <span className="text-[10px] uppercase tracking-[0.4em] text-accent font-bold">Atención Personalizada</span>
+          <h2 className="font-serif text-3xl md:text-5xl italic leading-tight text-stone-800">¿Preferís que te ayudemos nosotras?</h2>
+          <p className="text-stone-600 font-light">Escribinos directamente y realizá tu pedido de forma manual. Estamos para asesorarte en la elección de tus cristales.</p>
           <a 
             href="https://wa.me/3492274535" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 bg-[#25D366] text-white px-8 py-4 rounded-full font-bold text-sm transition-all hover:scale-105 shadow-xl"
+            className="btn btn-primary"
           >
             <Icon name="whatsapp" size={20} stroke={2} />
-            Comprar por WhatsApp
+            Consultar por WhatsApp
           </a>
         </div>
       </div>

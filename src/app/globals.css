@@ -148,18 +148,25 @@ em { font-style: italic; color: var(--accent-ink); }
   margin-bottom: 10px;
 }
 
+.breadcrumb { 
+  display: flex; align-items: center; gap: 8px; font-size: 10px; 
+  text-transform: uppercase; letter-spacing: 0.15em; color: var(--fg-soft);
+  margin-bottom: 32px; justify-content: flex-start;
+}
+.bc-sep { opacity: 0.3; }
+
 /* ─── Botones ─── */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;  
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;  
   border: 1px solid transparent; border-radius: 999px;
-  font-weight: 500; letter-spacing: 0.01em;
-  cursor: pointer; transition: all .2s var(--ease-premium);
+  font-weight: 700; letter-spacing: 0.02em;
+  cursor: pointer; transition: all .4s var(--ease-premium);
   font-family: var(--font-sans);
   text-decoration: none;
 }
-.btn-sm { height: 32px; padding: 0 14px; font-size: 12.5px; }
-.btn-md { height: 44px; padding: 0 24px; font-size: 14px; }
-.btn-lg { height: 56px; padding: 0 32px; font-size: 15px; }
+.btn-sm { height: 40px; padding: 0 20px; font-size: 12px; }
+.btn-md { height: 52px; padding: 0 32px; font-size: 14px; }
+.btn-lg { height: 64px; padding: 0 44px; font-size: 16px; }
 .btn-full { width: 100%; }
 .btn-primary { background: var(--brand-orange); color: #fff; border-color: var(--brand-orange); }
 .btn-primary:hover { background: var(--brand-navy); transform: translateY(-2px); }
