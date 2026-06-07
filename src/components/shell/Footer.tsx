@@ -7,7 +7,13 @@ import Icon from '@/components/ui/Icon';
 
 const IG_URL = 'https://www.instagram.com/laboticadelalma1/';
 
-// Mock post colors that match the brand palette
+// ── Behold feed ──────────────────────────────────────────────────────────────
+// 1. Registrate gratis en https://behold.so
+// 2. Conectá @laboticadelalma1
+// 3. Copiá el Feed ID y reemplazá null aquí
+const BEHOLD_FEED_ID: string | null = null;
+
+// Placeholders mientras no hay Behold configurado
 const IG_POSTS = [
   'from-stone-300 to-stone-400',
   'from-emerald-200 to-emerald-400',
@@ -66,12 +72,19 @@ function InstagramPreviewCard({
         </p>
       </div>
 
-      {/* Mock posts grid */}
-      <div className="grid grid-cols-3 gap-0.5 px-0.5">
-        {IG_POSTS.map((grad, i) => (
-          <div key={i} className={`aspect-square bg-gradient-to-br ${grad}`} />
-        ))}
-      </div>
+      {/* Posts grid: real feed (Behold) o placeholder */}
+      {BEHOLD_FEED_ID ? (
+        <div className="px-0.5 pb-0.5" style={{ minHeight: 170 }}>
+          {/* @ts-expect-error behold-widget is a custom element */}
+          <behold-widget feed-id={BEHOLD_FEED_ID} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-0.5 px-0.5">
+          {IG_POSTS.map((grad, i) => (
+            <div key={i} className={`aspect-square bg-gradient-to-br ${grad}`} />
+          ))}
+        </div>
+      )}
 
       {/* CTA */}
       <a
