@@ -1,8 +1,96 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
+
+const IG_URL = 'https://www.instagram.com/laboticadelalma1/';
+
+// Mock post colors that match the brand palette
+const IG_POSTS = [
+  'from-stone-300 to-stone-400',
+  'from-emerald-200 to-emerald-400',
+  'from-amber-200 to-amber-400',
+  'from-rose-200 to-rose-300',
+  'from-stone-200 to-stone-300',
+  'from-emerald-300 to-teal-400',
+  'from-amber-100 to-amber-300',
+  'from-rose-100 to-rose-200',
+  'from-stone-300 to-stone-500',
+];
+
+function InstagramPreviewCard() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 6, scale: 0.97 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      className="absolute bottom-full left-0 mb-3 w-64 rounded-2xl overflow-hidden shadow-2xl z-50"
+      style={{ background: '#fff' }}
+    >
+      {/* IG gradient header */}
+      <div className="h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative flex items-end px-4 pb-3">
+        {/* Avatar */}
+        <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
+          <Icon name="instagram" size={22} className="text-white" />
+        </div>
+      </div>
+
+      {/* Profile info */}
+      <div className="pt-8 px-4 pb-3">
+        <p className="font-bold text-[13px] text-stone-900 leading-tight">La Botica del Alma</p>
+        <p className="text-[11px] text-stone-500">@laboticadelalma1</p>
+        <p className="text-[11px] text-stone-600 mt-1.5 leading-snug">
+          Joyería artesanal · Piedras naturales · Rafaela, Santa Fe ✨
+        </p>
+      </div>
+
+      {/* Mock posts grid */}
+      <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-0.5">
+        {IG_POSTS.map((grad, i) => (
+          <div
+            key={i}
+            className={`aspect-square bg-gradient-to-br ${grad}`}
+          />
+        ))}
+      </div>
+
+      {/* CTA */}
+      <div className="px-4 py-3">
+        <span className="block text-center text-[11px] font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
+          Ver perfil completo →
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+function InstagramLink() {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <li className="pt-1 relative">
+      <a
+        href={IG_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 text-stone-100/90 hover:text-pink-300 transition-colors font-medium group"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <span className="bg-gradient-to-br from-purple-400 via-pink-400 to-orange-400 rounded-md p-0.5 flex">
+          <Icon name="instagram" size={13} className="text-white" />
+        </span>
+        Seguinos en Instagram
+      </a>
+      <AnimatePresence>
+        {hovered && <InstagramPreviewCard />}
+      </AnimatePresence>
+    </li>
+  );
+}
 
 export default function Footer() {
   const pivotLetters = "PIVOT".split("");
@@ -21,15 +109,16 @@ export default function Footer() {
             <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/contacto" className="hover:text-brand-orange transition-colors">Hacenos tu consulta</Link></li>
               <li className="pt-1">
-                <a 
-                  href={whatsappUrl} 
-                  target="_blank" 
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
                 >
                   <Icon name="whatsapp" size={14} /> Comprá por WhatsApp
                 </a>
               </li>
+              <InstagramLink />
             </ul>
           </div>
 
@@ -50,16 +139,6 @@ export default function Footer() {
             <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/catalogo" className="hover:text-brand-orange transition-colors">Tienda online</Link></li>
               <li><Link href="/nuestra-historia" className="hover:text-brand-orange transition-colors">Sobre la Botica</Link></li>
-              <li>
-                <a
-                  href="https://www.instagram.com/laboticadelalma1/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-brand-orange transition-colors"
-                >
-                  <Icon name="instagram" size={14} /> @laboticadelalma1
-                </a>
-              </li>
             </ul>
           </div>
 
