@@ -21,10 +21,12 @@ const IG_POSTS = [
 ];
 
 function InstagramPreviewCard({
-  pos, onClose,
+  pos, onClose, onMouseEnter, onMouseLeave,
 }: {
   pos: { top: number; left: number };
   onClose: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) {
   const cardW = 256;
   const margin = 12;
@@ -39,16 +41,17 @@ function InstagramPreviewCard({
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
       className="fixed rounded-2xl overflow-hidden shadow-2xl bg-white z-[200]"
       style={{ top: pos.top, left, width: cardW }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      data-ig-card="true"
     >
       {/* IG gradient header */}
       <div className="h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative">
-        {/* Close (mobile) */}
         <button
           className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white text-xs leading-none"
           onClick={onClose}
           aria-label="Cerrar"
         >✕</button>
-        {/* Avatar */}
         <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
           <Icon name="instagram" size={22} className="text-white" />
         </div>
@@ -86,44 +89,58 @@ function InstagramPreviewCard({
 function InstagramLink() {
   const [open, setOpen] = useState(false);
   const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
-  const ref = useRef<HTMLLIElement>(null);
+  const triggerRef = useRef<HTMLLIElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scheduleClose = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 120);
+  };
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
 
   const calcPos = () => {
-    if (!ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    // Show above the element; if too close to top, show below
-    const above = r.top - 8;
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
     const cardH = 340;
-    const top = above - cardH > 0 ? above - cardH : r.bottom + 8;
+    const top = r.top - cardH - 8 > 0 ? r.top - cardH - 8 : r.bottom + 8;
     setCardPos({ top, left: r.left });
   };
 
-  // Close on outside click/touch
+  // Close on outside tap (mobile)
   useEffect(() => {
     if (!open) return;
-    const close = (e: MouseEvent | TouchEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    const onTap = (e: TouchEvent) => {
+      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
+        // Check if tap is on the fixed card by class
+        const el = e.target as HTMLElement;
+        if (!el.closest('[data-ig-card]')) setOpen(false);
+      }
     };
-    document.addEventListener('mousedown', close);
-    document.addEventListener('touchstart', close);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      document.removeEventListener('touchstart', close);
-    };
+    document.addEventListener('touchstart', onTap);
+    return () => document.removeEventListener('touchstart', onTap);
   }, [open]);
 
   return (
-    <li ref={ref} className="pt-1">
+    <li ref={triggerRef} className="pt-1">
       <a
         href={IG_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
-        onPointerEnter={(e) => { if (e.pointerType === 'mouse') { calcPos(); setOpen(true); } }}
-        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setOpen(false); }}
+        onPointerEnter={(e) => {
+          if (e.pointerType !== 'mouse') return;
+          cancelClose();
+          calcPos();
+          setOpen(true);
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType !== 'mouse') return;
+          scheduleClose();
+        }}
         onClick={(e) => {
           const native = e.nativeEvent as PointerEvent;
-          if (native.pointerType === 'mouse') return; // desktop navigates normally
+          if (native.pointerType === 'mouse') return;
           e.preventDefault();
           calcPos();
           setOpen(prev => !prev);
@@ -136,6 +153,8 @@ function InstagramLink() {
           <InstagramPreviewCard
             pos={cardPos}
             onClose={() => setOpen(false)}
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
           />
         )}
       </AnimatePresence>
