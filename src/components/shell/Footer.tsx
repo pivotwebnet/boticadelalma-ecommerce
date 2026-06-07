@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
@@ -20,18 +20,34 @@ const IG_POSTS = [
   'from-stone-300 to-stone-500',
 ];
 
-function InstagramPreviewCard() {
+function InstagramPreviewCard({
+  pos, onClose,
+}: {
+  pos: { top: number; left: number };
+  onClose: () => void;
+}) {
+  const cardW = 256;
+  const margin = 12;
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
+  const left = Math.min(pos.left, vw - cardW - margin);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 6, scale: 0.97 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="absolute bottom-full left-0 mb-3 w-64 rounded-2xl overflow-hidden shadow-2xl z-50"
-      style={{ background: '#fff' }}
+      className="fixed rounded-2xl overflow-hidden shadow-2xl bg-white z-[200]"
+      style={{ top: pos.top, left, width: cardW }}
     >
       {/* IG gradient header */}
-      <div className="h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative flex items-end px-4 pb-3">
+      <div className="h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative">
+        {/* Close (mobile) */}
+        <button
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white text-xs leading-none"
+          onClick={onClose}
+          aria-label="Cerrar"
+        >✕</button>
         {/* Avatar */}
         <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
           <Icon name="instagram" size={22} className="text-white" />
@@ -48,42 +64,80 @@ function InstagramPreviewCard() {
       </div>
 
       {/* Mock posts grid */}
-      <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-0.5">
+      <div className="grid grid-cols-3 gap-0.5 px-0.5">
         {IG_POSTS.map((grad, i) => (
-          <div
-            key={i}
-            className={`aspect-square bg-gradient-to-br ${grad}`}
-          />
+          <div key={i} className={`aspect-square bg-gradient-to-br ${grad}`} />
         ))}
       </div>
 
       {/* CTA */}
-      <div className="px-4 py-3">
-        <span className="block text-center text-[11px] font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400">
-          Ver perfil completo →
-        </span>
-      </div>
+      <a
+        href={IG_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-center text-[11px] font-bold uppercase tracking-widest py-3 text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-orange-400 hover:opacity-80 transition-opacity"
+      >
+        Ver perfil completo →
+      </a>
     </motion.div>
   );
 }
 
 function InstagramLink() {
-  const [hovered, setHovered] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
+  const ref = useRef<HTMLLIElement>(null);
+
+  const calcPos = () => {
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    // Show above the element; if too close to top, show below
+    const above = r.top - 8;
+    const cardH = 340;
+    const top = above - cardH > 0 ? above - cardH : r.bottom + 8;
+    setCardPos({ top, left: r.left });
+  };
+
+  // Close on outside click/touch
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent | TouchEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    document.addEventListener('touchstart', close);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('touchstart', close);
+    };
+  }, [open]);
 
   return (
-    <li className="pt-1 relative">
+    <li ref={ref} className="pt-1">
       <a
         href={IG_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+        onPointerEnter={(e) => { if (e.pointerType === 'mouse') { calcPos(); setOpen(true); } }}
+        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setOpen(false); }}
+        onClick={(e) => {
+          const native = e.nativeEvent as PointerEvent;
+          if (native.pointerType === 'mouse') return; // desktop navigates normally
+          e.preventDefault();
+          calcPos();
+          setOpen(prev => !prev);
+        }}
       >
         <Icon name="instagram" size={14} /> Seguinos en Instagram
       </a>
       <AnimatePresence>
-        {hovered && <InstagramPreviewCard />}
+        {open && (
+          <InstagramPreviewCard
+            pos={cardPos}
+            onClose={() => setOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </li>
   );
