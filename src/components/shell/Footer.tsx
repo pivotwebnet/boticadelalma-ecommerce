@@ -76,14 +76,11 @@ function InstagramLink() {
         href={IG_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 text-stone-100/90 hover:text-pink-300 transition-colors font-medium group"
+        className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        <span className="bg-gradient-to-br from-purple-400 via-pink-400 to-orange-400 rounded-md p-0.5 flex">
-          <Icon name="instagram" size={13} className="text-white" />
-        </span>
-        Seguinos en Instagram
+        <Icon name="instagram" size={14} /> Seguinos en Instagram
       </a>
       <AnimatePresence>
         {hovered && <InstagramPreviewCard />}
