@@ -2,9 +2,10 @@ interface IconProps {
   name: string;
   size?: number;
   stroke?: number;
+  className?: string;
 }
 
-export default function Icon({ name, size = 18, stroke = 1.5 }: IconProps) {
+export default function Icon({ name, size = 18, stroke = 1.5, className }: IconProps) {
   const p = {
     width: size,
     height: size,
@@ -14,6 +15,7 @@ export default function Icon({ name, size = 18, stroke = 1.5 }: IconProps) {
     strokeWidth: stroke,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
+    className,
   };
 
   switch (name) {
@@ -43,6 +45,7 @@ export default function Icon({ name, size = 18, stroke = 1.5 }: IconProps) {
     case 'check':     return <svg {...p}><path d="m5 12 5 5 9-11" /></svg>;
     case 'map-pin':   return <svg {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>;
     case 'sparkle':   return <svg {...p}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" /></svg>;
+    case 'instagram': return <svg {...p}><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>;
     case 'whatsapp':  return <svg {...p} fill="currentColor" stroke="none"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.87 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.414 0 .018 5.405.015 12.044c0 2.123.553 4.197 1.604 6.046L0 24l6.222-1.633a11.846 11.846 0 0 0 5.824 1.53h.005c6.637 0 12.032-5.403 12.035-12.042.003-3.218-1.248-6.242-3.522-8.509Z" /></svg>;
     default: return null;
   }

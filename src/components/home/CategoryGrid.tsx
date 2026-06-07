@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useCategories } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
@@ -15,7 +16,7 @@ import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
  * - Parallax Layering for depth
  * - Sophisticated Glassmorphism UI
  */
-function EliteCategoryCard({ category }: { category: any }) {
+function EliteCategoryCard({ category }: { category: import('@/lib/types').Category }) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Motion Values for Mouse Position
@@ -81,11 +82,21 @@ function EliteCategoryCard({ category }: { category: any }) {
             className="relative aspect-[4/5] w-full rounded-[32px] overflow-hidden bg-white shadow-sm group-hover:shadow-2xl transition-shadow duration-700"
           >
             {/* Background Image Layer */}
-            <motion.div 
+            <motion.div
               className="absolute inset-0 w-full h-full"
               style={{ transform: "translateZ(0px)" }}
             >
-              <ProductPlaceholder tone="cream" label="" aspectRatio={4/5} />
+              {category.image ? (
+                <Image
+                  src={category.image}
+                  alt={category.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+              ) : (
+                <ProductPlaceholder tone="cream" label="" aspectRatio={4/5} />
+              )}
             </motion.div>
 
             {/* Elite 3D Shine Overlay (More brilliant) */}

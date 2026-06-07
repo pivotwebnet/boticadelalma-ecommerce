@@ -36,11 +36,12 @@ export default function PDPClient({ product }: PDPClientProps) {
 
   useEffect(() => setMounted(true), []);
 
-  const category = CATEGORIES.find(c => c.id === product.cat)!;
-  const liveProduct = allProducts.find(p => p.id === product.id);
+  const category = CATEGORIES.find(c => c.id === product.cat) ?? CATEGORIES[0];;
   const related = allProducts.filter(p => p.cat === product.cat && p.id !== product.id).slice(0, 4);
-  const displayRating = liveProduct?.rating ?? product.rating;
-  const displayReviews = liveProduct?.reviews ?? product.reviews;
+  
+  // Use product prop directly if it's updated, otherwise try to find in liveProducts
+  const displayRating = product.rating || 0;
+  const displayReviews = product.reviews || 0;
   const images = [product.tone, 'cream', 'stone', 'sage'];
 
   const isFav = mounted && favs.includes(product.id);
@@ -77,15 +78,26 @@ export default function PDPClient({ product }: PDPClientProps) {
         {/* Galería */}
         <div className="pdp-gallery">
           <div className="thumbs">
-            {images.map((tone, i) => (
+            {product.image && (
               <button
-                key={i}
-                className={`thumb${i === mainIdx ? ' on' : ''}`}
-                onClick={() => setMainIdx(i)}
+                className={`thumb${mainIdx === 0 ? ' on' : ''}`}
+                onClick={() => setMainIdx(0)}
               >
-                <ProductPlaceholder tone={tone} label={`vista ${i + 1}`} aspectRatio={1} />
+                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
               </button>
-            ))}
+            )}
+            {images.slice(product.image ? 1 : 0).map((tone, i) => {
+              const idx = product.image ? i + 1 : i;
+              return (
+                <button
+                  key={idx}
+                  className={`thumb${idx === mainIdx ? ' on' : ''}`}
+                  onClick={() => setMainIdx(idx)}
+                >
+                  <ProductPlaceholder tone={tone} label={`vista ${idx + 1}`} aspectRatio={1} />
+                </button>
+              );
+            })}
           </div>
           <div
             ref={imgRef}
@@ -104,7 +116,15 @@ export default function PDPClient({ product }: PDPClientProps) {
               className="zoom-wrap"
               style={zoom ? { transform: `scale(2)`, transformOrigin: `${zPos.x}% ${zPos.y}%` } : {}}
             >
-              <ProductPlaceholder tone={images[mainIdx]} label={product.label} aspectRatio={1} />
+              {mainIdx === 0 && product.image ? (
+                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
+              ) : (
+                <ProductPlaceholder 
+                  tone={product.image ? images[mainIdx - 1] : images[mainIdx]} 
+                  label={product.label} 
+                  aspectRatio={1} 
+                />
+              )}
             </div>
           </div>
         </div>
@@ -223,14 +243,14 @@ export default function PDPClient({ product }: PDPClientProps) {
       <CommentSection productId={product.id} />
 
       {/* Relacionados */}
-      <section className="section">
+      <section className="related-pieces section">
         <header className="section-head">
           <span className="eyebrow">Podría acompañarte</span>
           <h2>Piezas relacionadas</h2>
         </header>
         <div className="product-grid grid-regular">
           {related.map(p => (
-            <ProductCard key={p.id} product={p} density="regular" />
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
       </section>

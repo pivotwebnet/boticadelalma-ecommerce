@@ -58,7 +58,7 @@ export default function CuidadosPage() {
 
       <div className="p-12 rounded-[3rem] bg-accent/5 border border-accent/10 flex flex-col items-center gap-6 text-center">
         <Icon name="leaf" size={40} className="text-accent/40" />
-        <p className="text-stone-600 italic font-serif text-lg">"Cuidar tus objetos es una forma de honrar tu propia energía."</p>
+        <p className="text-stone-600 italic font-serif text-lg">&ldquo;Cuidar tus objetos es una forma de honrar tu propia energía.&rdquo;</p>
       </div>
     </InfoPageLayout>
   );

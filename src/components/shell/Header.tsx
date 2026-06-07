@@ -272,6 +272,7 @@ export default function Header() {
                 hover:opacity-60
                 relative
               "
+              onClick={() => router.push('/favoritos')}
               aria-label="Favoritos"
             >
 

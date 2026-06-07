@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import { getProduct, getProducts } from '@/lib/api';
+import { getProduct, getProducts, getComments } from '@/lib/api';
+import { PRODUCTS } from '@/lib/data';
 import PDPClient from '@/components/pdp/PDPClient';
 import { Product } from '@/lib/types';
 
@@ -9,27 +10,44 @@ interface PageProps {
 
 export default async function ProductPage({ params }: PageProps) {
   const { id } = await params;
-  const p = await getProduct(id);
-  if (!p) notFound();
+  const [apiProduct, comments] = await Promise.all([
+    getProduct(id),
+    getComments(id),
+  ]);
 
-  const product: Product = {
-    id: p.id,
-    cat: p.categoryId,
-    name: p.name,
-    price: p.price,
-    was: p.originalPrice,
-    tone: p.tone,
-    label: p.label,
-    tags: p.tags || [],
-    rating: p.rating,
-    reviews: p.reviews,
-    new: p.isNew,
-  };
+  const staticProduct = PRODUCTS.find(p => p.id === id);
+  if (!apiProduct && !staticProduct) notFound();
+
+  const avgRating = comments.length
+    ? Math.round((comments.reduce((s, c) => s + c.rating, 0) / comments.length) * 10) / 10
+    : 0;
+
+  const product: Product = apiProduct
+    ? {
+        id: apiProduct.id,
+        cat: apiProduct.categoryId,
+        name: apiProduct.name,
+        price: apiProduct.price,
+        was: apiProduct.originalPrice,
+        tone: apiProduct.tone,
+        label: apiProduct.label,
+        tags: apiProduct.tags || [],
+        rating: avgRating,
+        reviews: comments.length,
+        new: apiProduct.isNew,
+        image: apiProduct.imageUrl ?? staticProduct?.image,
+      }
+    : {
+        ...staticProduct!,
+        rating: avgRating,
+        reviews: comments.length,
+      };
 
   return <PDPClient product={product} />;
 }
 
 export async function generateStaticParams() {
-  const products = await getProducts();
-  return products.map(p => ({ id: p.id }));
+  const apiProducts = await getProducts();
+  const source = apiProducts.length > 0 ? apiProducts : PRODUCTS;
+  return source.map(p => ({ id: p.id }));
 }

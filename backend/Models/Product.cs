@@ -34,6 +34,9 @@ public class Product
     public decimal Rating { get; set; }
     public int Reviews { get; set; }
 
+    [MaxLength(500)]
+    public string? ImageUrl { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

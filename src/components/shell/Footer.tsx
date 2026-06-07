@@ -13,53 +13,63 @@ export default function Footer() {
   return (
     <footer className="mt-32 pt-16 pb-8 bg-[#2A5E36] text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-          
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-12 gap-y-16 mb-12">
+
           {/* Col 1: Experiencia del Cliente */}
-          <div>
-            <h4 className="text-[14px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-10">Experiencia del Cliente</h4>
-            <ul className="flex flex-col gap-4 text-[15px] font-medium text-stone-100">
+          <div className="flex flex-col items-start">
+            <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-8">Experiencia del Cliente</h4>
+            <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/contacto" className="hover:text-brand-orange transition-colors">Hacenos tu consulta</Link></li>
-              <li className="pt-2">
+              <li className="pt-1">
                 <a 
                   href={whatsappUrl} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
                 >
-                  <Icon name="whatsapp" size={16} /> Comprá por WhatsApp
+                  <Icon name="whatsapp" size={14} /> Comprá por WhatsApp
                 </a>
               </li>
             </ul>
           </div>
 
           {/* Col 2: Ayuda */}
-          <div>
-            <h4 className="text-[14px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-10">Ayuda</h4>
-            <ul className="flex flex-col gap-4 text-[15px] font-medium text-stone-100">
+          <div className="flex flex-col items-start">
+            <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-8">Ayuda</h4>
+            <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/como-comprar" className="hover:text-brand-orange transition-colors">Cómo comprar</Link></li>
               <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Envíos y devoluciones</Link></li>
-              <li><Link href="/preguntas-frecuentes" className="hover:text-brand-orange transition-colors">Preguntas frecuentes</Link></li>
+              <li><Link href="/preguntas-frecuentes" className="hover:text-brand-orange transition-colors">Dudas Frecuentes</Link></li>
               <li><Link href="/cuidados" className="hover:text-brand-orange transition-colors">Guía de cuidados</Link></li>
             </ul>
           </div>
 
           {/* Col 3: La Botica */}
-          <div>
-            <h4 className="text-[14px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-10">La Botica</h4>
-            <ul className="flex flex-col gap-4 text-[15px] font-medium text-stone-100">
+          <div className="flex flex-col items-start">
+            <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-8">La Botica</h4>
+            <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/catalogo" className="hover:text-brand-orange transition-colors">Tienda online</Link></li>
               <li><Link href="/nuestra-historia" className="hover:text-brand-orange transition-colors">Sobre la Botica</Link></li>
+              <li>
+                <a
+                  href="https://www.instagram.com/laboticadelalma1/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:text-brand-orange transition-colors"
+                >
+                  <Icon name="instagram" size={14} /> @laboticadelalma1
+                </a>
+              </li>
             </ul>
           </div>
 
           {/* Col 4: Información */}
-          <div>
-            <h4 className="text-[14px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-10">Información</h4>
-            <ul className="flex flex-col gap-4 text-[15px] font-medium text-stone-100">
+          <div className="flex flex-col items-start">
+            <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-8">Información</h4>
+            <ul className="flex flex-col gap-4 text-[13px] font-medium text-stone-100/90">
               <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Términos y condiciones</Link></li>
               <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Política de privacidad</Link></li>
-              <li className="pt-4 flex items-center gap-2 text-stone-300 text-[12px] font-bold uppercase tracking-widest">
+              <li className="pt-4 flex items-center gap-2 text-stone-300 text-[11px] font-bold uppercase tracking-widest">
                 <Icon name="shield" size={14} /> Compra 100% Segura
               </li>
             </ul>
@@ -67,33 +77,30 @@ export default function Footer() {
 
         </div>
 
+
         {/* Footer Base */}
-        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-stone-400 flex items-center gap-4">
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-8 text-[11px]">
+          <div className="uppercase tracking-[0.2em] text-stone-400 font-medium flex items-center gap-4">
             <span>© 2026 · La Botica del Alma</span>
-            <span className="hidden md:inline text-stone-600">|</span>
+            <span className="hidden md:inline text-stone-600/40">|</span>
             <a 
               href="https://www.google.com/maps/search/Rafaela,+Santa+Fe,+Argentina" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-brand-orange transition-all group border-b border-transparent hover:border-brand-orange/40 pb-0.5"
-              title="Ver en Google Maps"
+              className="flex items-center gap-1.5 hover:text-white transition-all group"
             >
-              <Icon name="map-pin" size={12} className="group-hover:scale-110 transition-transform" /> 
-              <span className="flex items-center gap-2">
-                Rafaela, Santa Fe
-                <span className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity uppercase font-bold tracking-tighter bg-white/10 px-1.5 py-0.5 rounded ml-1">Ver mapa</span>
-              </span>
+              <Icon name="map-pin" size={10} /> 
+              Rafaela, Santa Fe
             </a>
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-[11px] uppercase tracking-widest text-stone-300/60">Diseño y Desarrollo por</span>
+            <span className="uppercase tracking-widest text-stone-300/60">Diseño y Desarrollo por</span>
             <motion.a 
               href="https://www.pivotweb.com.ar/" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="group relative flex items-center ml-2"
+              className="group relative flex items-center ml-1"
               initial="rest"
               whileHover="hover"
             >
@@ -133,7 +140,7 @@ export default function Footer() {
                       transition: { repeat: Infinity, duration: 0.8 }
                     }
                   }}
-                  className="inline-block w-[12px] h-[4px] bg-brand-orange ml-1 mb-1"
+                  className="inline-block w-[10px] h-[3px] bg-brand-orange ml-1 mb-0.5"
                 />
               </span>
             </motion.a>

@@ -1,6 +1,7 @@
 export interface Product {
   id: string;
   cat: string;
+  subcat?: string;
   name: string;
   price: number;
   was?: number;
@@ -25,6 +26,7 @@ export interface Category {
   name: string;
   count: number;
   icon: string;
+  image?: string;
   group?: string;
   subcategories?: SubCategory[];
 }
@@ -33,6 +35,7 @@ export interface Collection {
   id: string;
   name: string;
   subtitle: string;
+  image?: string;
 }
 
 export interface CartItem {

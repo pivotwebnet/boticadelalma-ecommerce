@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { INTENTIONS, MATERIALS } from '@/lib/data';
 import { useCategories, useProducts } from '@/hooks/useApiData';
 import { fmt } from '@/lib/utils';
@@ -11,10 +12,25 @@ import ProductCard from '@/components/ui/ProductCard';
 type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
 type ViewMode = 'grid' | 'rows';
 
+const SLUG_TO_INTENTION: Record<string, string> = {
+  'amor':                 'amor',
+  'prosperidad':          'prosperidad',
+  'abundancia':           'abundancia',
+  'proteccion':           'protección',
+  'escudos':              'escudos',
+  'calma':                'calma',
+  'crecimiento-personal': 'crecimiento personal',
+  'concrecion':           'concreción',
+  'comunicacion':         'comunicación',
+  'sanacion':             'sanación',
+};
+
 export default function CatalogClient() {
   const categories = useCategories();
   const products = useProducts();
+  const searchParams = useSearchParams();
   const [catSel, setCatSel] = useState<string[]>([]);
+  const [subcatSel, setSubcatSel] = useState<string>('');
   const [sort, setSort] = useState<SortKey>('relevance');
   const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [matSel, setMatSel] = useState<string[]>([]);
@@ -22,6 +38,21 @@ export default function CatalogClient() {
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
   const [sortOpen, setSortOpen] = useState(false);
+
+  // Pre-select filters from URL params
+  useEffect(() => {
+    const catParam    = searchParams.get('cat');
+    const subcatParam = searchParams.get('subcat');
+    const intencion   = searchParams.get('intencion');
+
+    if (catParam) setCatSel([catParam]);
+    if (subcatParam) setSubcatSel(subcatParam);
+    if (intencion) {
+      const intention = SLUG_TO_INTENTION[intencion];
+      if (intention && INTENTIONS.includes(intention)) setIntSel([intention]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate absolute max price from all products
   const absoluteMax = useMemo(() => {
@@ -52,11 +83,9 @@ export default function CatalogClient() {
   const filtered = useMemo(() => {
     let list = products;
 
-    if (catSel.length) {
-      list = list.filter(p => catSel.includes(p.cat));
-    }
-    
-    // Dynamic price filtering
+    if (catSel.length) list = list.filter(p => catSel.includes(p.cat));
+    if (subcatSel)     list = list.filter(p => p.subcat === subcatSel);
+
     list = list.filter(p => p.price <= maxPrice);
 
     if (matSel.length) {
@@ -75,13 +104,14 @@ export default function CatalogClient() {
     if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
 
     return list;
-  }, [products, catSel, maxPrice, matSel, intSel, onlyNew, sort]);
+  }, [products, catSel, subcatSel, maxPrice, matSel, intSel, onlyNew, sort]);
 
   const activeFilters =
-    catSel.length + (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + (onlyNew ? 1 : 0);
+    catSel.length + (subcatSel ? 1 : 0) + (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + (onlyNew ? 1 : 0);
 
   const clearFilters = () => {
     setCatSel([]);
+    setSubcatSel('');
     setMaxPrice(absoluteMax);
     setMatSel([]);
     setIntSel([]);
@@ -93,7 +123,7 @@ export default function CatalogClient() {
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Catálogo' }]} />
 
       <header className="plp-head">
-        <h1>Catálogo completo</h1>
+        <h1>Catálogo</h1>
         <p>{filtered.length} piezas · seleccionadas a mano</p>
       </header>
 
@@ -266,8 +296,8 @@ export default function CatalogClient() {
             </div>
           </div>
 
-          {/* Chips de categorías activas */}
-          {catSel.length > 0 && (
+          {/* Active filter chips */}
+          {(catSel.length > 0 || subcatSel) && (
             <div className="active-cats">
               {catSel.map(id => {
                 const cat = categories.find(c => c.id === id)!;
@@ -275,12 +305,25 @@ export default function CatalogClient() {
                   <button
                     key={id}
                     className="chip chip-on"
-                    onClick={() => toggle(catSel, id, setCatSel)}
+                    onClick={() => { toggle(catSel, id, setCatSel); setSubcatSel(''); }}
                   >
                     {cat.name} ✕
                   </button>
                 );
               })}
+              {subcatSel && (() => {
+                const cat = categories.find(c => c.subcategories?.some(s => s.id === subcatSel));
+                const sub = cat?.subcategories?.find(s => s.id === subcatSel);
+                return sub ? (
+                  <button
+                    key={subcatSel}
+                    className="chip chip-on"
+                    onClick={() => setSubcatSel('')}
+                  >
+                    {sub.name} ✕
+                  </button>
+                ) : null;
+              })()}
             </div>
           )}
 
