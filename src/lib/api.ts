@@ -138,18 +138,34 @@ export interface ApiProduct {
   isActive: boolean
   rating: number
   reviews: number
+  imageUrl?: string
   createdAt: string
   updatedAt: string
 }
 
-export async function getProducts(params?: { categoryId?: string; search?: string }): Promise<ApiProduct[]> {
+export interface GetProductsParams {
+  categoryId?: string
+  search?: string
+  material?: string
+  intention?: string
+  isNew?: boolean
+  minPrice?: number
+  maxPrice?: number
+  sortBy?: 'price-asc' | 'price-desc' | 'newest' | 'rating' | 'name'
+}
+
+export async function getProducts(params?: GetProductsParams): Promise<ApiProduct[]> {
   try {
     const qs = new URLSearchParams()
-    if (params?.categoryId) qs.set('categoryId', params.categoryId)
-    if (params?.search) qs.set('search', params.search)
-    const res = await fetch(`${API_URL}/api/products?${qs}`, {
-      next: { revalidate: 60, tags: ['products'] },
-    })
+    if (params?.categoryId)           qs.set('categoryId', params.categoryId)
+    if (params?.search)               qs.set('search',     params.search)
+    if (params?.material)             qs.set('material',   params.material)
+    if (params?.intention)            qs.set('intention',  params.intention)
+    if (params?.isNew != null)        qs.set('isNew',      String(params.isNew))
+    if (params?.minPrice != null)     qs.set('minPrice',   String(params.minPrice))
+    if (params?.maxPrice != null)     qs.set('maxPrice',   String(params.maxPrice))
+    if (params?.sortBy)               qs.set('sortBy',     params.sortBy)
+    const res = await fetch(`${API_URL}/api/products?${qs}`, { cache: 'no-store' })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }
@@ -158,7 +174,7 @@ export async function getProducts(params?: { categoryId?: string; search?: strin
 export async function getProduct(id: string): Promise<ApiProduct | null> {
   try {
     const res = await fetch(`${API_URL}/api/products/${id}`, {
-      next: { revalidate: 60, tags: [`product-${id}`] },
+      cache: 'no-store',
     })
     if (!res.ok) return null
     return res.json()

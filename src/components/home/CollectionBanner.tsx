@@ -58,10 +58,9 @@ export default function CollectionBanner() {
               </h2>
               <div className="h-px w-20 bg-brand-orange mb-8" />
               <p className="text-lg text-stone-600 leading-relaxed font-light mb-12">
-                Una serie de objetos para acompañar los ciclos: cuarzos lunares, velas de
-                intención y una baraja pensada para los comienzos. Cada pieza ha sido consagrada bajo la luz de la última luna.
+                Una curaduría de joyas y piedras para acompañar los ciclos: collares de cuarzo lunar, amuletos de protección y complementos energéticos para los nuevos comienzos.
               </p>
-              <Link href="/categoria/cristales" className="group inline-flex items-center gap-6">
+              <Link href="/catalogo" className="group inline-flex items-center gap-6">
                 <div className="w-16 h-16 rounded-full border border-stone-200 flex items-center justify-center group-hover:bg-brand-orange group-hover:border-brand-orange transition-all duration-500">
                   <Icon name="arrow-r" size={20} className="group-hover:text-white transition-colors duration-500" />
                 </div>

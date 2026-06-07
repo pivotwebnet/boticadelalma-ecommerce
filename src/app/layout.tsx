@@ -17,7 +17,7 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400'], variable
 
 export const metadata: Metadata = {
   title: 'La Botica del Alma — Joyas con alma',
-  description: 'Cristales, velas y amuletos seleccionados uno por uno. Envíos a todo el país.',
+  description: 'Joyería artesanal, piedras naturales y complementos energéticos. Seleccionados uno por uno. Envíos a todo el país.',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

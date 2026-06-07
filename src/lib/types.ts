@@ -9,6 +9,7 @@ export interface Product {
   tags: string[];
   rating: number;
   reviews: number;
+  image?: string;
   new?: boolean;
   fav?: boolean;
 }
@@ -24,6 +25,7 @@ export interface Category {
   name: string;
   count: number;
   icon: string;
+  group?: string;
   subcategories?: SubCategory[];
 }
 

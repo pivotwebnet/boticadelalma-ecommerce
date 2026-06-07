@@ -17,13 +17,13 @@ export default function Hero() {
       <div className="hero-overlay">
         <span className="hero-eyebrow">— Colección de otoño —</span>
         <h1>Joyas con alma.</h1>
-        <p>Cristales, velas y amuletos seleccionados uno por uno. Envíos a todo el país.</p>
+        <p>Joyería artesanal, piedras naturales y complementos energéticos. Envíos a todo el país.</p>
         <div className="hero-ctas">
           <Link href="/catalogo" className="btn btn-primary btn-lg">
             Explorar la tienda <Icon name="arrow-r" size={16} />
           </Link>
-          <Link href="/categoria/cristales" className="btn btn-ghost btn-lg">
-            Ver cristales
+          <Link href="/categoria/collares" className="btn btn-ghost btn-lg">
+            Ver collares
           </Link>
         </div>
       </div>

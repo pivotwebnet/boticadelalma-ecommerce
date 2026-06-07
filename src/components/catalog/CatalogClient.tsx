@@ -21,6 +21,7 @@ export default function CatalogClient() {
   const [intSel, setIntSel] = useState<string[]>([]);
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
+  const [sortOpen, setSortOpen] = useState(false);
 
   // Calculate absolute max price from all products
   const absoluteMax = useMemo(() => {
@@ -28,15 +29,25 @@ export default function CatalogClient() {
     return prices.length > 0 ? Math.ceil(Math.max(...prices) / 1000) * 1000 : 100000;
   }, [products]);
 
-  // Sync maxPrice if default
+  // Close dropdown on click outside
   useEffect(() => {
-    if (maxPrice === 100000 && absoluteMax !== 100000) {
-      setMaxPrice(absoluteMax);
-    }
-  }, [absoluteMax, maxPrice]);
+    if (!sortOpen) return;
+    const h = () => setSortOpen(false);
+    window.addEventListener('click', h);
+    return () => window.removeEventListener('click', h);
+  }, [sortOpen]);
 
   const toggle = <T,>(arr: T[], val: T, set: (v: T[]) => void) =>
     set(arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val]);
+
+  const sortOptions: { key: SortKey; label: string }[] = [
+    { key: 'relevance', label: 'Relevancia' },
+    { key: 'price-asc', label: 'Precio: menor a mayor' },
+    { key: 'price-desc', label: 'Precio: mayor a menor' },
+    { key: 'rating', label: 'Mejor valorados' },
+  ];
+
+  const currentSortLabel = sortOptions.find(o => o.key === sort)?.label;
 
   const filtered = useMemo(() => {
     let list = products;
@@ -102,19 +113,47 @@ export default function CatalogClient() {
           {/* Categorías */}
           <div className="filter-group">
             <h4>Categoría</h4>
-            {categories.map(c => (
-              <label key={c.id} className="check-row">
-                <input
-                  type="checkbox"
-                  checked={catSel.includes(c.id)}
-                  onChange={() => toggle(catSel, c.id, setCatSel)}
-                />
-                <span>{c.name}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--fg-soft)' }}>
-                  {c.count}
-                </span>
-              </label>
-            ))}
+
+            {/* Joyería – grupo colapsable */}
+            {(() => {
+              const joyas = categories.filter(c => c.group === 'Joyería');
+              const rest  = categories.filter(c => !c.group);
+              return (
+                <>
+                  {joyas.length > 0 && (
+                    <>
+                      <span className="filter-subgroup-label">Joyería</span>
+                      {joyas.map(c => (
+                        <label key={c.id} className="check-row check-indent">
+                          <input
+                            type="checkbox"
+                            checked={catSel.includes(c.id)}
+                            onChange={() => toggle(catSel, c.id, setCatSel)}
+                          />
+                          <span>{c.name}</span>
+                          <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--fg-soft)' }}>
+                            {c.count}
+                          </span>
+                        </label>
+                      ))}
+                    </>
+                  )}
+                  {rest.map(c => (
+                    <label key={c.id} className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={catSel.includes(c.id)}
+                        onChange={() => toggle(catSel, c.id, setCatSel)}
+                      />
+                      <span>{c.name}</span>
+                      <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--fg-soft)' }}>
+                        {c.count}
+                      </span>
+                    </label>
+                  ))}
+                </>
+              );
+            })()}
           </div>
 
           {/* Precio */}
@@ -195,12 +234,27 @@ export default function CatalogClient() {
           <div className="plp-toolbar">
             <div className="toolbar-sort">
               <label>Ordenar:</label>
-              <select value={sort} onChange={e => setSort(e.target.value as SortKey)}>
-                <option value="relevance">Relevancia</option>
-                <option value="price-asc">Precio: menor a mayor</option>
-                <option value="price-desc">Precio: mayor a menor</option>
-                <option value="rating">Mejor valorados</option>
-              </select>
+              <div className={`sort-dropdown${sortOpen ? ' open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                <button className="sort-trigger" onClick={() => setSortOpen(!sortOpen)}>
+                  <span>{currentSortLabel}</span>
+                  <Icon name="chevron-d" size={14} className="dl-chevron" />
+                </button>
+                <div className="sort-menu">
+                  {sortOptions.map(opt => (
+                    <button
+                      key={opt.key}
+                      className={`sort-item${sort === opt.key ? ' active' : ''}`}
+                      onClick={() => {
+                        setSort(opt.key);
+                        setSortOpen(false);
+                      }}
+                    >
+                      {opt.label}
+                      {sort === opt.key && <Icon name="check" size={14} className="check-mark" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="view-toggle">
               <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}>

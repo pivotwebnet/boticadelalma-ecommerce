@@ -7,7 +7,7 @@ import { fmt } from '@/lib/utils';
 import Icon from '@/components/ui/Icon';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 
-const TRENDING = ['palo santo', 'amatista', 'tarot', 'vela ritual'];
+const TRENDING = ['plata', 'amatista', 'collar', 'ojo turco'];
 
 export default function SearchBox() {
   const router = useRouter();

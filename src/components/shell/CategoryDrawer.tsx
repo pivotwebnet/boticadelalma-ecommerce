@@ -147,7 +147,7 @@ export default function CategoryDrawer() {
           <ul>
             {COLLECTIONS.map(c => (
               <li key={c.id}>
-                <button className="drawer-link subtle" onClick={() => goTo('cristales')}>
+                <button className="drawer-link subtle" onClick={() => goTo('/catalogo')}>
                   <span className="dl-name">{c.name}</span>
                   <span className="dl-sub">{c.subtitle}</span>
                 </button>
