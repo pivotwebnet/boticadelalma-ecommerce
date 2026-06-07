@@ -176,15 +176,22 @@ function RankingTable({
 }
 
 export default function AdminDashboard() {
-  const [orders, setOrders] = useState<ApiOrder[]>([])
+  const [orders,     setOrders]     = useState<ApiOrder[]>([])
+  const [products,   setProducts]   = useState<{ id: string; categoryId: string }[]>([])
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('30d')
 
   useEffect(() => {
-    fetch('/api/admin/orders')
-      .then(r => r.json())
-      .then(setOrders)
-      .finally(() => setLoading(false))
+    Promise.all([
+      fetch('/api/admin/orders').then(r => r.json()).catch(() => []),
+      fetch('/api/admin/products').then(r => r.json()).catch(() => []),
+      fetch('/api/admin/categories').then(r => r.json()).catch(() => []),
+    ]).then(([o, p, c]) => {
+      setOrders(Array.isArray(o) ? o : [])
+      setProducts(Array.isArray(p) ? p : [])
+      setCategories(Array.isArray(c) ? c : [])
+    }).finally(() => setLoading(false))
   }, [])
 
   const filtered = useMemo(() => filterByPeriod(orders, period), [orders, period])
@@ -233,20 +240,20 @@ export default function AdminDashboard() {
   }, [filtered])
 
   const categoryRanking = useMemo(() => {
-    // Use product name prefix heuristics — ideally we'd have categoryId on items
-    // Group by first word of product name as rough proxy; real grouping needs API join
-    const map: Record<string, { revenue: number; qty: number }> = {}
+    const prodCatMap: Record<string, string> = {}
+    products.forEach(p => { prodCatMap[p.id] = p.categoryId })
+
+    const map: Record<string, { catName: string; revenue: number; qty: number }> = {}
     filtered.forEach(o => o.items.forEach(it => {
-      // Extract category from productId prefix (e.g. "cristal-amatista" → "cristales")
-      const parts = it.productId.split('-')
-      const cat = parts[0] ?? 'otros'
-      if (!map[cat]) map[cat] = { revenue: 0, qty: 0 }
-      map[cat].revenue += it.pricePaid * it.quantity
-      map[cat].qty += it.quantity
+      const catId   = prodCatMap[it.productId] ?? 'otros'
+      const catName = categories.find(c => c.id === catId)?.name ?? catId
+      if (!map[catId]) map[catId] = { catName, revenue: 0, qty: 0 }
+      map[catId].revenue += it.pricePaid * it.quantity
+      map[catId].qty     += it.quantity
     }))
-    return Object.entries(map).sort(([, a], [, b]) => b.revenue - a.revenue).slice(0, 5)
-      .map(([cat, v]) => ({ label: cat.charAt(0).toUpperCase() + cat.slice(1), sub: `${v.qty} unidades`, value: fmt(v.revenue) }))
-  }, [filtered])
+    return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+      .map(v => ({ label: v.catName, sub: `${v.qty} unidades`, value: fmt(v.revenue) }))
+  }, [filtered, products, categories])
 
   const recent = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8)
   const dateStr = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })

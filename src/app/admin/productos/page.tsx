@@ -7,16 +7,25 @@ function fmt(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-const TONES = ['sage', 'lavender', 'rose', 'amber', 'midnight', 'cream', 'ocean', 'forest', 'terracotta', 'lilac']
+const TONES = [
+  { value: 'stone',  label: 'Piedra  — plata / neutro'   },
+  { value: 'ember',  label: 'Ámbar   — dorado / cálido'  },
+  { value: 'rose',   label: 'Rosado  — amor / cuarzo'    },
+  { value: 'indigo', label: 'Índigo  — protección'       },
+  { value: 'sage',   label: 'Salvia  — calma / verde'    },
+  { value: 'moss',   label: 'Musgo   — natural / tierra' },
+  { value: 'cream',  label: 'Crema   — neutro suave'     },
+  { value: 'clay',   label: 'Arcilla — gamuza / tierra'  },
+]
 
 type FormState = {
   id: string; name: string; categoryId: string; price: string; originalPrice: string
-  tone: string; label: string; tags: string; isNew: boolean; isActive: boolean
+  tone: string; label: string; tags: string; imageUrl: string; isNew: boolean; isActive: boolean
 }
 
 const EMPTY_FORM: FormState = {
   id: '', name: '', categoryId: '', price: '', originalPrice: '',
-  tone: 'sage', label: '', tags: '', isNew: false, isActive: true,
+  tone: 'stone', label: '', tags: '', imageUrl: '', isNew: false, isActive: true,
 }
 
 function productToForm(p: ApiProduct): FormState {
@@ -24,6 +33,7 @@ function productToForm(p: ApiProduct): FormState {
     id: p.id, name: p.name, categoryId: p.categoryId,
     price: String(p.price), originalPrice: p.originalPrice ? String(p.originalPrice) : '',
     tone: p.tone, label: p.label, tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
+    imageUrl: p.imageUrl ?? '',
     isNew: p.isNew, isActive: p.isActive,
   }
 }
@@ -157,6 +167,7 @@ export default function ProductosPage() {
       tone: form.tone,
       label: form.label.trim(),
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      imageUrl: form.imageUrl.trim() || null,
       isNew: form.isNew,
       isActive: form.isActive,
     }
@@ -331,14 +342,15 @@ export default function ProductosPage() {
               <Select label="Categoría" value={form.categoryId} onChange={v => setF('categoryId', v)}
                 options={categories.map(c => ({ value: c.id, label: c.name }))} />
               <Select label="Tono de color" value={form.tone} onChange={v => setF('tone', v)}
-                options={TONES.map(t => ({ value: t, label: t.charAt(0).toUpperCase() + t.slice(1) }))} />
+                options={TONES.map(t => ({ value: t.value, label: t.label }))} />
               <Input label="Precio (ARS)" value={form.price} onChange={v => setF('price', v)} type="number" />
               <Input label="Precio original (opcional)" value={form.originalPrice} onChange={v => setF('originalPrice', v)} type="number" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
-              <Input label="Etiqueta" value={form.label} onChange={v => setF('label', v)} />
-              <Input label="Tags (separados por coma)" value={form.tags} onChange={v => setF('tags', v)} />
+              <Input label="Etiqueta (ej: collar · plata)" value={form.label} onChange={v => setF('label', v)} />
+              <Input label="Tags (separados por coma — materiales e intenciones)" value={form.tags} onChange={v => setF('tags', v)} />
+              <Input label="URL de imagen (Unsplash u otra)" value={form.imageUrl} onChange={v => setF('imageUrl', v)} />
             </div>
 
             <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>

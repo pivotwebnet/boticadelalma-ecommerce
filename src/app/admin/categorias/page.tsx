@@ -12,16 +12,21 @@ function categoryToForm(c: ApiCategory): FormState {
 }
 
 const ICON_OPTIONS = [
-  { value: 'leaf', label: '🍃 leaf' },
-  { value: 'sparkles', label: '✨ sparkles' },
-  { value: 'flame', label: '🕯️ flame' },
-  { value: 'moon', label: '🌙 moon' },
-  { value: 'star', label: '⭐ star' },
-  { value: 'sun', label: '☀️ sun' },
-  { value: 'droplet', label: '💧 droplet' },
-  { value: 'wind', label: '💨 wind' },
-  { value: 'gem', label: '💎 gem' },
-  { value: 'flower', label: '🌸 flower' },
+  // Joyería
+  { value: 'ring',      label: '💍 ring      — Anillos'      },
+  { value: 'necklace',  label: '📿 necklace  — Collares'     },
+  { value: 'charm',     label: '🔮 charm     — Dijes'        },
+  { value: 'bracelet',  label: '✨ bracelet  — Pulseras'     },
+  { value: 'earring',   label: '💫 earring   — Aros'        },
+  { value: 'anklet',    label: '🌿 anklet    — Tobilleras'   },
+  // Piedras y complementos
+  { value: 'crystal',   label: '💎 crystal   — Piedras'      },
+  { value: 'accessory', label: '🌙 accessory — Complementos' },
+  // Genéricos de reserva
+  { value: 'leaf',      label: '🍃 leaf'      },
+  { value: 'moon',      label: '🌙 moon'      },
+  { value: 'star',      label: '⭐ star'      },
+  { value: 'gem',       label: '💎 gem'       },
 ]
 
 function Input({ label, value, onChange, type = 'text', disabled = false }: {

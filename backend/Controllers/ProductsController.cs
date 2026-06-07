@@ -144,6 +144,7 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
         if (dto.Tone        is not null) product.Tone        = dto.Tone;
         if (dto.Label       is not null) product.Label       = dto.Label;
         if (dto.Tags        is not null) product.Tags        = JsonSerializer.Serialize(dto.Tags);
+        if (dto.ImageUrl    is not null) product.ImageUrl    = dto.ImageUrl == "" ? null : dto.ImageUrl;
         if (dto.IsNew.HasValue)          product.IsNew       = dto.IsNew.Value;
         if (dto.IsActive.HasValue)       product.IsActive    = dto.IsActive.Value;
         product.UpdatedAt = DateTime.UtcNow;
