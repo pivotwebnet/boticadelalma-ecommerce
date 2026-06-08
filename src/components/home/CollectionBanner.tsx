@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
-import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 
 export default function CollectionBanner() {
   return (
@@ -18,14 +18,17 @@ export default function CollectionBanner() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl"
+              className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl aspect-[16/10]"
             >
-              <ProductPlaceholder
-                tone="indigo"
-                label="luna nueva · editorial"
-                aspectRatio={16 / 10}
-                rounded={false}
+              <Image
+                src="https://images.unsplash.com/photo-1567333528660-d4387a67cfbb?auto=format&fit=crop&w=1200&q=85"
+                alt="Luna Nueva — colección editorial"
+                fill
+                sizes="(max-width: 1024px) 100vw, 58vw"
+                className="object-cover"
+                priority
               />
+              <div className="absolute inset-0 bg-stone-900/20" />
             </motion.div>
             
             {/* Decorative Floating Element */}

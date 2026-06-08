@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getCategories } from '@/lib/api';
+import { CATEGORIES } from '@/lib/data';
 import PLPClient from '@/components/plp/PLPClient';
 
 interface PageProps {
@@ -8,13 +9,16 @@ interface PageProps {
 
 export default async function CategoryPage({ params }: PageProps) {
   const { cat } = await params;
-  const categories = await getCategories();
-  const exists = categories.some(c => c.id === cat);
+  const apiCategories = await getCategories();
+  const exists =
+    apiCategories.some(c => c.id === cat) ||
+    CATEGORIES.some(c => c.id === cat);
   if (!exists) notFound();
   return <PLPClient cat={cat} />;
 }
 
 export async function generateStaticParams() {
-  const categories = await getCategories();
-  return categories.map(c => ({ cat: c.id }));
+  const apiCategories = await getCategories();
+  const source = apiCategories.length > 0 ? apiCategories : CATEGORIES;
+  return source.map(c => ({ cat: c.id }));
 }

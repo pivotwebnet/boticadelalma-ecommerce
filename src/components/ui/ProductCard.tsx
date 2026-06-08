@@ -33,7 +33,16 @@ export default function ProductCard({ product, density }: ProductCardProps) {
     <article className={`product-card group density-${d}`}>
       <div className="product-media" onClick={() => router.push(`/producto/${product.id}`)}>
         <div className="product-image-wrap">
-          <ProductPlaceholder tone={product.tone} label={product.label} aspectRatio={4/5} rounded={false} />
+          {product.image ? (
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="product-image-el"
+              loading="lazy"
+            />
+          ) : (
+            <ProductPlaceholder tone={product.tone} label={product.label} aspectRatio={4/5} rounded={false} />
+          )}
         </div>
         
         <button

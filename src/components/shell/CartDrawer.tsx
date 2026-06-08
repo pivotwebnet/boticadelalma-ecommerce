@@ -57,7 +57,11 @@ export default function CartDrawer() {
             items.map(it => (
               <div key={it.product.id} className="cart-item">
                 <div className="ci-thumb">
-                  <ProductPlaceholder tone={it.product.tone} label="" aspectRatio={1} />
+                  {it.product.image ? (
+                    <img src={it.product.image} alt={it.product.name} className="object-cover w-full h-full" />
+                  ) : (
+                    <ProductPlaceholder tone={it.product.tone} label="" aspectRatio={1} />
+                  )}
                 </div>
                 <div className="ci-body">
                   <span className="ci-name">{it.product.name}</span>

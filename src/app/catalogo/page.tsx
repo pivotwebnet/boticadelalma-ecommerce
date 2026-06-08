@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import CatalogClient from '@/components/catalog/CatalogClient';
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function CatalogPage() {
-  return <CatalogClient />;
+  return (
+    <Suspense>
+      <CatalogClient />
+    </Suspense>
+  );
 }
