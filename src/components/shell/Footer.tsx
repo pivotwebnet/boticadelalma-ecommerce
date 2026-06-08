@@ -3,33 +3,26 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import Icon from '@/components/ui/Icon';
 
 const IG_URL = 'https://www.instagram.com/laboticadelalma1/';
 
-// ── Behold feed ──────────────────────────────────────────────────────────────
-// 1. Registrate gratis en https://behold.so
-// 2. Conectá @laboticadelalma1
-// 3. Copiá el Feed ID y reemplazá null aquí
-const BEHOLD_FEED_ID: string | null = null;
+type IgPost = { shortcode: string; link: string; thumbnail: string | null };
 
-// Placeholders mientras no hay Behold configurado
-const IG_POSTS = [
-  'from-stone-300 to-stone-400',
-  'from-emerald-200 to-emerald-400',
-  'from-amber-200 to-amber-400',
-  'from-rose-200 to-rose-300',
+// Placeholder gradient colors mientras cargan las fotos
+const PLACEHOLDER_GRADS = [
   'from-stone-200 to-stone-300',
-  'from-emerald-300 to-teal-400',
+  'from-emerald-100 to-emerald-300',
   'from-amber-100 to-amber-300',
   'from-rose-100 to-rose-200',
-  'from-stone-300 to-stone-500',
 ];
 
 function InstagramPreviewCard({
-  pos, onClose, onMouseEnter, onMouseLeave,
+  pos, posts, onClose, onMouseEnter, onMouseLeave,
 }: {
   pos: { top: number; left: number };
+  posts: IgPost[];
   onClose: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
@@ -51,40 +44,53 @@ function InstagramPreviewCard({
       onMouseLeave={onMouseLeave}
       data-ig-card="true"
     >
-      {/* IG gradient header */}
-      <div className="h-16 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative">
+      {/* Header IG */}
+      <div className="h-14 bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 relative">
         <button
-          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white text-xs leading-none"
+          className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/20 flex items-center justify-center text-white text-xs"
           onClick={onClose}
           aria-label="Cerrar"
         >✕</button>
-        <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-lg">
-          <Icon name="instagram" size={22} className="text-white" />
+        <div className="absolute -bottom-5 left-4 w-11 h-11 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-md">
+          <Icon name="instagram" size={20} className="text-white" />
         </div>
       </div>
 
-      {/* Profile info */}
-      <div className="pt-8 px-4 pb-3">
+      {/* Info */}
+      <div className="pt-7 px-4 pb-2">
         <p className="font-bold text-[13px] text-stone-900 leading-tight">La Botica del Alma</p>
-        <p className="text-[11px] text-stone-500">@laboticadelalma1</p>
-        <p className="text-[11px] text-stone-600 mt-1.5 leading-snug">
-          Joyería artesanal · Piedras naturales · Rafaela, Santa Fe ✨
-        </p>
+        <p className="text-[11px] text-stone-400">@laboticadelalma1</p>
       </div>
 
-      {/* Posts grid: real feed (Behold) o placeholder */}
-      {BEHOLD_FEED_ID ? (
-        <div className="px-0.5 pb-0.5" style={{ minHeight: 170 }}>
-          {/* @ts-expect-error behold-widget is a custom element */}
-          <behold-widget feed-id={BEHOLD_FEED_ID} />
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-0.5 px-0.5">
-          {IG_POSTS.map((grad, i) => (
-            <div key={i} className={`aspect-square bg-gradient-to-br ${grad}`} />
-          ))}
-        </div>
-      )}
+      {/* Grilla de posts reales */}
+      <div className="grid grid-cols-2 gap-0.5 px-0.5">
+        {(posts.length > 0 ? posts : PLACEHOLDER_GRADS.map((g, i) => ({ shortcode: String(i), link: IG_URL, thumbnail: null, grad: g }))).map((post, i) => {
+          const thumb = (post as IgPost).thumbnail;
+          const grad = PLACEHOLDER_GRADS[i % PLACEHOLDER_GRADS.length];
+          return (
+            <a
+              key={(post as IgPost).shortcode}
+              href={(post as IgPost).link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="aspect-square relative overflow-hidden block"
+            >
+              {thumb ? (
+                <Image
+                  src={thumb}
+                  alt="Post de Instagram"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-300"
+                  sizes="128px"
+                  unoptimized
+                />
+              ) : (
+                <div className={`w-full h-full bg-gradient-to-br ${grad}`} />
+              )}
+            </a>
+          );
+        })}
+      </div>
 
       {/* CTA */}
       <a
@@ -102,8 +108,20 @@ function InstagramPreviewCard({
 function InstagramLink() {
   const [open, setOpen] = useState(false);
   const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
+  const [posts, setPosts] = useState<IgPost[]>([]);
   const triggerRef = useRef<HTMLLIElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetched = useRef(false);
+
+  // Prefetch thumbnails on first hover/tap
+  const fetchPosts = () => {
+    if (fetched.current) return;
+    fetched.current = true;
+    fetch('/api/ig-thumbs')
+      .then(r => r.json())
+      .then((data: IgPost[]) => setPosts(data))
+      .catch(() => {});
+  };
 
   const scheduleClose = () => {
     closeTimer.current = setTimeout(() => setOpen(false), 120);
@@ -115,7 +133,7 @@ function InstagramLink() {
   const calcPos = () => {
     if (!triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
-    const cardH = 340;
+    const cardH = 320;
     const top = r.top - cardH - 8 > 0 ? r.top - cardH - 8 : r.bottom + 8;
     setCardPos({ top, left: r.left });
   };
@@ -144,6 +162,7 @@ function InstagramLink() {
         onPointerEnter={(e) => {
           if (e.pointerType !== 'mouse') return;
           cancelClose();
+          fetchPosts();
           calcPos();
           setOpen(true);
         }}
@@ -155,6 +174,7 @@ function InstagramLink() {
           const native = e.nativeEvent as PointerEvent;
           if (native.pointerType === 'mouse') return;
           e.preventDefault();
+          fetchPosts();
           calcPos();
           setOpen(prev => !prev);
         }}
@@ -165,6 +185,7 @@ function InstagramLink() {
         {open && (
           <InstagramPreviewCard
             pos={cardPos}
+            posts={posts}
             onClose={() => setOpen(false)}
             onMouseEnter={cancelClose}
             onMouseLeave={scheduleClose}
