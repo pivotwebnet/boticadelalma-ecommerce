@@ -6,6 +6,7 @@ import { useStore } from '@/store/useStore';
 import { INTENTIONS } from '@/lib/data';
 import { useCategories } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
+import Image from 'next/image';
 
 function toSlug(s: string) {
   return s
@@ -14,18 +15,9 @@ function toSlug(s: string) {
     .replace(/\s+/g, '-');
 }
 
-const INTENTION_ICONS: Record<string, string> = {
-  'amor': '❤️',
-  'prosperidad': '🌿',
-  'abundancia': '✨',
-  'protección': '🛡️',
-  'escudos': '🔮',
-  'calma': '🌊',
-  'crecimiento personal': '🌱',
-  'concreción': '🎯',
-  'comunicación': '💬',
-  'sanación': '🌸',
-};
+function capitalize(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
 
 export default function CategoryDrawer() {
   const router = useRouter();
@@ -136,6 +128,7 @@ export default function CategoryDrawer() {
                     onClick={() => goTo(`/catalogo?cat=${cat.id}&subcat=${sub.id}`)}
                   >
                     <span className="dl-name">{sub.name}</span>
+                    <Icon name="chev-r" size={12} className="dl-chevron" />
                   </button>
                 ))}
               </CatSection>
@@ -163,6 +156,7 @@ export default function CategoryDrawer() {
                     onClick={() => goTo(`/catalogo?cat=${cat.id}&subcat=${sub.id}`)}
                   >
                     <span className="dl-name">{sub.name}</span>
+                    <Icon name="chev-r" size={12} className="dl-chevron" />
                   </button>
                 ))}
               </CatSection>
@@ -190,6 +184,7 @@ export default function CategoryDrawer() {
                     onClick={() => goTo(`/catalogo?cat=${cat.id}&subcat=${sub.id}`)}
                   >
                     <span className="dl-name">{sub.name}</span>
+                    <Icon name="chev-r" size={12} className="dl-chevron" />
                   </button>
                 ))}
               </CatSection>
@@ -209,8 +204,15 @@ export default function CategoryDrawer() {
                   className="intention-pill"
                   onClick={() => goTo(`/catalogo?intencion=${toSlug(intent)}`)}
                 >
-                  <span className="intention-icon">{INTENTION_ICONS[intent] ?? '✦'}</span>
-                  <span>{intent}</span>
+                  <Image
+                    src={`/icons/${toSlug(intent)}.svg`}
+                    alt={intent}
+                    width={18}
+                    height={18}
+                    className="intention-icon"
+                    style={{ objectFit: 'contain' }}
+                  />
+                  <span>{capitalize(intent)}</span>
                 </button>
               ))}
             </div>
@@ -245,7 +247,7 @@ function GroupSection({
       >
         <span className="dgh-label">{label}</span>
         <span className={`dgh-chevron${open ? ' open' : ''}`}>
-          <Icon name="chev-d" size={13} stroke={2} />
+          <Icon name="chev-r" size={13} stroke={2} />
         </span>
       </button>
       <div className={`submenu-wrapper${open ? ' expanded' : ''}`}>
@@ -280,7 +282,7 @@ function CatSection({
           onClick={onToggle}
           aria-label={`Expandir ${catName}`}
         >
-          <Icon name="chev-d" size={12} stroke={2} />
+          <Icon name="chev-r" size={12} stroke={2} />
         </button>
       </div>
       <div className={`submenu-wrapper${open ? ' expanded' : ''}`}>

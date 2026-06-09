@@ -7,6 +7,7 @@ interface StoreState {
   favs: string[];
   drawerOpen: boolean;
   cartOpen: boolean;
+  favsOpen: boolean;
   theme: Theme;
   purchase: Purchase | null;
   cartLocked: boolean;
@@ -18,6 +19,7 @@ interface StoreState {
   toggleFav: (id: string) => void;
   setDrawerOpen: (open: boolean) => void;
   setCartOpen: (open: boolean) => void;
+  setFavsOpen: (open: boolean) => void;
   setTheme: <K extends keyof Theme>(key: K, value: Theme[K]) => void;
   setPurchase: (p: Purchase) => void;
   clearPurchase: () => void;
@@ -32,6 +34,7 @@ export const useStore = create<StoreState>()(
       favs: [],
       drawerOpen: false,
       cartOpen: false,
+      favsOpen: false,
       purchase: null,
       cartLocked: false,
       toast: null,
@@ -83,8 +86,9 @@ export const useStore = create<StoreState>()(
             : [...state.favs, id],
         })),
 
-      setDrawerOpen: (open) => set({ drawerOpen: open }),
-      setCartOpen: (open) => set({ cartOpen: open }),
+      setDrawerOpen: (open) => set(open ? { drawerOpen: true, favsOpen: false } : { drawerOpen: false }),
+      setCartOpen: (open) => set(open ? { cartOpen: true, favsOpen: false } : { cartOpen: false }),
+      setFavsOpen: (open) => set(open ? { favsOpen: true, cartOpen: false, drawerOpen: false } : { favsOpen: false }),
 
       setTheme: (key, value) =>
         set(state => ({ theme: { ...state.theme, [key]: value } })),

@@ -39,20 +39,18 @@ export default function CatalogClient() {
   const [view, setView] = useState<ViewMode>('grid');
   const [sortOpen, setSortOpen] = useState(false);
 
-  // Pre-select filters from URL params
+  // Sync filters from URL params — re-runs on every navigation (incl. desde el menú)
   useEffect(() => {
     const catParam    = searchParams.get('cat');
     const subcatParam = searchParams.get('subcat');
     const intencion   = searchParams.get('intencion');
 
-    if (catParam) setCatSel([catParam]);
-    if (subcatParam) setSubcatSel(subcatParam);
-    if (intencion) {
-      const intention = SLUG_TO_INTENTION[intencion];
-      if (intention && INTENTIONS.includes(intention)) setIntSel([intention]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    setCatSel(catParam ? [catParam] : []);
+    setSubcatSel(subcatParam ?? '');
+
+    const intention = intencion ? SLUG_TO_INTENTION[intencion] : undefined;
+    setIntSel(intention && INTENTIONS.includes(intention) ? [intention] : []);
+  }, [searchParams]);
 
   // Calculate absolute max price from all products
   const absoluteMax = useMemo(() => {

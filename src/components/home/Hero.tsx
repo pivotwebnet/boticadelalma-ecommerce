@@ -7,17 +7,6 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 import { useProducts } from '@/hooks/useApiData';
 
-const MARQUEE = [
-  'Joyería artesanal',
-  'Piedras naturales',
-  'Hecho con amor',
-  'Envíos a todo el país',
-  'Complementos energéticos',
-  'Piezas únicas',
-  'Plata de ley',
-  'Cuarzo · Amatista · Labradorita',
-];
-
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 function up(delay: number) {
@@ -29,6 +18,33 @@ function up(delay: number) {
       transition: { duration: 0.9, delay, ease: EASE },
     },
   };
+}
+
+function AnimatedTitle() {
+  const lines = ['Joyas con', 'alma.'];
+  let idx = 0;
+  return (
+    <h1 className="hero-v2-title">
+      {lines.map((line, li) => (
+        <span key={li} className={`block${li === 0 ? ' text-[#E86315]' : ''}`}>
+          {Array.from(line).map((ch) => {
+            const i = idx++;
+            return (
+              <motion.span
+                key={i}
+                className="inline-block"
+                initial={{ y: -55, opacity: 0, filter: 'blur(6px)' }}
+                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                transition={{ duration: 0.6, delay: 0.2 + i * 0.04, ease: EASE }}
+              >
+                {ch === ' ' ? ' ' : ch}
+              </motion.span>
+            );
+          })}
+        </span>
+      ))}
+    </h1>
+  );
 }
 
 export default function Hero() {
@@ -65,21 +81,16 @@ export default function Hero() {
           />
         </motion.div>
 
-        {/* ── Gradient layers ── */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/95 via-stone-950/45 to-stone-950/5" />
-        <div className="absolute inset-0 bg-gradient-to-r from-stone-950/65 via-stone-950/20 to-transparent" />
+        {/* ── Degradé sutil solo abajo (legibilidad del texto) ── */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/55 via-stone-950/10 to-transparent" />
 
-        {/* ── Glow orb ── */}
-        <motion.div
-          className="absolute pointer-events-none"
+        {/* ── Difuminado crema (color del navbar) cayendo sobre la foto ── */}
+        <div
+          className="absolute inset-x-0 top-0 h-80 pointer-events-none z-[5]"
           style={{
-            top: '20%', right: '15%',
-            width: 480, height: 480,
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(42,94,54,0.18) 0%, transparent 68%)',
+            background:
+              'linear-gradient(to bottom, #f7f1e7 0%, rgba(247,241,231,0.9) 35%, rgba(247,241,231,0.55) 65%, transparent 100%)',
           }}
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.85, 0.5] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
         />
 
         {/* ── Main content ── */}
@@ -95,16 +106,8 @@ export default function Hero() {
             </span>
           </motion.div>
 
-          {/* Headline */}
-          <motion.h1
-            variants={up(0.28)}
-            initial="hidden"
-            animate="show"
-            className="hero-v2-title"
-          >
-            Joyas con<br />
-            <em className="text-[#E86315]">alma.</em>
-          </motion.h1>
+          {/* Headline — revelado letra por letra cayendo desde arriba */}
+          <AnimatedTitle />
 
           {/* Subtitle + CTAs */}
           <motion.div
@@ -168,18 +171,6 @@ export default function Hero() {
           </motion.div>
         </motion.div>
       </section>
-
-      {/* ── Marquee strip ── */}
-      <div className="hero-marquee-wrap">
-        <div className="hero-marquee-track">
-          {[...MARQUEE, ...MARQUEE].map((item, i) => (
-            <span key={i} className="hero-marquee-item">
-              {item}
-              <span className="hero-marquee-dot" />
-            </span>
-          ))}
-        </div>
-      </div>
     </>
   );
 }

@@ -8,6 +8,16 @@ import { useStore } from '@/store/useStore';
 import Icon from '@/components/ui/Icon';
 import SearchBox from './SearchBox';
 
+const ANNOUNCE_ITEMS = [
+  '· ENVÍO GRATIS DESDE $120.000 ·',
+  '· 3 cuotas sin interés ·',
+  '· PUNTO DE RETIRO EN RAFAELA, SANTA FE ·',
+];
+// Una "mitad" repite los mensajes hasta superar el ancho de pantalla;
+// se duplica (HALF + HALF) para que translateX(-50%) cicle sin cortes.
+const ANNOUNCE_HALF = [...ANNOUNCE_ITEMS, ...ANNOUNCE_ITEMS, ...ANNOUNCE_ITEMS];
+const ANNOUNCE_LOOP = [...ANNOUNCE_HALF, ...ANNOUNCE_HALF];
+
 export default function Header() {
 
   const router = useRouter();
@@ -24,6 +34,10 @@ export default function Header() {
 
   const setCartOpen = useStore(
     (s) => s.setCartOpen
+  );
+
+  const setFavsOpen = useStore(
+    (s) => s.setFavsOpen
   );
 
   const cart = useStore(
@@ -121,19 +135,13 @@ export default function Header() {
 
         <div className="announcebar">
 
-          <span>
-            · ENVÍO GRATIS DESDE
-            $120.000 ·
-          </span>
-
-          <span>
-            · 3 cuotas sin interés ·
-          </span>
-
-          <span>
-            · PUNTO DE RETIRO EN
-            RAFAELA, SANTA FE ·
-          </span>
+          <div className="announcebar-track">
+            {ANNOUNCE_LOOP.map((t, i) => (
+              <span key={i} aria-hidden={i >= ANNOUNCE_ITEMS.length ? true : undefined}>
+                {t}
+              </span>
+            ))}
+          </div>
 
         </div>
 
@@ -272,7 +280,7 @@ export default function Header() {
                 hover:opacity-60
                 relative
               "
-              onClick={() => router.push('/favoritos')}
+              onClick={() => setFavsOpen(true)}
               aria-label="Favoritos"
             >
 

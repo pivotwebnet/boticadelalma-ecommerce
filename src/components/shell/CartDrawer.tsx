@@ -94,7 +94,7 @@ export default function CartDrawer() {
             <div className="cart-line cart-total"><span>Total</span><span>{fmt(total)}</span></div>
             <Button
               variant="primary"
-              size="lg"
+              size="md"
               full
               iconRight="arrow-r"
               onClick={() => {

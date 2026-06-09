@@ -6,6 +6,7 @@ import Header from '@/components/shell/Header';
 import Footer from '@/components/shell/Footer';
 import CategoryDrawer from '@/components/shell/CategoryDrawer';
 import CartDrawer from '@/components/shell/CartDrawer';
+import FavoritesDrawer from '@/components/shell/FavoritesDrawer';
 import Toast from '@/components/ui/Toast';
 import FloatingActions from '@/components/ui/FloatingActions';
 import { ApiDataProvider } from '@/hooks/useApiData';
@@ -40,6 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Footer />
           <CategoryDrawer />
           <CartDrawer />
+          <FavoritesDrawer />
           <Toast />
           <FloatingActions />
         </ApiDataProvider>
