@@ -1,6 +1,5 @@
 using BoticaDelAlma.API.Data;
 using Microsoft.EntityFrameworkCore;
-using BoticaDelAlma.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
