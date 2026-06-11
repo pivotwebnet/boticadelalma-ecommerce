@@ -79,7 +79,7 @@ function EliteCategoryCard({ category }: { category: import('@/lib/types').Categ
               rotateY, 
               transformStyle: "preserve-3d" 
             }}
-            className="relative aspect-[4/5] w-full rounded-[32px] overflow-hidden bg-white shadow-sm group-hover:shadow-2xl transition-shadow duration-700"
+            className="relative aspect-square w-full rounded-xl overflow-hidden bg-white shadow-sm group-hover:shadow-2xl transition-shadow duration-700"
           >
             {/* Background Image Layer */}
             <motion.div
@@ -95,7 +95,7 @@ function EliteCategoryCard({ category }: { category: import('@/lib/types').Categ
                   className="object-cover group-hover:scale-105 transition-transform duration-700"
                 />
               ) : (
-                <ProductPlaceholder tone="cream" label="" aspectRatio={4/5} />
+                <ProductPlaceholder tone="cream" label="" aspectRatio={1} />
               )}
             </motion.div>
 
@@ -148,7 +148,7 @@ export default function CategoryGrid() {
   const displayCats = categories.slice(0, 6);
 
   return (
-    <section className="section py-20">
+    <section className="section py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Elite Header */}
         <header className="mb-16 text-center">
@@ -171,7 +171,7 @@ export default function CategoryGrid() {
         </header>
 
         {/* 3D Grid System */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
           {displayCats.map((cat) => (
             <EliteCategoryCard key={cat.id} category={cat} />
           ))}

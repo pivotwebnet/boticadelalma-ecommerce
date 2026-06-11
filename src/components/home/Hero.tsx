@@ -72,7 +72,7 @@ export default function Hero() {
         {/* ── Background with parallax ── */}
         <motion.div className="absolute inset-0" style={{ y: imgY }}>
           <Image
-            src="/banner.png"
+            src="/banner2.jpeg"
             alt="La Botica del Alma"
             fill
             priority
@@ -81,15 +81,15 @@ export default function Hero() {
           />
         </motion.div>
 
-        {/* ── Degradé sutil solo abajo (legibilidad del texto) ── */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/55 via-stone-950/10 to-transparent" />
+        {/* ── Degradé crema abajo (legibilidad del texto oscuro) ── */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#F5F2D9]/38 via-[#F5F2D9]/10 to-transparent" />
 
         {/* ── Difuminado crema (color del navbar) cayendo sobre la foto ── */}
         <div
-          className="absolute inset-x-0 top-0 h-80 pointer-events-none z-[5]"
+          className="absolute inset-x-0 top-0 h-36 pointer-events-none z-[5]"
           style={{
             background:
-              'linear-gradient(to bottom, #f7f1e7 0%, rgba(247,241,231,0.9) 35%, rgba(247,241,231,0.55) 65%, transparent 100%)',
+              'linear-gradient(to bottom, rgba(245,242,217,0.5) 0%, rgba(245,242,217,0.45) 35%, rgba(245,242,217,0.28) 65%, transparent 100%)',
           }}
         />
 

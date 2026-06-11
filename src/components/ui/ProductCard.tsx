@@ -41,7 +41,7 @@ export default function ProductCard({ product, density }: ProductCardProps) {
               loading="lazy"
             />
           ) : (
-            <ProductPlaceholder tone={product.tone} label={product.label} aspectRatio={4/5} rounded={false} />
+            <ProductPlaceholder tone={product.tone} label={product.label} aspectRatio={1} rounded={false} />
           )}
         </div>
         

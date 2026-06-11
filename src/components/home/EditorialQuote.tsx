@@ -5,7 +5,7 @@ import Icon from '@/components/ui/Icon';
 
 export default function EditorialQuote() {
   return (
-    <section className="section py-24 px-4">
+    <section className="section py-12 px-4">
       <div className="max-w-4xl mx-auto relative group">
         
         {/* Soft Note Background */}
@@ -23,7 +23,7 @@ export default function EditorialQuote() {
           </motion.div>
         </div>
 
-        <div className="relative z-10 py-16 px-8 md:py-20 md:px-16 text-center">
+        <div className="relative z-10 py-10 px-6 md:py-12 md:px-16 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

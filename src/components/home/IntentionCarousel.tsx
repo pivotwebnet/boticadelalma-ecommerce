@@ -11,7 +11,8 @@ const ITEMS = [
     title: "Amor",
     subtitle: "Conectar emocionalmente",
     iconSrc: "/icons/amor.svg",
-    hoverBg: "#FDF1F0",
+    bg: "#FCF8F8",
+    hoverBg: "#F6C9CF",
     hoverText: "#8A5A55",
   },
   {
@@ -19,7 +20,8 @@ const ITEMS = [
     title: "Prosperidad",
     subtitle: "Atraer riqueza y fortuna",
     iconSrc: "/icons/prosperidad.svg",
-    hoverBg: "#F9F6E5",
+    bg: "#FCFAF3",
+    hoverBg: "#F2E2A8",
     hoverText: "#7A6335",
   },
   {
@@ -27,7 +29,8 @@ const ITEMS = [
     title: "Abundancia",
     subtitle: "Expandir lo que tenés",
     iconSrc: "/icons/abundancia.svg",
-    hoverBg: "#F3F6E5",
+    bg: "#F8FBF3",
+    hoverBg: "#DCEBA8",
     hoverText: "#5A6A35",
   },
   {
@@ -35,7 +38,8 @@ const ITEMS = [
     title: "Protección",
     subtitle: "Resguardar tu energía",
     iconSrc: "/icons/proteccion.svg",
-    hoverBg: "#F0F4F8",
+    bg: "#F4F8FC",
+    hoverBg: "#BFDCF0",
     hoverText: "#3A4D5C",
   },
   {
@@ -43,7 +47,8 @@ const ITEMS = [
     title: "Escudos",
     subtitle: "Blindar tu campo energético",
     iconSrc: "/icons/escudos.svg",
-    hoverBg: "#F0F2F7",
+    bg: "#F7F7FC",
+    hoverBg: "#C9CCEE",
     hoverText: "#3A3D5C",
   },
   {
@@ -51,7 +56,8 @@ const ITEMS = [
     title: "Calma",
     subtitle: "Bajar el ruido mental",
     iconSrc: "/icons/calma.svg",
-    hoverBg: "#E8F2EE",
+    bg: "#F4FBF8",
+    hoverBg: "#B6E2D2",
     hoverText: "#3E5C52",
   },
   {
@@ -59,7 +65,8 @@ const ITEMS = [
     title: "Crecimiento",
     subtitle: "Evolucionar y florecer",
     iconSrc: "/icons/crecimiento-personal.svg",
-    hoverBg: "#E8F4E8",
+    bg: "#F6FAF2",
+    hoverBg: "#C2E0AC",
     hoverText: "#2D5A2D",
   },
   {
@@ -67,7 +74,8 @@ const ITEMS = [
     title: "Concreción",
     subtitle: "Materializar tus metas",
     iconSrc: "/icons/concrecion.svg",
-    hoverBg: "#F5F0E8",
+    bg: "#FCF9F3",
+    hoverBg: "#F2CFA6",
     hoverText: "#5C4D3A",
   },
   {
@@ -75,7 +83,8 @@ const ITEMS = [
     title: "Comunicación",
     subtitle: "Expresar con claridad",
     iconSrc: "/icons/comunicacion.svg",
-    hoverBg: "#E8F0F4",
+    bg: "#F4F9FC",
+    hoverBg: "#B5DDE7",
     hoverText: "#3A4D5A",
   },
   {
@@ -83,7 +92,8 @@ const ITEMS = [
     title: "Sanación",
     subtitle: "Restaurar el equilibrio",
     iconSrc: "/icons/sanacion.svg",
-    hoverBg: "#F4E8F0",
+    bg: "#FBF7FB",
+    hoverBg: "#E2BFDC",
     hoverText: "#5A3A55",
   },
 ];
@@ -153,10 +163,10 @@ export default function IntentionCarousel() {
   const cardW = 100 / visibleCards;
 
   return (
-    <section className="py-20 overflow-hidden">
+    <section className="py-8 overflow-hidden">
       <div className="mx-auto max-w-7xl px-4">
         {/* Header */}
-        <div className="mb-10 text-center">
+        <div className="mb-6 text-center">
           <span className="mb-2 block text-[11px] uppercase tracking-[0.4em] text-stone-400 font-medium">
             Propósito & Intención
           </span>
@@ -196,7 +206,7 @@ export default function IntentionCarousel() {
           >
             {/* Track */}
             <div
-              className="flex py-10"
+              className="flex py-6"
               style={{
                 transform: `translateX(-${idx * cardW}%)`,
                 transition: animated
@@ -209,9 +219,10 @@ export default function IntentionCarousel() {
                 <div
                   key={`${item.id}-${i}`}
                   className="flex-shrink-0 px-3"
-                  style={{ 
+                  style={{
                     width: `${cardW}%`,
-                    // Injecting variables for CSS hover
+                    // Injecting variables for CSS base + hover colors
+                    '--card-bg': item.bg,
                     '--hover-bg': item.hoverBg,
                     '--hover-text': item.hoverText,
                   } as React.CSSProperties}

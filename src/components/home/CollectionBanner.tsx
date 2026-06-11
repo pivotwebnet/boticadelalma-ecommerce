@@ -7,7 +7,7 @@ import Icon from '@/components/ui/Icon';
 
 export default function CollectionBanner() {
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative py-16 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-16 lg:gap-24">
           

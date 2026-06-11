@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { useStore } from '@/store/useStore';
+import { useProducts } from '@/hooks/useApiData';
 
 import Icon from '@/components/ui/Icon';
 import SearchBox from './SearchBox';
@@ -48,6 +49,8 @@ export default function Header() {
     (s) => s.favs
   );
 
+  const products = useProducts();
+
   // =========================
   // MOUNT
   // =========================
@@ -88,6 +91,13 @@ export default function Header() {
 
   const cartCount = cart.reduce(
     (sum, i) => sum + i.qty,
+    0
+  );
+
+  // Solo contamos favoritos que existen en el catálogo actual,
+  // para que el badge coincida con el drawer y no infle por IDs huérfanos.
+  const favCount = products.reduce(
+    (sum, p) => (favs.includes(p.id) ? sum + 1 : sum),
     0
   );
 
@@ -290,9 +300,9 @@ export default function Header() {
               />
 
               {mounted &&
-                favs.length > 0 && (
+                favCount > 0 && (
                   <span className="count-badge">
-                    {favs.length}
+                    {favCount}
                   </span>
                 )}
 

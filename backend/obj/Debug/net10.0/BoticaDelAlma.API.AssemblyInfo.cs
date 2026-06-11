@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BoticaDelAlma.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f6a0316c51d542b5244d8a67668e64bd7937713b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dc4db7e14c7085a8a9d7942ecd2c59af79ca2d2f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BoticaDelAlma.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BoticaDelAlma.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
