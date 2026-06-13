@@ -62,9 +62,14 @@ export default function CommentSection({ productId }: { productId: string }) {
         )}
         {!loading && data?.comments.length === 0 && (
           <div className="comments-empty">
-            <Icon name="star" size={28} />
-            <p>Todavía no hay reseñas.</p>
-            <span>Sé el primero en compartir tu experiencia.</span>
+            <div className="comments-empty-badge">
+              <Icon name="star" size={30} stroke={1.3} />
+            </div>
+            <h3>Todavía no hay reseñas</h3>
+            <p>
+              Esta pieza está esperando su primera historia. Si ya la tenés, tu
+              reseña ayuda a otras personas a elegir con el corazón.
+            </p>
           </div>
         )}
         {!loading && data?.comments.map(c => (

@@ -7,6 +7,7 @@ import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useCategories } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
+import VineDecoration from '@/components/ui/VineDecoration';
 
 /**
  * ULTRA-ELITE CATEGORY CARD
@@ -149,7 +150,7 @@ export default function CategoryGrid() {
 
   return (
     <section className="section py-8">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         {/* Elite Header */}
         <header className="mb-16 text-center">
           <motion.span 
@@ -160,7 +161,8 @@ export default function CategoryGrid() {
           >
             Curaduría Exclusiva
           </motion.span>
-          <motion.h2 
+          <VineDecoration />
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

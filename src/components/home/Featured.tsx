@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Product } from '@/lib/types';
 import ProductCard from '@/components/ui/ProductCard';
 import Icon from '@/components/ui/Icon';
+import VineDecoration from '@/components/ui/VineDecoration';
 
 interface FeaturedProps {
   products: Product[];
@@ -22,6 +23,7 @@ export default function Featured({ products, intentionFilter }: FeaturedProps) {
           <span className="eyebrow">
             {intentionFilter ? `Intención · ${intentionFilter}` : 'Lo más querido'}
           </span>
+          <VineDecoration className="vine-decor--left" />
           <h2>
             {intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
           </h2>

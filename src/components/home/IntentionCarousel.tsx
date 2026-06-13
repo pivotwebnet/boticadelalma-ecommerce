@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
+import VineDecoration from "@/components/ui/VineDecoration";
 
 const ITEMS = [
   {
@@ -164,12 +165,13 @@ export default function IntentionCarousel() {
 
   return (
     <section className="py-8 overflow-hidden">
-      <div className="mx-auto max-w-7xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         {/* Header */}
         <div className="mb-6 text-center">
           <span className="mb-2 block text-[11px] uppercase tracking-[0.4em] text-stone-400 font-medium">
             Propósito & Intención
           </span>
+          <VineDecoration />
           <h2 className="font-serif text-4xl text-stone-800 md:text-5xl italic tracking-tight">
             Elegí tu camino
           </h2>

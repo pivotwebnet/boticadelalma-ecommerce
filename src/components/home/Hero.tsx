@@ -72,7 +72,7 @@ export default function Hero() {
         {/* ── Background with parallax ── */}
         <motion.div className="absolute inset-0" style={{ y: imgY }}>
           <Image
-            src="/banner2.jpeg"
+            src="/banner3.jpg"
             alt="La Botica del Alma"
             fill
             priority

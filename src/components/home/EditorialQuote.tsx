@@ -30,10 +30,10 @@ export default function EditorialQuote() {
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
-            <blockquote className="font-serif text-2xl md:text-4xl italic text-stone-800 leading-[1.5] tracking-tight mb-12 max-w-2xl mx-auto">
-              &ldquo;Cada objeto que llega a tus manos fue elegido con cuidado. Son piezas pequeñas, con alma e historia.&rdquo;
+            <blockquote className="font-serif text-2xl md:text-4xl italic text-stone-800 leading-[1.5] tracking-tight mb-10 max-w-2xl mx-auto">
+              &ldquo;Lo que eliges, también te elige.&rdquo;
             </blockquote>
-            
+
             <div className="flex flex-col items-center gap-6">
               {/* Minimalist divider with leaf */}
               <div className="flex items-center gap-4 text-accent/30">
@@ -46,11 +46,6 @@ export default function EditorialQuote() {
                 </motion.div>
                 <div className="w-12 h-px bg-current" />
               </div>
-
-              <cite className="not-italic flex flex-col items-center">
-                <span className="text-[10px] uppercase tracking-[0.5em] text-stone-400 font-bold mb-2">Curaduría</span>
-                <span className="font-serif text-2xl text-stone-600 italic">Valentina G.</span>
-              </cite>
             </div>
           </motion.div>
         </div>
