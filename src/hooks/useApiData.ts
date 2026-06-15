@@ -5,6 +5,30 @@ import { CATEGORIES, PRODUCTS } from '@/lib/data'
 import type { Category, Product } from '@/lib/types'
 import type { ApiProduct, ApiCategory } from '@/lib/api'
 
+// subcat comes from the static catalog — the backend model doesn't have this field
+const SUBCAT_MAP: Record<string, string> = {}
+for (const p of PRODUCTS) {
+  if (p.subcat) SUBCAT_MAP[p.id] = p.subcat
+}
+
+function mapApiProduct(api: ApiProduct): Product {
+  return {
+    id:      api.id,
+    cat:     api.categoryId,
+    subcat:  SUBCAT_MAP[api.id],
+    name:    api.name,
+    price:   api.price,
+    was:     api.originalPrice,
+    tone:    api.tone,
+    label:   api.label,
+    tags:    api.tags ?? [],
+    rating:  api.rating  ?? 0,
+    reviews: api.reviews ?? 0,
+    image:   api.imageUrl,
+    new:     api.isNew,
+  }
+}
+
 type ApiDataCtx = {
   categories: Category[]
   products: Product[]
@@ -22,29 +46,14 @@ type ProviderProps = {
 }
 
 export function ApiDataProvider({ children, initialCategories = [], initialProducts = [] }: ProviderProps) {
+  // Use API as source of truth; fall back to static data when the API is empty
+  const products = initialProducts.length > 0
+    ? initialProducts.map(mapApiProduct)
+    : PRODUCTS
+
   const catCountMap: Record<string, number> = {}
   initialCategories.forEach(c => { catCountMap[c.id] = c.productCount })
 
-  const products = PRODUCTS.map(staticProd => {
-    const liveProd = initialProducts.find(p => p.id === staticProd.id)
-    if (!liveProd) return { ...staticProd, rating: 0, reviews: 0 }
-
-    return {
-      ...staticProd,
-      name:    liveProd.name          ?? staticProd.name,
-      price:   liveProd.price         ?? staticProd.price,
-      was:     liveProd.originalPrice ?? staticProd.was,
-      tone:    liveProd.tone          ?? staticProd.tone,
-      label:   liveProd.label         ?? staticProd.label,
-      tags:    liveProd.tags          ?? staticProd.tags,
-      image:   liveProd.imageUrl      ?? staticProd.image,
-      rating:  liveProd.rating        ?? 0,
-      reviews: liveProd.reviews       ?? 0,
-      new:     liveProd.isNew         ?? staticProd.new,
-    }
-  })
-
-  // c.count is already computed from PRODUCTS in data.ts; API overrides if available
   const categories = CATEGORIES.map(c => ({
     ...c,
     count: catCountMap[c.id] ?? c.count,
