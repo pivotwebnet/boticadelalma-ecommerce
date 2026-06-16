@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getComments, createComment } from '@/lib/api'
+import { rateLimit, clientIp } from '@/lib/rate-limit'
 
 type Params = { params: Promise<{ productId: string }> }
 
@@ -37,6 +38,14 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
+  // Anti-spam de reseñas: máx 5 por minuto por IP.
+  if (!rateLimit(`comments:${clientIp(req)}`, 5, 60_000)) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
+      { status: 429 },
+    )
+  }
+
   const { productId } = await params
   const { text, rating, orderId, author } = await req.json()
 

@@ -42,6 +42,18 @@ El estado escribible del frontend (contraseña del panel, configuración de la t
 - **Cloudflare**: `/api/media/*` responde con `Cache-Control: immutable` (el filename es único → una foto nueva es otra URL, no quedan cacheadas viejas). `/api/site-settings` va con `no-store` para que un cambio de banner se vea al instante. Máx 6 MB por imagen. No usar reglas "Cache Everything" sobre `/api/*` ni `/admin/*`.
 - **DonWeb**: solo el dominio → DNS apuntando a Cloudflare, y Cloudflare al server de Coolify. Sin impacto en la app.
 
+### Seguridad — checklist OBLIGATORIO en producción
+
+Estas son configuraciones de despliegue (no de código) sin las cuales la API queda expuesta:
+
+1. **`AdminApiKey` (backend) = `BACKEND_ADMIN_KEY` (frontend)**, con un valor aleatorio largo. Si queda vacía, **cualquiera que llegue al backend puede leer todas las órdenes (datos personales), cambiar estados y crear/borrar productos, categorías y reseñas**. CORS NO protege (es del navegador; un atacante usa `curl`).
+2. **Backend en red interna**: en Coolify, exponer públicamente **solo** el frontend Next.js. El backend .NET debe ser accesible **solo** desde el contenedor de Next (no publicar su puerto). Así los endpoints públicos/admin no se pueden atacar directo.
+3. **`ADMIN_SESSION_SECRET`** aleatorio y largo. Si falta, se usa un default conocido y se podría **falsificar la cookie de sesión** del admin.
+4. **Migraciones**: ahora se aplican solas al arrancar el backend (dev y prod), así que la base se actualiza sola en cada deploy.
+5. **Cloudflare** como defensa de borde: activar **Rate Limiting** y **Bot Fight Mode** sobre `/api/orders` y `/api/comments` para frenar spam/agotamiento de stock a escala.
+
+Protecciones ya implementadas en el código (defensa en profundidad): descuento de stock **atómico** (sin sobreventa por compras simultáneas), **rate limiting** por IP en crear orden (8/min) y reseña (5/min), checkout que nunca define estado ni confía en precios del cliente, reseñas verificadas contra la orden real, y anti open-redirect en el login.
+
 ## Autenticación del Panel Admin (Next.js)
 
 El login del panel (`/admin/login`) vive en el **frontend** (Next.js), no en el backend .NET. Su lógica está en:

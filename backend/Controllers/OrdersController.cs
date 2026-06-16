@@ -93,10 +93,6 @@ public class OrdersController(BoticaDbContext db, IConfiguration config) : Contr
             });
         }
 
-        // Descuenta stock.
-        foreach (var (productId, totalQty) in qtyByProduct)
-            products[productId].Stock -= totalQty;
-
         // El estado inicial SOLO lo puede fijar el panel admin (ventas manuales ya
         // cobradas). El checkout público SIEMPRE nace "pending": nadie puede marcar
         // su propia orden como pagada/enviada sin pagar (anti-manipulación, igual
@@ -126,8 +122,28 @@ public class OrdersController(BoticaDbContext db, IConfiguration config) : Contr
 
         order.Total = order.Items.Sum(i => i.PricePaid * i.Quantity);
 
+        // Descuento de stock ATÓMICO dentro de una transacción. El UPDATE condicional
+        // (Stock >= cantidad) y el bloqueo de fila evitan la sobreventa cuando dos
+        // compras simultáneas pelean por la última unidad: solo una gana el descuento.
+        // Se recorren los productos en orden de Id para evitar deadlocks.
+        await using var tx = await db.Database.BeginTransactionAsync();
+
+        foreach (var (productId, totalQty) in qtyByProduct.OrderBy(kv => kv.Key))
+        {
+            var affected = await db.Products
+                .Where(p => p.Id == productId && p.Stock >= totalQty)
+                .ExecuteUpdateAsync(s => s.SetProperty(p => p.Stock, p => p.Stock - totalQty));
+
+            if (affected == 0)
+            {
+                await tx.RollbackAsync();
+                return Conflict($"Se agotó el stock de '{products[productId].Name}' mientras se procesaba la compra. Revisá la disponibilidad e intentá de nuevo.");
+            }
+        }
+
         db.Orders.Add(order);
         await db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return CreatedAtAction(nameof(GetById), new { id = order.Id }, MapToResponse(order));
     }

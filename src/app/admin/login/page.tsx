@@ -33,7 +33,9 @@ function LoginForm() {
     })
 
     if (res.ok) {
-      const from = searchParams.get('from') ?? '/admin'
+      // Anti open-redirect: solo se permite volver a una ruta interna del panel.
+      const fromParam = searchParams.get('from') ?? '/admin'
+      const from = fromParam.startsWith('/admin') ? fromParam : '/admin'
       router.replace(from)
     } else {
       const data = await res.json().catch(() => ({}))
