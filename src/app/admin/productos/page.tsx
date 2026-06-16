@@ -257,6 +257,13 @@ export default function ProductosPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Lee filtros desde la URL (al venir enlazado desde el dashboard).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search)
+    const s = sp.get('search'); if (s) setSearch(s)
+    const c = sp.get('cat'); if (c) setCatFilter(c)
+  }, [])
+
   const filtered = products.filter(p => {
     const q = search.toLowerCase()
     const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)

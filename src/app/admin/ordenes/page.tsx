@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { ApiOrder, ApiProduct } from '@/lib/api'
 
 function fmt(n: number) {
@@ -243,8 +243,10 @@ export default function OrdenesPage() {
   const [orders, setOrders] = useState<ApiOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
+  const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<ApiOrder | null>(null)
   const [showNew, setShowNew] = useState(false)
+  const openedRef = useRef(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -255,12 +257,36 @@ export default function OrdenesPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Lee filtros desde la URL (al venir enlazado desde el dashboard).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search)
+    const st = sp.get('status')
+    if (st && (STATUSES as readonly string[]).includes(st)) setFilter(st)
+    const q = sp.get('q')
+    if (q) setSearch(q)
+  }, [])
+
+  // Abre el detalle de una orden puntual (?order=<id>) una vez cargadas.
+  useEffect(() => {
+    if (loading || openedRef.current) return
+    const oid = new URLSearchParams(window.location.search).get('order')
+    if (oid) {
+      const o = orders.find(x => x.id === oid)
+      if (o) { setSelected(o); openedRef.current = true }
+    }
+  }, [loading, orders])
+
   const handleStatusChange = (id: string, status: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
     if (selected?.id === id) setSelected(prev => prev ? { ...prev, status } : null)
   }
 
-  const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
+  const q = search.trim().toLowerCase()
+  const filtered = orders.filter(o => {
+    const matchStatus = filter === 'all' || o.status === filter
+    const matchSearch = !q || o.customerName.toLowerCase().includes(q) || o.customerEmail.toLowerCase().includes(q)
+    return matchStatus && matchSearch
+  })
   const counts = STATUSES.reduce((acc, s) => ({
     ...acc,
     [s]: s === 'all' ? orders.length : orders.filter(o => o.status === s).length,
@@ -316,6 +342,14 @@ export default function OrdenesPage() {
             {STATUS_LABEL[s]} <span style={{ opacity: 0.7 }}>({counts[s] ?? 0})</span>
           </button>
         ))}
+        <input
+          placeholder="Buscar cliente o email…"
+          value={search} onChange={e => setSearch(e.target.value)}
+          style={{
+            marginLeft: 'auto', background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 999, padding: '6px 14px', fontSize: 12.5, color: 'var(--fg)', outline: 'none', width: 220,
+          }}
+        />
       </div>
 
       {/* Tabla */}

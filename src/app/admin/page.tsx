@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ApiOrder } from '@/lib/api'
 
 function fmt(n: number) {
@@ -134,47 +135,65 @@ function MonthlyChart({ orders }: { orders: ApiOrder[] }) {
 }
 
 function RankingTable({
-  title, rows, valueLabel, colorAccent,
+  title, rows, valueLabel, colorAccent, href,
 }: {
   title: string
-  rows: { label: string; sub?: string; value: string | number }[]
+  rows: { label: string; sub?: string; value: string | number; href?: string }[]
   valueLabel: string
   colorAccent: string
+  href?: string
 }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
       <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)' }}>{title}</span>
+        {href ? (
+          <Link href={href} style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)', textDecoration: 'none' }}>{title} →</Link>
+        ) : (
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)' }}>{title}</span>
+        )}
         <span style={{ fontSize: 10, color: 'var(--fg-soft)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{valueLabel}</span>
       </div>
       {rows.length === 0 ? (
         <div style={{ padding: '24px 20px', color: 'var(--fg-soft)', fontSize: 12, textAlign: 'center' }}>Sin datos</div>
       ) : (
-        rows.map((r, i) => (
-          <div key={i} style={{
+        rows.map((r, i) => {
+          const inner = (
+            <>
+              <span style={{
+                width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 600,
+                background: i === 0 ? colorAccent : 'var(--bg)',
+                color: i === 0 ? '#fff' : 'var(--fg-soft)',
+                border: i === 0 ? 'none' : '1px solid var(--line)',
+              }}>{i + 1}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {r.label}
+                </div>
+                {r.sub && <div style={{ fontSize: 11, color: 'var(--fg-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sub}</div>}
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 600, color: colorAccent, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                {r.value}
+              </span>
+            </>
+          )
+          const rowStyle: React.CSSProperties = {
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '12px 20px',
             borderBottom: i < rows.length - 1 ? '1px solid var(--line-soft)' : 'none',
-          }}>
-            <span style={{
-              width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10, fontWeight: 600,
-              background: i === 0 ? colorAccent : 'var(--bg)',
-              color: i === 0 ? '#fff' : 'var(--fg-soft)',
-              border: i === 0 ? 'none' : '1px solid var(--line)',
-            }}>{i + 1}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {r.label}
-              </div>
-              {r.sub && <div style={{ fontSize: 11, color: 'var(--fg-soft)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.sub}</div>}
-            </div>
-            <span style={{ fontSize: 13, fontWeight: 600, color: colorAccent, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-              {r.value}
-            </span>
-          </div>
-        ))
+            textDecoration: 'none', color: 'inherit',
+            cursor: r.href ? 'pointer' : 'default', transition: 'background .12s',
+          }
+          const hover = (e: React.MouseEvent<HTMLElement>, on: boolean) => {
+            if (r.href) e.currentTarget.style.background = on ? 'var(--surface-2)' : 'transparent'
+          }
+          return r.href ? (
+            <Link key={i} href={r.href} style={rowStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)}>{inner}</Link>
+          ) : (
+            <div key={i} style={rowStyle}>{inner}</div>
+          )
+        })
       )}
     </div>
   )
@@ -193,7 +212,7 @@ function InventoryPanel({ products }: { products: { id: string; name: string; st
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
       <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)' }}>Reposición de stock</span>
+        <Link href="/admin/productos" style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)', textDecoration: 'none' }}>Reposición de stock →</Link>
         <span style={{ fontSize: 10, color: 'var(--fg-soft)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
           {outOfStock.length} agotados · {lowStock.length} por agotarse
         </span>
@@ -204,10 +223,14 @@ function InventoryPanel({ products }: { products: { id: string; name: string; st
         </div>
       ) : (
         alerts.map((p, i) => (
-          <div key={p.id} style={{
+          <Link key={p.id} href={`/admin/productos?search=${encodeURIComponent(p.id)}`} style={{
             display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
             borderBottom: i < alerts.length - 1 ? '1px solid var(--line-soft)' : 'none',
-          }}>
+            textDecoration: 'none', color: 'inherit', cursor: 'pointer', transition: 'background .12s',
+          }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
             <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: p.stock === 0 ? '#e06557' : '#c9a17a' }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
@@ -216,7 +239,7 @@ function InventoryPanel({ products }: { products: { id: string; name: string; st
             <span style={{ fontSize: 12, fontWeight: 600, flexShrink: 0, color: p.stock === 0 ? '#e06557' : '#c9a17a' }}>
               {p.stock === 0 ? 'Agotado' : `Quedan ${p.stock}`}
             </span>
-          </div>
+          </Link>
         ))
       )}
     </div>
@@ -229,6 +252,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('30d')
+  const router = useRouter()
 
   useEffect(() => {
     Promise.all([
@@ -269,42 +293,42 @@ export default function AdminDashboard() {
 
   // Rankings — sobre órdenes con ingreso real.
   const productRanking = useMemo(() => {
-    const map: Record<string, { name: string; revenue: number; qty: number }> = {}
+    const map: Record<string, { id: string; name: string; revenue: number; qty: number }> = {}
     revenueOrders.forEach(o => o.items.forEach(it => {
-      if (!map[it.productId]) map[it.productId] = { name: it.productName, revenue: 0, qty: 0 }
+      if (!map[it.productId]) map[it.productId] = { id: it.productId, name: it.productName, revenue: 0, qty: 0 }
       map[it.productId].revenue += it.pricePaid * it.quantity
       map[it.productId].qty += it.quantity
     }))
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-      .map(p => ({ label: p.name, sub: `${p.qty} vendidos`, value: fmt(p.revenue) }))
+      .map(p => ({ label: p.name, sub: `${p.qty} vendidos`, value: fmt(p.revenue), href: `/admin/productos?search=${encodeURIComponent(p.id)}` }))
   }, [revenueOrders])
 
   const customerRanking = useMemo(() => {
-    const map: Record<string, { name: string; revenue: number; count: number }> = {}
+    const map: Record<string, { name: string; email: string; revenue: number; count: number }> = {}
     revenueOrders.forEach(o => {
       const k = o.customerEmail
-      if (!map[k]) map[k] = { name: o.customerName, revenue: 0, count: 0 }
+      if (!map[k]) map[k] = { name: o.customerName, email: k, revenue: 0, count: 0 }
       map[k].revenue += o.total
       map[k].count++
     })
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-      .map(c => ({ label: c.name, sub: `${c.count} órdenes`, value: fmt(c.revenue) }))
+      .map(c => ({ label: c.name, sub: `${c.count} órdenes`, value: fmt(c.revenue), href: `/admin/ordenes?q=${encodeURIComponent(c.email)}` }))
   }, [revenueOrders])
 
   const categoryRanking = useMemo(() => {
     const prodCatMap: Record<string, string> = {}
     products.forEach(p => { prodCatMap[p.id] = p.categoryId })
 
-    const map: Record<string, { catName: string; revenue: number; qty: number }> = {}
+    const map: Record<string, { catId: string; catName: string; revenue: number; qty: number }> = {}
     revenueOrders.forEach(o => o.items.forEach(it => {
       const catId   = prodCatMap[it.productId] ?? 'otros'
       const catName = categories.find(c => c.id === catId)?.name ?? catId
-      if (!map[catId]) map[catId] = { catName, revenue: 0, qty: 0 }
+      if (!map[catId]) map[catId] = { catId, catName, revenue: 0, qty: 0 }
       map[catId].revenue += it.pricePaid * it.quantity
       map[catId].qty     += it.quantity
     }))
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-      .map(v => ({ label: v.catName, sub: `${v.qty} unidades`, value: fmt(v.revenue) }))
+      .map(v => ({ label: v.catName, sub: `${v.qty} unidades`, value: fmt(v.revenue), href: v.catId !== 'otros' ? `/admin/productos?cat=${encodeURIComponent(v.catId)}` : undefined }))
   }, [revenueOrders, products, categories])
 
   const recent = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8)
@@ -318,6 +342,7 @@ export default function AdminDashboard() {
       deltaC: deltaColor(totalRevenue, prevRevenue),
       sub: `Ticket promedio: ${fmt(avgOrder)}`,
       color: '#9bae88',
+      href: '/admin/ordenes?status=paid',
     },
     {
       label: 'Órdenes',
@@ -326,6 +351,7 @@ export default function AdminDashboard() {
       deltaC: deltaColor(filtered.length, prevPeriodOrders.length),
       sub: `${pending} pendientes de pago`,
       color: '#6686e7',
+      href: '/admin/ordenes',
     },
     {
       label: 'Pagadas / Enviadas',
@@ -334,6 +360,7 @@ export default function AdminDashboard() {
       deltaC: deltaColor(paidCount, prevPaid),
       sub: `${pending} sin confirmar`,
       color: '#c9a17a',
+      href: '/admin/ordenes?status=paid',
     },
     {
       label: 'Pendientes',
@@ -342,6 +369,7 @@ export default function AdminDashboard() {
       deltaC: deltaColor(prevPending, pending), // inverted: fewer pending = better
       sub: 'requieren acción',
       color: '#e06557',
+      href: '/admin/ordenes?status=pending',
     },
   ]
 
@@ -386,11 +414,16 @@ export default function AdminDashboard() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, padding: '28px 40px 0' }}>
         {stats.map(s => (
-          <div key={s.label} style={{
+          <Link key={s.label} href={s.href} style={{
             background: 'var(--surface)', border: '1px solid var(--line)',
             borderRadius: 12, padding: '20px 22px',
             position: 'relative', overflow: 'hidden',
-          }}>
+            textDecoration: 'none', cursor: 'pointer', transition: 'border-color .15s, transform .15s',
+            display: 'block',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = s.color; e.currentTarget.style.transform = 'translateY(-2px)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.transform = 'none' }}
+          >
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 2,
               background: `linear-gradient(90deg, transparent, ${s.color}, transparent)`,
@@ -410,7 +443,7 @@ export default function AdminDashboard() {
               )}
               <span style={{ fontSize: 11, color: 'var(--fg-soft)' }}>{s.sub}</span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -427,18 +460,21 @@ export default function AdminDashboard() {
           rows={productRanking}
           valueLabel="Ingresos"
           colorAccent="#9bae88"
+          href="/admin/productos"
         />
         <RankingTable
           title="Top Clientes"
           rows={customerRanking}
           valueLabel="Total compras"
           colorAccent="#6686e7"
+          href="/admin/ordenes"
         />
         <RankingTable
           title="Top Categorías"
           rows={categoryRanking}
           valueLabel="Ingresos"
           colorAccent="#c9a17a"
+          href="/admin/categorias"
         />
       </div>
 
@@ -477,7 +513,12 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {recent.map((o, i) => (
-                  <tr key={o.id} style={{ borderBottom: i < recent.length - 1 ? '1px solid var(--line-soft)' : 'none' }}>
+                  <tr key={o.id}
+                    onClick={() => router.push(`/admin/ordenes?order=${o.id}`)}
+                    style={{ borderBottom: i < recent.length - 1 ? '1px solid var(--line-soft)' : 'none', cursor: 'pointer', transition: 'background .12s' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
                     <td style={{ padding: '14px 20px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)' }}>
                       {o.id.slice(0, 8)}…
                     </td>
