@@ -34,8 +34,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# admin credentials (set by client on first login)
-/data/admin.json
+# estado escribible de la app: contraseña del panel, settings de la tienda e
+# imágenes subidas (banner/productos). En producción vive en un volumen persistente.
+/data/
 
 # .NET
 backend/bin/

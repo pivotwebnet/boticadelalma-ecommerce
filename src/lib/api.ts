@@ -155,6 +155,7 @@ export interface ApiProduct {
   rating: number
   reviews: number
   imageUrl?: string
+  images: string[]
   stock: number
   createdAt: string
   updatedAt: string
@@ -234,6 +235,21 @@ export async function updateProduct(id: string, dto: unknown): Promise<{ ok: boo
     if (res.ok) return { ok: true }
     const data = await res.json().catch(() => null)
     return { ok: false, error: typeof data === 'string' ? data : (data?.error ?? data?.title ?? 'Error al actualizar') }
+  } catch { return { ok: false, error: 'Error de conexión' } }
+}
+
+// Ajuste masivo de precios sobre un conjunto de productos elegido en el panel.
+export async function bulkAdjustPrices(
+  productIds: string[], percent: number, mode: 'discount' | 'increase',
+): Promise<{ ok: boolean; updated?: number; error?: string }> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/bulk-price`, {
+      method: 'POST', headers: adminHeaders(true),
+      body: JSON.stringify({ productIds, percent, mode }),
+    })
+    const data = await res.json().catch(() => null)
+    if (res.ok) return { ok: true, updated: (data as { updated?: number })?.updated }
+    return { ok: false, error: typeof data === 'string' ? data : ((data as { error?: string })?.error ?? 'No se pudo aplicar el ajuste.') }
   } catch { return { ok: false, error: 'Error de conexión' } }
 }
 

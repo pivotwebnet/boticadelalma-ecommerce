@@ -30,6 +30,17 @@ Funcionalidades del panel (frontend):
 - **Ventas manuales**: desde *Órdenes → "Nueva venta manual"* se cargan ventas por WhatsApp/presenciales (toma precios del catálogo y descuenta stock).
 - **Configuración**: `/admin/configuracion` permite cambiar la contraseña del panel.
 - **Login**: limita a 5 intentos fallidos por IP cada 15 minutos. La sesión expira a los 7 días.
+- **Fotos de productos**: hasta 6 por producto, subidas desde la PC (`/admin/productos`). La web muestra **solo las cargadas** (sin slots vacíos); la primera es la portada. Regla validada en el backend: rechaza (400) si hay fotos vacías o más de 6.
+- **Banner / Apariencia**: `/admin/apariencia` permite subir la imagen de fondo del banner principal (los botones/textos no cambian).
+
+## Despliegue (Coolify + Cloudflare + DonWeb)
+
+El estado escribible del frontend (contraseña del panel, configuración de la tienda y **fotos subidas** del banner y de productos) se guarda en disco bajo un directorio configurable por la env **`DATA_DIR`** (`src/lib/storage.ts`). Las imágenes subidas van a `DATA_DIR/uploads` y se sirven por `GET /api/media/<archivo>` (no por `/public`, que se hornea en la imagen Docker).
+
+- **Coolify — frontend (Next.js)**: agregar un **Persistent Storage** montado en `/app/data` y definir `DATA_DIR=/app/data`. Sin esto, cada redeploy borra la contraseña del panel (`admin.json`), la configuración (`site-settings.json`) y las fotos subidas. Otras envs: `API_URL` (URL interna del backend .NET), `BACKEND_ADMIN_KEY` (= `AdminApiKey` del backend), `ADMIN_SESSION_SECRET`.
+- **Coolify — backend (.NET)**: definir `AdminApiKey` (= `BACKEND_ADMIN_KEY` del frontend) y la cadena de conexión a la base Postgres (otro servicio de Coolify con su propio volumen).
+- **Cloudflare**: `/api/media/*` responde con `Cache-Control: immutable` (el filename es único → una foto nueva es otra URL, no quedan cacheadas viejas). `/api/site-settings` va con `no-store` para que un cambio de banner se vea al instante. Máx 6 MB por imagen. No usar reglas "Cache Everything" sobre `/api/*` ni `/admin/*`.
+- **DonWeb**: solo el dominio → DNS apuntando a Cloudflare, y Cloudflare al server de Coolify. Sin impacto en la app.
 
 ## Autenticación del Panel Admin (Next.js)
 

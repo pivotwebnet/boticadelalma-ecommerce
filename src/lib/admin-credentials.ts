@@ -1,7 +1,9 @@
 import fs from 'fs'
 import path from 'path'
+import { DATA_DIR } from '@/lib/storage'
 
-const CREDS_FILE = path.join(process.cwd(), 'data', 'admin.json')
+// Vive en el volumen persistente: así la contraseña sobrevive a los redeploys.
+const CREDS_FILE = path.join(DATA_DIR, 'admin.json')
 
 export interface AdminCredentials {
   hash: string

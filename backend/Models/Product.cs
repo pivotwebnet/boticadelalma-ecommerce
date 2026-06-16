@@ -40,6 +40,10 @@ public class Product
     [MaxLength(500)]
     public string? ImageUrl { get; set; }
 
+    // Galería de fotos (JSON array de URLs). La web muestra EXACTAMENTE estas,
+    // sin slots vacíos: si hay 2 cargadas, se ven 2. Máximo 6. La primera es la portada.
+    public string Images { get; set; } = "[]";
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

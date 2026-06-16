@@ -101,6 +101,10 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         var priceError = ValidatePricing(dto.Price, dto.OriginalPrice, dto.Stock);
         if (priceError is not null) return BadRequest(priceError);
 
+        var imagesError = ValidateImages(dto.Images);
+        if (imagesError is not null) return BadRequest(imagesError);
+        var images = dto.Images ?? [];
+
         var product = new Product
         {
             Id            = dto.Id,
@@ -112,7 +116,9 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
             Label         = dto.Label ?? string.Empty,
             Tags          = JsonSerializer.Serialize(dto.Tags ?? []),
             IsNew         = dto.IsNew,
-            ImageUrl      = dto.ImageUrl,
+            // La portada (ImageUrl) es la primera foto de la galería, si hay.
+            ImageUrl      = images.Length > 0 ? images[0] : dto.ImageUrl,
+            Images        = JsonSerializer.Serialize(images),
             Stock         = dto.Stock,
         };
 
@@ -138,6 +144,9 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         var priceError    = ValidatePricing(finalPrice, finalOriginal, finalStock);
         if (priceError is not null) return BadRequest(priceError);
 
+        var imagesError = ValidateImages(dto.Images);
+        if (imagesError is not null) return BadRequest(imagesError);
+
         if (dto.Name        is not null) product.Name        = dto.Name;
         if (dto.CategoryId  is not null) product.CategoryId  = dto.CategoryId;
         if (dto.Price.HasValue)          product.Price        = dto.Price.Value;
@@ -145,7 +154,16 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         if (dto.Tone        is not null) product.Tone        = dto.Tone;
         if (dto.Label       is not null) product.Label       = dto.Label;
         if (dto.Tags        is not null) product.Tags        = JsonSerializer.Serialize(dto.Tags);
-        if (dto.ImageUrl    is not null) product.ImageUrl    = dto.ImageUrl == "" ? null : dto.ImageUrl;
+        if (dto.Images      is not null)
+        {
+            product.Images   = JsonSerializer.Serialize(dto.Images);
+            // La portada sigue a la galería: primera foto, o null si quedó vacía.
+            product.ImageUrl = dto.Images.Length > 0 ? dto.Images[0] : null;
+        }
+        else if (dto.ImageUrl is not null)
+        {
+            product.ImageUrl = dto.ImageUrl == "" ? null : dto.ImageUrl;
+        }
         if (dto.IsNew.HasValue)          product.IsNew       = dto.IsNew.Value;
         if (dto.IsActive.HasValue)       product.IsActive    = dto.IsActive.Value;
         if (dto.Stock.HasValue)          product.Stock       = dto.Stock.Value;
@@ -153,6 +171,58 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
 
         await db.SaveChangesAsync();
         return NoContent();
+    }
+
+    [HttpPost("bulk-price")]
+    [RequireAdminKey]
+    public async Task<IActionResult> BulkPrice([FromBody] BulkPriceDto dto)
+    {
+        if (dto.ProductIds is null || dto.ProductIds.Length == 0)
+            return BadRequest("Elegí al menos un producto.");
+        if (dto.Mode is not ("discount" or "increase"))
+            return BadRequest("Modo inválido.");
+        if (dto.Percent < 1)
+            return BadRequest("El porcentaje debe ser mayor a 0.");
+        if (dto.Mode == "discount" && dto.Percent >= 100)
+            return BadRequest("Un descuento debe ser menor al 100%.");
+
+        var products = await db.Products
+            .Where(p => dto.ProductIds.Contains(p.Id))
+            .ToListAsync();
+        if (products.Count == 0)
+            return BadRequest("No se encontraron los productos indicados.");
+
+        var factor = dto.Percent / 100.0;
+        foreach (var p in products)
+        {
+            if (dto.Mode == "discount")
+            {
+                // El "precio de lista" es el OriginalPrice si ya estaba en oferta,
+                // o el precio actual. El descuento se calcula siempre sobre la lista,
+                // así aplicar el % dos veces no encadena rebajas raras.
+                var listPrice = p.OriginalPrice is int op && op > p.Price ? op : p.Price;
+                var newPrice = (int)Math.Round(listPrice * (1 - factor));
+                if (newPrice < 1) newPrice = 1;
+                if (newPrice < listPrice)
+                {
+                    p.OriginalPrice = listPrice; // queda tachado en la tienda
+                    p.Price = newPrice;
+                }
+            }
+            else // increase
+            {
+                var newPrice = (int)Math.Round(p.Price * (1 + factor));
+                if (newPrice < 1) newPrice = 1;
+                p.Price = newPrice;
+                // Si el aumento alcanza/supera el precio de lista, ya no es oferta.
+                if (p.OriginalPrice is int op && op <= newPrice)
+                    p.OriginalPrice = null;
+            }
+            p.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        return Ok(new { updated = products.Count });
     }
 
     [HttpDelete("{id}")]
@@ -191,15 +261,35 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         return null;
     }
 
+    // Regla de las fotos: hasta 6 y ninguna vacía. Así la web muestra solo las
+    // que de verdad se cargaron (nada de slots en blanco). Null = no se tocaron.
+    private const int MaxImages = 6;
+    private static string? ValidateImages(string[]? images)
+    {
+        if (images is null) return null;
+        if (images.Length > MaxImages)
+            return $"Se permiten hasta {MaxImages} fotos por producto.";
+        if (images.Any(string.IsNullOrWhiteSpace))
+            return "No se permiten fotos vacías: se guardan solo las que realmente cargaste.";
+        return null;
+    }
+
     private static ProductResponseDto MapToDto(Product p)
     {
         string[] tags;
         try   { tags = JsonSerializer.Deserialize<string[]>(p.Tags) ?? []; }
         catch { tags = []; }
+
+        string[] images;
+        try   { images = JsonSerializer.Deserialize<string[]>(p.Images) ?? []; }
+        catch { images = []; }
+        // Defensa extra: nunca devolver entradas vacías a la tienda.
+        images = images.Where(s => !string.IsNullOrWhiteSpace(s)).ToArray();
+
         return new ProductResponseDto(
             p.Id, p.Name, p.CategoryId, p.Category?.Name,
             p.Price, p.OriginalPrice, p.Tone, p.Label, tags,
             p.IsNew, p.IsActive, p.Rating, p.Reviews,
-            p.ImageUrl, p.Stock, p.CreatedAt, p.UpdatedAt);
+            p.ImageUrl, images, p.Stock, p.CreatedAt, p.UpdatedAt);
     }
 }

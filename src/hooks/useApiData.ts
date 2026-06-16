@@ -24,7 +24,9 @@ function mapApiProduct(api: ApiProduct): Product {
     tags:    api.tags ?? [],
     rating:  api.rating  ?? 0,
     reviews: api.reviews ?? 0,
-    image:   api.imageUrl,
+    // Galería: solo las fotos cargadas. La portada es la primera (o el imageUrl legacy).
+    images:  api.images ?? [],
+    image:   api.images?.[0] ?? api.imageUrl,
     new:     api.isNew,
   }
 }

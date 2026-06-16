@@ -42,7 +42,13 @@ export default function PDPClient({ product }: PDPClientProps) {
   // Use product prop directly if it's updated, otherwise try to find in liveProducts
   const displayRating = product.rating || 0;
   const displayReviews = product.reviews || 0;
-  const images = [product.tone, 'cream', 'stone', 'sage'];
+  // Galería: SOLO las fotos realmente cargadas. Si no hay ninguna, se usa un
+  // placeholder (no se inventan miniaturas vacías).
+  const gallery = product.images && product.images.length > 0
+    ? product.images
+    : (product.image ? [product.image] : []);
+  const safeIdx = Math.min(mainIdx, Math.max(0, gallery.length - 1));
+  const mainSrc = gallery[safeIdx];
 
   const isFav = mounted && favs.includes(product.id);
   const discount = product.was
@@ -75,30 +81,21 @@ export default function PDPClient({ product }: PDPClientProps) {
       />
 
       <div className="pdp-main">
-        {/* Galería */}
+        {/* Galería — solo las fotos realmente cargadas */}
         <div className="pdp-gallery">
-          <div className="thumbs">
-            {product.image && (
-              <button
-                className={`thumb${mainIdx === 0 ? ' on' : ''}`}
-                onClick={() => setMainIdx(0)}
-              >
-                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
-              </button>
-            )}
-            {images.slice(product.image ? 1 : 0).map((tone, i) => {
-              const idx = product.image ? i + 1 : i;
-              return (
+          {gallery.length > 1 && (
+            <div className="thumbs">
+              {gallery.map((src, idx) => (
                 <button
-                  key={idx}
-                  className={`thumb${idx === mainIdx ? ' on' : ''}`}
+                  key={src + idx}
+                  className={`thumb${idx === safeIdx ? ' on' : ''}`}
                   onClick={() => setMainIdx(idx)}
                 >
-                  <ProductPlaceholder tone={tone} label={`vista ${idx + 1}`} aspectRatio={1} />
+                  <img src={src} alt={`${product.name} — foto ${idx + 1}`} className="object-cover w-full h-full" />
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
           <div
             ref={imgRef}
             className={`main-image${zoom ? ' zoomed' : ''}`}
@@ -116,14 +113,10 @@ export default function PDPClient({ product }: PDPClientProps) {
               className="zoom-wrap"
               style={zoom ? { transform: `scale(2)`, transformOrigin: `${zPos.x}% ${zPos.y}%` } : {}}
             >
-              {mainIdx === 0 && product.image ? (
-                <img src={product.image} alt={product.name} className="object-cover w-full h-full" />
+              {mainSrc ? (
+                <img src={mainSrc} alt={product.name} className="object-cover w-full h-full" />
               ) : (
-                <ProductPlaceholder 
-                  tone={product.image ? images[mainIdx - 1] : images[mainIdx]} 
-                  label={product.label} 
-                  aspectRatio={1} 
-                />
+                <ProductPlaceholder tone={product.tone} label={product.label} aspectRatio={1} />
               )}
             </div>
           </div>

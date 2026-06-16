@@ -17,6 +17,7 @@ public record ProductResponseDto(
     decimal Rating,
     int Reviews,
     string? ImageUrl,
+    string[] Images,
     int Stock,
     DateTime CreatedAt,
     DateTime UpdatedAt
@@ -33,6 +34,7 @@ public record CreateProductDto(
     string[]? Tags,
     bool IsNew,
     string? ImageUrl,
+    string[]? Images,
     int Stock
 );
 
@@ -45,9 +47,18 @@ public record UpdateProductDto(
     string? Label,
     string[]? Tags,
     string? ImageUrl,
+    string[]? Images,
     bool? IsNew,
     bool? IsActive,
     int? Stock
+);
+
+// Ajuste masivo de precios: aplica un % de descuento o aumento a un conjunto
+// de productos elegido por la dueña (uno, una categoría, una intención, o todos).
+public record BulkPriceDto(
+    [Required] string[] ProductIds,
+    [Range(1, 1000)] int Percent,
+    [Required] string Mode   // "discount" | "increase"
 );
 
 public record CategoryResponseDto(

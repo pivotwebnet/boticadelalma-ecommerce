@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { ApiProduct, ApiCategory } from '@/lib/api'
+
+const MAX_IMAGES = 6
 
 function fmt(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
@@ -21,12 +23,12 @@ const TONES = [
 type FormState = {
   id: string; name: string; categoryId: string; price: string; originalPrice: string
   stock: string
-  tone: string; label: string; tags: string; imageUrl: string; isNew: boolean; isActive: boolean
+  tone: string; label: string; tags: string; images: string[]; isNew: boolean; isActive: boolean
 }
 
 const EMPTY_FORM: FormState = {
   id: '', name: '', categoryId: '', price: '', originalPrice: '', stock: '0',
-  tone: 'stone', label: '', tags: '', imageUrl: '', isNew: false, isActive: true,
+  tone: 'stone', label: '', tags: '', images: [], isNew: false, isActive: true,
 }
 
 function productToForm(p: ApiProduct): FormState {
@@ -35,9 +37,99 @@ function productToForm(p: ApiProduct): FormState {
     price: String(p.price), originalPrice: p.originalPrice ? String(p.originalPrice) : '',
     stock: String(p.stock ?? 0),
     tone: p.tone, label: p.label, tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
-    imageUrl: p.imageUrl ?? '',
+    images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []),
     isNew: p.isNew, isActive: p.isActive,
   }
+}
+
+// Subida de fotos del producto: hasta MAX_IMAGES, solo las cargadas se guardan.
+// La primera es la portada.
+function ImageUploader({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function onFiles(files: FileList | null) {
+    if (!files || files.length === 0) return
+    setErr('')
+    const room = MAX_IMAGES - images.length
+    if (room <= 0) { setErr(`Máximo ${MAX_IMAGES} fotos.`); return }
+    const list = Array.from(files).slice(0, room)
+    setUploading(true)
+    try {
+      const uploaded: string[] = []
+      for (const f of list) {
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(f.type)) {
+          setErr('Formato no permitido. Usá JPG, PNG, WebP o AVIF.'); continue
+        }
+        if (f.size > 6 * 1024 * 1024) { setErr('Cada imagen debe pesar máximo 6 MB.'); continue }
+        const fd = new FormData(); fd.append('file', f)
+        const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+        const d = await res.json().catch(() => ({}))
+        if (res.ok && d?.url) uploaded.push(d.url)
+        else setErr(d?.error ?? 'No se pudo subir una imagen.')
+      }
+      if (uploaded.length) onChange([...images, ...uploaded])
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  const remove = (i: number) => onChange(images.filter((_, idx) => idx !== i))
+  const makeCover = (i: number) => {
+    if (i === 0) return
+    const next = [...images]
+    const [x] = next.splice(i, 1)
+    next.unshift(x)
+    onChange(next)
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>
+        Fotos del producto ({images.length}/{MAX_IMAGES}) · la primera es la portada
+      </label>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        {images.map((src, i) => (
+          <div key={src + i} style={{
+            position: 'relative', width: 84, height: 84, borderRadius: 8, overflow: 'hidden',
+            border: i === 0 ? '2px solid var(--brand-orange)' : '1px solid var(--line)',
+          }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {i === 0 && (
+              <span style={{ position: 'absolute', top: 0, left: 0, right: 0, fontSize: 9, textAlign: 'center', background: 'var(--brand-orange)', color: '#fff', padding: '1px 0', letterSpacing: '0.05em' }}>PORTADA</span>
+            )}
+            <button type="button" onClick={() => remove(i)} title="Quitar" style={{
+              position: 'absolute', top: 3, right: 3, width: 18, height: 18, borderRadius: '50%',
+              border: 'none', background: 'rgba(0,0,0,.65)', color: '#fff', cursor: 'pointer', fontSize: 12, lineHeight: 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>×</button>
+            {i !== 0 && (
+              <button type="button" onClick={() => makeCover(i)} title="Hacer portada" style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0, fontSize: 9, border: 'none',
+                background: 'rgba(0,0,0,.6)', color: '#fff', cursor: 'pointer', padding: '2px 0',
+              }}>Hacer portada</button>
+            )}
+          </div>
+        ))}
+        {images.length < MAX_IMAGES && (
+          <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} style={{
+            width: 84, height: 84, borderRadius: 8, border: '1px dashed var(--line)',
+            background: 'transparent', color: 'var(--fg-soft)', cursor: uploading ? 'wait' : 'pointer',
+            fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>＋</span>
+            {uploading ? 'Subiendo…' : 'Agregar'}
+          </button>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple
+        onChange={e => onFiles(e.target.files)} style={{ display: 'none' }} />
+      {err && <span style={{ fontSize: 12, color: '#e06557' }}>{err}</span>}
+    </div>
+  )
 }
 
 // Devuelve un entero >= 0 o null si el texto no es un entero válido.
@@ -47,8 +139,25 @@ function parsePositiveInt(s: string): number | null {
   return n
 }
 
-// Slug válido: minúsculas, números y guiones.
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+// Convierte un nombre en un slug: minúsculas, sin acentos, con guiones.
+// "Anillo de Luna ✦" → "anillo-de-luna"
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // saca acentos
+    .replace(/[^a-z0-9]+/g, '-')                       // todo lo demás → guión
+    .replace(/^-+|-+$/g, '')                            // sin guiones al borde
+}
+
+// Garantiza que el slug no choque con uno existente: si "anillo-luna" ya está,
+// devuelve "anillo-luna-2", "anillo-luna-3", etc. Así nunca se repiten IDs.
+function uniqueSlug(base: string, taken: Set<string>): string {
+  const root = base || 'producto'
+  if (!taken.has(root)) return root
+  let n = 2
+  while (taken.has(`${root}-${n}`)) n++
+  return `${root}-${n}`
+}
 
 function Input({ label, value, onChange, type = 'text', disabled = false }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; disabled?: boolean
@@ -128,6 +237,13 @@ export default function ProductosPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
+  // Ajuste masivo de precios
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkMode, setBulkMode] = useState<'discount' | 'increase'>('discount')
+  const [bulkPct, setBulkPct] = useState('')
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
+
   const load = useCallback(async () => {
     setLoading(true)
     const [p, c] = await Promise.all([
@@ -148,6 +264,49 @@ export default function ProductosPage() {
     return matchSearch && matchCat
   })
 
+  // Productos a los que se aplica el ajuste: los tildados, o —si no hay ninguno
+  // tildado— todos los que están filtrados a la vista.
+  const targetIds = selected.size > 0
+    ? products.filter(p => selected.has(p.id)).map(p => p.id)
+    : filtered.map(p => p.id)
+
+  const toggleOne = (id: string) => setSelected(s => {
+    const n = new Set(s)
+    if (n.has(id)) n.delete(id); else n.add(id)
+    return n
+  })
+  const allFilteredSelected = filtered.length > 0 && filtered.every(p => selected.has(p.id))
+  const toggleAllFiltered = () => setSelected(s => {
+    const n = new Set(s)
+    if (allFilteredSelected) filtered.forEach(p => n.delete(p.id))
+    else filtered.forEach(p => n.add(p.id))
+    return n
+  })
+
+  async function applyBulk() {
+    const pct = parseInt(bulkPct)
+    if (!Number.isInteger(pct) || pct < 1) return
+    setBulkBusy(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/products/bulk-price', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: targetIds, percent: pct, mode: bulkMode }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setNotice(`Se aplicó un ${bulkMode === 'discount' ? 'descuento' : 'aumento'} del ${pct}% a ${d?.updated ?? targetIds.length} producto(s).`)
+        setBulkConfirm(false); setBulkPct(''); setSelected(new Set())
+        await load()
+      } else {
+        setError(d?.error ?? 'No se pudo aplicar el ajuste.')
+        setBulkConfirm(false)
+      }
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
   function openCreate() {
     setForm(EMPTY_FORM)
     setError('')
@@ -166,14 +325,15 @@ export default function ProductosPage() {
 
   async function handleSave() {
     setError('')
-    if (!form.id.trim() || !form.name.trim() || !form.categoryId || !form.price) {
-      setError('ID, nombre, categoría y precio son obligatorios.')
+    if (!form.name.trim() || !form.categoryId || !form.price) {
+      setError('Nombre, categoría y precio son obligatorios.')
       return
     }
-    if (modal === 'create' && !SLUG_RE.test(form.id.trim())) {
-      setError('El ID debe ser un slug: solo minúsculas, números y guiones (ej: "anillo-luna").')
-      return
-    }
+    // El ID/slug se genera solo a partir del nombre (y se evita repetir uno existente).
+    // En edición el ID no cambia nunca.
+    const id = modal === 'create'
+      ? uniqueSlug(slugify(form.name), new Set(products.map(p => p.id)))
+      : form.id
     const price = parsePositiveInt(form.price.trim())
     if (price === null) {
       setError('El precio debe ser un número entero (sin decimales).')
@@ -198,7 +358,7 @@ export default function ProductosPage() {
     }
     setSaving(true)
     const body = {
-      id: form.id.trim(),
+      id,
       name: form.name.trim(),
       categoryId: form.categoryId,
       price,
@@ -207,7 +367,7 @@ export default function ProductosPage() {
       tone: form.tone,
       label: form.label.trim(),
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-      imageUrl: form.imageUrl.trim() || null,
+      images: form.images,
       isNew: form.isNew,
       isActive: form.isActive,
     }
@@ -298,6 +458,56 @@ export default function ProductosPage() {
         <span style={{ fontSize: 12, color: 'var(--fg-soft)', marginLeft: 'auto' }}>{filtered.length} resultados</span>
       </div>
 
+      {/* Ajuste masivo de precios */}
+      <div style={{ padding: '0 40px 16px', display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 10, padding: '8px 12px' }}>
+          <span style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)' }}>Ajuste de precios</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['discount', 'increase'] as const).map(m => (
+              <button key={m} onClick={() => setBulkMode(m)} style={{
+                padding: '5px 12px', borderRadius: 999, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                border: bulkMode === m ? 'none' : '1px solid var(--line)',
+                background: bulkMode === m ? (m === 'discount' ? 'rgba(155,174,136,.18)' : 'rgba(201,161,122,.18)') : 'transparent',
+                color: bulkMode === m ? (m === 'discount' ? '#9bae88' : '#c9a17a') : 'var(--fg-muted)',
+              }}>{m === 'discount' ? 'Descuento' : 'Aumento'}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <input
+              type="number" min={1} max={bulkMode === 'discount' ? 99 : 1000} value={bulkPct}
+              onChange={e => setBulkPct(e.target.value)} placeholder="0"
+              style={{ width: 58, background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 7, padding: '7px 10px', fontSize: 13, color: 'var(--fg)', outline: 'none', textAlign: 'right' }}
+            />
+            <span style={{ fontSize: 14, color: 'var(--fg-muted)', fontWeight: 600 }}>%</span>
+          </div>
+          <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>
+            a {selected.size > 0 ? <strong style={{ color: 'var(--fg)' }}>{selected.size} seleccionado{selected.size === 1 ? '' : 's'}</strong> : <>todos los filtrados ({filtered.length})</>}
+          </span>
+          <button
+            disabled={!bulkPct || parseInt(bulkPct) < 1 || targetIds.length === 0}
+            onClick={() => setBulkConfirm(true)}
+            style={{
+              padding: '7px 16px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, border: 'none',
+              background: (!bulkPct || parseInt(bulkPct) < 1 || targetIds.length === 0) ? 'var(--line)' : 'var(--brand-orange)',
+              color: (!bulkPct || parseInt(bulkPct) < 1 || targetIds.length === 0) ? 'var(--fg-soft)' : '#fff',
+              cursor: (!bulkPct || parseInt(bulkPct) < 1 || targetIds.length === 0) ? 'not-allowed' : 'pointer',
+            }}>Aplicar</button>
+        </div>
+        {selected.size > 0 && (
+          <button onClick={() => setSelected(new Set())} style={{
+            padding: '7px 14px', borderRadius: 7, fontSize: 12, fontWeight: 500,
+            background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
+          }}>Limpiar selección</button>
+        )}
+      </div>
+
+      {error && !modal && (
+        <div style={{ margin: '0 40px 8px', padding: '10px 14px', background: 'rgba(224,101,87,.12)', border: '1px solid rgba(224,101,87,.3)', borderRadius: 8, fontSize: 13, color: '#e06557', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{error}</span>
+          <button onClick={() => setError('')} style={{ background: 'none', border: 'none', color: 'var(--fg-soft)', cursor: 'pointer', fontSize: 16 }}>×</button>
+        </div>
+      )}
+
       {notice && (
         <div style={{ margin: '0 40px 8px', padding: '10px 14px', background: 'rgba(201,161,122,.12)', border: '1px solid rgba(201,161,122,.3)', borderRadius: 8, fontSize: 13, color: '#c9a17a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{notice}</span>
@@ -316,6 +526,10 @@ export default function ProductosPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
+                  <th style={{ padding: '12px 16px', borderBottom: '1px solid var(--line)', width: 36 }}>
+                    <input type="checkbox" checked={allFilteredSelected} onChange={toggleAllFiltered}
+                      title="Seleccionar todos los filtrados" style={{ cursor: 'pointer', accentColor: 'var(--brand-orange)' }} />
+                  </th>
                   {['ID', 'Nombre', 'Categoría', 'Precio', 'Stock', 'Etiqueta', 'Estado', 'Acciones'].map(h => (
                     <th key={h} style={{
                       textAlign: 'left', padding: '12px 16px',
@@ -327,7 +541,14 @@ export default function ProductosPage() {
               </thead>
               <tbody>
                 {filtered.map((p, i) => (
-                  <tr key={p.id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--line-soft)' : 'none' }}>
+                  <tr key={p.id} style={{
+                    borderBottom: i < filtered.length - 1 ? '1px solid var(--line-soft)' : 'none',
+                    background: selected.has(p.id) ? 'rgba(232,99,21,0.05)' : 'transparent',
+                  }}>
+                    <td style={{ padding: '13px 16px', width: 36 }}>
+                      <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)}
+                        style={{ cursor: 'pointer', accentColor: 'var(--brand-orange)' }} />
+                    </td>
                     <td style={{ padding: '13px 16px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)' }}>{p.id}</td>
                     <td style={{ padding: '13px 16px' }}>
                       <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--fg)' }}>{p.name}</div>
@@ -396,8 +617,23 @@ export default function ProductosPage() {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <Input label="ID (slug único)" value={form.id} onChange={v => setF('id', v)} disabled={modal === 'edit'} />
               <Input label="Nombre" value={form.name} onChange={v => setF('name', v)} />
+              {modal === 'edit'
+                ? <Input label="ID (no se puede cambiar)" value={form.id} onChange={() => {}} disabled />
+                : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>ID (se genera solo)</label>
+                    <div style={{
+                      background: 'var(--bg)', border: '1px dashed var(--line)', borderRadius: 7,
+                      padding: '8px 12px', fontSize: 13, color: 'var(--fg-soft)', fontFamily: 'var(--font-mono)',
+                      minHeight: 19, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {form.name.trim()
+                        ? uniqueSlug(slugify(form.name), new Set(products.map(p => p.id)))
+                        : '—'}
+                    </div>
+                  </div>
+                )}
               <Select label="Categoría" value={form.categoryId} onChange={v => setF('categoryId', v)}
                 options={categories.map(c => ({ value: c.id, label: c.name }))} />
               <Select label="Tono de color" value={form.tone} onChange={v => setF('tone', v)}
@@ -410,7 +646,7 @@ export default function ProductosPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
               <Input label="Etiqueta (ej: collar · plata)" value={form.label} onChange={v => setF('label', v)} />
               <Input label="Tags (separados por coma — materiales e intenciones)" value={form.tags} onChange={v => setF('tags', v)} />
-              <Input label="URL de imagen (Unsplash u otra)" value={form.imageUrl} onChange={v => setF('imageUrl', v)} />
+              <ImageUploader images={form.images} onChange={imgs => setF('images', imgs)} />
             </div>
 
             <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
@@ -462,6 +698,40 @@ export default function ProductosPage() {
                 padding: '9px 20px', borderRadius: 7, fontSize: 13, fontWeight: 600,
                 background: '#c0392b', color: '#fff', border: 'none', cursor: deleting ? 'wait' : 'pointer',
               }}>{deleting ? 'Eliminando…' : 'Sí, eliminar'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmación de ajuste masivo de precios */}
+      {bulkConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+        }} onClick={e => { if (e.target === e.currentTarget && !bulkBusy) setBulkConfirm(false) }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, padding: 32, maxWidth: 440, width: '90%' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, color: 'var(--fg)', marginBottom: 12 }}>
+              {bulkMode === 'discount' ? 'Aplicar descuento' : 'Aplicar aumento'}
+            </div>
+            <p style={{ fontSize: 13.5, color: 'var(--fg-muted)', margin: '0 0 8px', lineHeight: 1.5 }}>
+              Se va a aplicar un <strong style={{ color: 'var(--fg)' }}>{bulkMode === 'discount' ? 'descuento' : 'aumento'} del {parseInt(bulkPct) || 0}%</strong> sobre{' '}
+              <strong style={{ color: 'var(--fg)' }}>{targetIds.length} producto{targetIds.length === 1 ? '' : 's'}</strong>{' '}
+              ({selected.size > 0 ? 'los seleccionados' : 'todos los filtrados'}).
+            </p>
+            <p style={{ fontSize: 12.5, color: 'var(--fg-soft)', margin: '0 0 24px', lineHeight: 1.5 }}>
+              {bulkMode === 'discount'
+                ? 'El precio anterior queda tachado como precio de lista y se muestra como oferta en la tienda.'
+                : 'Sube el precio de venta. Si algún producto estaba en oferta y el aumento alcanza el precio de lista, deja de mostrarse como oferta.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setBulkConfirm(false)} disabled={bulkBusy} style={{
+                padding: '9px 20px', borderRadius: 7, fontSize: 13, fontWeight: 500,
+                background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: bulkBusy ? 'wait' : 'pointer',
+              }}>Cancelar</button>
+              <button onClick={applyBulk} disabled={bulkBusy} style={{
+                padding: '9px 22px', borderRadius: 7, fontSize: 13, fontWeight: 600,
+                background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: bulkBusy ? 'wait' : 'pointer', opacity: bulkBusy ? 0.7 : 1,
+              }}>{bulkBusy ? 'Aplicando…' : 'Confirmar'}</button>
             </div>
           </div>
         </div>

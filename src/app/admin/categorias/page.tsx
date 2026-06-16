@@ -3,30 +3,31 @@
 import { useEffect, useState, useCallback } from 'react'
 import { ApiCategory } from '@/lib/api'
 
-type FormState = { id: string; name: string; icon: string; sortOrder: string; isActive: boolean }
+type FormState = { id: string; name: string; icon: string; isActive: boolean }
 
-const EMPTY_FORM: FormState = { id: '', name: '', icon: 'leaf', sortOrder: '0', isActive: true }
+const EMPTY_FORM: FormState = { id: '', name: '', icon: 'ring', isActive: true }
 
 function categoryToForm(c: ApiCategory): FormState {
-  return { id: c.id, name: c.name, icon: c.icon, sortOrder: String(c.sortOrder), isActive: c.isActive }
+  return { id: c.id, name: c.name, icon: c.icon, isActive: c.isActive }
 }
 
+// El `value` se guarda en la base; el `label` es lo que ve la dueña (en español).
 const ICON_OPTIONS = [
   // Joyería
-  { value: 'ring',      label: '💍 ring      — Anillos'      },
-  { value: 'necklace',  label: '📿 necklace  — Collares'     },
-  { value: 'charm',     label: '🔮 charm     — Dijes'        },
-  { value: 'bracelet',  label: '✨ bracelet  — Pulseras'     },
-  { value: 'earring',   label: '💫 earring   — Aros'        },
-  { value: 'anklet',    label: '🌿 anklet    — Tobilleras'   },
+  { value: 'ring',      label: '💍 Anillos'     },
+  { value: 'necklace',  label: '📿 Collares'    },
+  { value: 'charm',     label: '🔮 Dijes'       },
+  { value: 'bracelet',  label: '✨ Pulseras'    },
+  { value: 'earring',   label: '💫 Aros'        },
+  { value: 'anklet',    label: '🌿 Tobilleras'  },
   // Piedras y complementos
-  { value: 'crystal',   label: '💎 crystal   — Piedras'      },
-  { value: 'accessory', label: '🌙 accessory — Complementos' },
-  // Genéricos de reserva
-  { value: 'leaf',      label: '🍃 leaf'      },
-  { value: 'moon',      label: '🌙 moon'      },
-  { value: 'star',      label: '⭐ star'      },
-  { value: 'gem',       label: '💎 gem'       },
+  { value: 'crystal',   label: '💎 Piedras'     },
+  { value: 'accessory', label: '🌙 Complementos' },
+  // Genéricos
+  { value: 'leaf',      label: '🍃 Hoja'        },
+  { value: 'moon',      label: '🌙 Luna'        },
+  { value: 'star',      label: '⭐ Estrella'    },
+  { value: 'gem',       label: '💎 Gema'        },
 ]
 
 function Input({ label, value, onChange, type = 'text', disabled = false }: {
@@ -102,17 +103,18 @@ export default function CategoriasPage() {
     setError('')
     if (!form.id.trim() || !form.name.trim()) { setError('ID y nombre son obligatorios.'); return }
     setSaving(true)
-    const body = {
-      id: form.id.trim(),
-      name: form.name.trim(),
-      icon: form.icon,
-      sortOrder: parseInt(form.sortOrder) || 0,
-      isActive: form.isActive,
-    }
     try {
       if (modal === 'create') {
+        // El orden se asigna solo: la nueva categoría va al final. Así la dueña
+        // nunca tiene que pensar en números ni puede repetir un mismo orden.
+        const nextOrder = categories.length
+          ? Math.max(...categories.map(c => c.sortOrder)) + 1
+          : 0
         const res = await fetch('/api/admin/categories', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: form.id.trim(), name: form.name.trim(), icon: form.icon, sortOrder: nextOrder,
+          }),
         })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
@@ -120,9 +122,10 @@ export default function CategoriasPage() {
           return
         }
       } else {
+        // En edición no se toca el orden (se conserva el que ya tenía).
         const res = await fetch(`/api/admin/categories/${form.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: body.name, icon: body.icon, sortOrder: body.sortOrder, isActive: body.isActive }),
+          body: JSON.stringify({ name: form.name.trim(), icon: form.icon, isActive: form.isActive }),
         })
         if (!res.ok) { setError('Error al actualizar categoría.'); return }
       }
@@ -176,7 +179,7 @@ export default function CategoriasPage() {
         ) : categories.length === 0 ? (
           <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>No hay categorías.</div>
         ) : (
-          categories.map(c => (
+          categories.map((c, idx) => (
             <div key={c.id} style={{
               background: 'var(--surface)', border: '1px solid var(--line)',
               borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden',
@@ -213,8 +216,8 @@ export default function CategoriasPage() {
                   <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{c.productCount}</div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Orden</div>
-                  <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{c.sortOrder}</div>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Posición</div>
+                  <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{idx + 1}º</div>
                 </div>
               </div>
 
@@ -273,7 +276,11 @@ export default function CategoriasPage() {
                 </select>
               </div>
 
-              <Input label="Orden de visualización" value={form.sortOrder} onChange={v => setF('sortOrder', v)} type="number" />
+              {modal === 'create' && (
+                <p style={{ fontSize: 12, color: 'var(--fg-soft)', margin: 0 }}>
+                  El orden de aparición se asigna automáticamente (la nueva categoría va al final).
+                </p>
+              )}
               <Toggle label="Categoría activa" checked={form.isActive} onChange={v => setF('isActive', v)} />
             </div>
 

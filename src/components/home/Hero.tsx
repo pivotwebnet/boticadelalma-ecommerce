@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -53,6 +53,18 @@ export default function Hero() {
   const products = useProducts();
   const totalPiezas = products.length;
 
+  // Fondo del banner: configurable desde el panel (Apariencia). Si no se cargó
+  // ninguno, usa la imagen por defecto del proyecto.
+  const [bannerSrc, setBannerSrc] = useState('/banner3.jpg');
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then(r => r.json())
+      .then((s: { heroImageUrl?: string | null }) => {
+        if (s?.heroImageUrl) setBannerSrc(s.heroImageUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   const STATS = [
     { value: `+${totalPiezas}`, label: 'piezas' },
     { value: '100%', label: 'artesanal' },
@@ -72,11 +84,13 @@ export default function Hero() {
         {/* ── Background with parallax ── */}
         <motion.div className="absolute inset-0" style={{ y: imgY }}>
           <Image
-            src="/banner3.jpg"
+            key={bannerSrc}
+            src={bannerSrc}
             alt="La Botica del Alma"
             fill
             priority
             sizes="100vw"
+            unoptimized={bannerSrc.startsWith('/api/media/')}
             className="object-cover object-center scale-110"
           />
         </motion.div>

@@ -10,7 +10,8 @@ export interface Product {
   tags: string[];
   rating: number;
   reviews: number;
-  image?: string;
+  image?: string;       // portada (primera foto)
+  images?: string[];    // galería: solo las fotos realmente cargadas
   new?: boolean;
   fav?: boolean;
 }
