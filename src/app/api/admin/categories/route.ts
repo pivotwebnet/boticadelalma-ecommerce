@@ -3,7 +3,8 @@ import { revalidateTag } from 'next/cache'
 import { getCategories, createCategory } from '@/lib/api'
 
 export async function GET() {
-  const categories = await getCategories()
+  // El panel admin debe ver también las categorías inactivas (para reactivarlas).
+  const categories = await getCategories({ includeInactive: true })
   return NextResponse.json(categories)
 }
 

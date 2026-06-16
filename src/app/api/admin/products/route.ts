@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const products = await getProducts({
     categoryId: searchParams.get('categoryId') ?? undefined,
     search: searchParams.get('search') ?? undefined,
+    includeInactive: true, // el panel admin debe ver también los inactivos
   })
   return NextResponse.json(products)
 }

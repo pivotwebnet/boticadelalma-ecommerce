@@ -40,10 +40,15 @@ type Period = '7d' | '30d' | '90d' | '1y' | 'all'
 
 const PERIOD_LABELS: Record<Period, string> = {
   '7d': 'Últimos 7 días',
-  '30d': 'Este mes',
+  '30d': 'Últimos 30 días',
   '90d': 'Últimos 3 meses',
-  '1y': 'Este año',
+  '1y': 'Último año',
   'all': 'Todo el tiempo',
+}
+
+// Una orden cuenta como ingreso real solo si fue cobrada (pagada o enviada).
+function isRevenue(o: ApiOrder): boolean {
+  return o.status === 'paid' || o.status === 'shipped'
 }
 
 function filterByPeriod(orders: ApiOrder[], period: Period): ApiOrder[] {
@@ -76,7 +81,7 @@ function MonthlyChart({ orders }: { orders: ApiOrder[] }) {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       map[key] = 0
     }
-    orders.forEach(o => {
+    orders.filter(isRevenue).forEach(o => {
       const d = new Date(o.createdAt)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       if (key in map) map[key] += o.total
@@ -175,9 +180,52 @@ function RankingTable({
   )
 }
 
+// Umbral de "poco stock": a partir de acá conviene reponer.
+const LOW_STOCK_THRESHOLD = 3
+
+function InventoryPanel({ products }: { products: { id: string; name: string; stock: number; isActive: boolean }[] }) {
+  const active = products.filter(p => p.isActive)
+  const outOfStock = active.filter(p => p.stock === 0)
+  const lowStock = active.filter(p => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
+  const alerts = [...outOfStock, ...lowStock].sort((a, b) => a.stock - b.stock).slice(0, 8)
+  const healthy = alerts.length === 0
+
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontFamily: 'var(--font-serif)', fontSize: 16, fontWeight: 500, color: 'var(--fg)' }}>Reposición de stock</span>
+        <span style={{ fontSize: 10, color: 'var(--fg-soft)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          {outOfStock.length} agotados · {lowStock.length} por agotarse
+        </span>
+      </div>
+      {healthy ? (
+        <div style={{ padding: '24px 20px', color: '#9bae88', fontSize: 12.5, textAlign: 'center' }}>
+          ✓ Todos los productos activos tienen stock saludable.
+        </div>
+      ) : (
+        alerts.map((p, i) => (
+          <div key={p.id} style={{
+            display: 'flex', alignItems: 'center', gap: 12, padding: '11px 20px',
+            borderBottom: i < alerts.length - 1 ? '1px solid var(--line-soft)' : 'none',
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: p.stock === 0 ? '#e06557' : '#c9a17a' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, color: 'var(--fg)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+              <div style={{ fontSize: 11, color: 'var(--fg-soft)', fontFamily: 'var(--font-mono)' }}>{p.id}</div>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 600, flexShrink: 0, color: p.stock === 0 ? '#e06557' : '#c9a17a' }}>
+              {p.stock === 0 ? 'Agotado' : `Quedan ${p.stock}`}
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 export default function AdminDashboard() {
   const [orders,     setOrders]     = useState<ApiOrder[]>([])
-  const [products,   setProducts]   = useState<{ id: string; categoryId: string }[]>([])
+  const [products,   setProducts]   = useState<{ id: string; categoryId: string; name: string; stock: number; isActive: boolean }[]>([])
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('30d')
@@ -207,29 +255,33 @@ export default function AdminDashboard() {
     })
   }, [orders, period])
 
-  const totalRevenue = filtered.reduce((s, o) => s + o.total, 0)
-  const prevRevenue = prevPeriodOrders.reduce((s, o) => s + o.total, 0)
+  // Solo las órdenes cobradas (pagadas/enviadas) cuentan como facturación.
+  const revenueOrders = useMemo(() => filtered.filter(isRevenue), [filtered])
+  const prevRevenueOrders = useMemo(() => prevPeriodOrders.filter(isRevenue), [prevPeriodOrders])
+
+  const totalRevenue = revenueOrders.reduce((s, o) => s + o.total, 0)
+  const prevRevenue = prevRevenueOrders.reduce((s, o) => s + o.total, 0)
   const pending = filtered.filter(o => o.status === 'pending').length
   const prevPending = prevPeriodOrders.filter(o => o.status === 'pending').length
-  const paidCount = filtered.filter(o => o.status === 'paid' || o.status === 'shipped').length
-  const prevPaid = prevPeriodOrders.filter(o => o.status === 'paid' || o.status === 'shipped').length
-  const avgOrder = filtered.length > 0 ? totalRevenue / filtered.length : 0
+  const paidCount = revenueOrders.length
+  const prevPaid = prevRevenueOrders.length
+  const avgOrder = revenueOrders.length > 0 ? totalRevenue / revenueOrders.length : 0
 
-  // Rankings
+  // Rankings — sobre órdenes con ingreso real.
   const productRanking = useMemo(() => {
     const map: Record<string, { name: string; revenue: number; qty: number }> = {}
-    filtered.forEach(o => o.items.forEach(it => {
+    revenueOrders.forEach(o => o.items.forEach(it => {
       if (!map[it.productId]) map[it.productId] = { name: it.productName, revenue: 0, qty: 0 }
       map[it.productId].revenue += it.pricePaid * it.quantity
       map[it.productId].qty += it.quantity
     }))
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
       .map(p => ({ label: p.name, sub: `${p.qty} vendidos`, value: fmt(p.revenue) }))
-  }, [filtered])
+  }, [revenueOrders])
 
   const customerRanking = useMemo(() => {
     const map: Record<string, { name: string; revenue: number; count: number }> = {}
-    filtered.forEach(o => {
+    revenueOrders.forEach(o => {
       const k = o.customerEmail
       if (!map[k]) map[k] = { name: o.customerName, revenue: 0, count: 0 }
       map[k].revenue += o.total
@@ -237,14 +289,14 @@ export default function AdminDashboard() {
     })
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
       .map(c => ({ label: c.name, sub: `${c.count} órdenes`, value: fmt(c.revenue) }))
-  }, [filtered])
+  }, [revenueOrders])
 
   const categoryRanking = useMemo(() => {
     const prodCatMap: Record<string, string> = {}
     products.forEach(p => { prodCatMap[p.id] = p.categoryId })
 
     const map: Record<string, { catName: string; revenue: number; qty: number }> = {}
-    filtered.forEach(o => o.items.forEach(it => {
+    revenueOrders.forEach(o => o.items.forEach(it => {
       const catId   = prodCatMap[it.productId] ?? 'otros'
       const catName = categories.find(c => c.id === catId)?.name ?? catId
       if (!map[catId]) map[catId] = { catName, revenue: 0, qty: 0 }
@@ -253,7 +305,7 @@ export default function AdminDashboard() {
     }))
     return Object.values(map).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
       .map(v => ({ label: v.catName, sub: `${v.qty} unidades`, value: fmt(v.revenue) }))
-  }, [filtered, products, categories])
+  }, [revenueOrders, products, categories])
 
   const recent = [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 8)
   const dateStr = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -362,9 +414,10 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* Monthly chart */}
-      <div style={{ padding: '24px 40px 0' }}>
+      {/* Monthly chart + inventario */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16, padding: '24px 40px 0' }}>
         <MonthlyChart orders={orders} />
+        <InventoryPanel products={products} />
       </div>
 
       {/* Rankings */}

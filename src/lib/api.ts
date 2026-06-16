@@ -3,6 +3,18 @@
 
 const API_URL = process.env.API_URL ?? 'http://localhost:5066'
 
+// Clave compartida con el backend para endpoints administrativos.
+// Debe coincidir con AdminApiKey del backend. Vacía en dev = sin exigencia.
+const ADMIN_KEY = process.env.BACKEND_ADMIN_KEY ?? ''
+
+// Headers para llamadas administrativas (mutaciones y lecturas privadas).
+function adminHeaders(json = false): Record<string, string> {
+  const h: Record<string, string> = {}
+  if (json) h['Content-Type'] = 'application/json'
+  if (ADMIN_KEY) h['X-Admin-Key'] = ADMIN_KEY
+  return h
+}
+
 export interface ApiComment {
   id: string
   productId: string
@@ -43,7 +55,9 @@ export interface CreateOrderInput {
   address?: string
   city?: string
   notes?: string
-  items: { productId: string; productName: string; pricePaid: number; quantity: number }[]
+  // El backend recalcula precio y nombre desde la DB; solo importan productId y quantity.
+  items: { productId: string; productName?: string; pricePaid?: number; quantity: number }[]
+  status?: string
 }
 
 export async function getComments(productId: string): Promise<ApiComment[]> {
@@ -73,7 +87,7 @@ export async function createComment(dto: {
 
 export async function getAllOrders(): Promise<ApiOrder[]> {
   try {
-    const res = await fetch(`${API_URL}/api/orders`)
+    const res = await fetch(`${API_URL}/api/orders`, { headers: adminHeaders(), cache: 'no-store' })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }
@@ -81,26 +95,28 @@ export async function getAllOrders(): Promise<ApiOrder[]> {
 
 export async function getOrder(id: string): Promise<ApiOrder | null> {
   try {
-    const res = await fetch(`${API_URL}/api/orders/${id}`)
+    const res = await fetch(`${API_URL}/api/orders/${id}`, { headers: adminHeaders() })
     if (!res.ok) return null
     return res.json()
   } catch { return null }
 }
 
-export async function updateOrderStatus(id: string, status: string): Promise<boolean> {
+export async function updateOrderStatus(id: string, status: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch(`${API_URL}/api/orders/${id}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminHeaders(true),
       body: JSON.stringify({ status }),
     })
-    return res.ok
-  } catch { return false }
+    if (res.ok) return { ok: true }
+    const data = await res.json().catch(() => null)
+    return { ok: false, error: typeof data === 'string' ? data : (data?.error ?? 'Error al actualizar estado') }
+  } catch { return { ok: false, error: 'Error de conexión' } }
 }
 
 export async function getAllComments(): Promise<ApiComment[]> {
   try {
-    const res = await fetch(`${API_URL}/api/comments`)
+    const res = await fetch(`${API_URL}/api/comments`, { headers: adminHeaders(), cache: 'no-store' })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }
@@ -108,7 +124,7 @@ export async function getAllComments(): Promise<ApiComment[]> {
 
 export async function deleteComment(id: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API_URL}/api/comments/${id}`, { method: 'DELETE' })
+    const res = await fetch(`${API_URL}/api/comments/${id}`, { method: 'DELETE', headers: adminHeaders() })
     return res.ok
   } catch { return false }
 }
@@ -139,6 +155,7 @@ export interface ApiProduct {
   rating: number
   reviews: number
   imageUrl?: string
+  stock: number
   createdAt: string
   updatedAt: string
 }
@@ -152,6 +169,7 @@ export interface GetProductsParams {
   minPrice?: number
   maxPrice?: number
   sortBy?: 'price-asc' | 'price-desc' | 'newest' | 'rating' | 'name'
+  includeInactive?: boolean
 }
 
 export async function getProducts(params?: GetProductsParams): Promise<ApiProduct[]> {
@@ -165,6 +183,7 @@ export async function getProducts(params?: GetProductsParams): Promise<ApiProduc
     if (params?.minPrice != null)     qs.set('minPrice',   String(params.minPrice))
     if (params?.maxPrice != null)     qs.set('maxPrice',   String(params.maxPrice))
     if (params?.sortBy)               qs.set('sortBy',     params.sortBy)
+    if (params?.includeInactive)      qs.set('includeInactive', 'true')
     const res = await fetch(`${API_URL}/api/products?${qs}`, { cache: 'no-store' })
     if (!res.ok) return []
     return res.json()
@@ -181,11 +200,16 @@ export async function getProduct(id: string): Promise<ApiProduct | null> {
   } catch { return null }
 }
 
-export async function getCategories(): Promise<ApiCategory[]> {
+export async function getCategories(opts?: { includeInactive?: boolean }): Promise<ApiCategory[]> {
   try {
-    const res = await fetch(`${API_URL}/api/categories`, {
-      next: { revalidate: 60, tags: ['categories'] },
-    })
+    // El panel admin pide includeInactive=true (sin cache) para poder reactivar
+    // categorías desactivadas; el catálogo público usa la versión cacheada.
+    const url = opts?.includeInactive
+      ? `${API_URL}/api/categories?includeInactive=true`
+      : `${API_URL}/api/categories`
+    const res = await fetch(url, opts?.includeInactive
+      ? { cache: 'no-store' }
+      : { next: { revalidate: 60, tags: ['categories'] } })
     if (!res.ok) return []
     return res.json()
   } catch { return [] }
@@ -194,33 +218,38 @@ export async function getCategories(): Promise<ApiCategory[]> {
 export async function createProduct(dto: unknown): Promise<{ ok: boolean; data: unknown }> {
   try {
     const res = await fetch(`${API_URL}/api/products`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: adminHeaders(true),
       body: JSON.stringify(dto),
     })
     return { ok: res.ok, data: await res.json() }
   } catch { return { ok: false, data: { error: 'Error de conexión' } } }
 }
 
-export async function updateProduct(id: string, dto: unknown): Promise<boolean> {
+export async function updateProduct(id: string, dto: unknown): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch(`${API_URL}/api/products/${id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: adminHeaders(true),
       body: JSON.stringify(dto),
     })
-    return res.ok
-  } catch { return false }
+    if (res.ok) return { ok: true }
+    const data = await res.json().catch(() => null)
+    return { ok: false, error: typeof data === 'string' ? data : (data?.error ?? data?.title ?? 'Error al actualizar') }
+  } catch { return { ok: false, error: 'Error de conexión' } }
 }
 
-export async function deleteProduct(id: string): Promise<boolean> {
+export async function deleteProduct(id: string): Promise<{ ok: boolean; softDeleted?: boolean; message?: string }> {
   try {
-    return (await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE' })).ok
-  } catch { return false }
+    const res = await fetch(`${API_URL}/api/products/${id}`, { method: 'DELETE', headers: adminHeaders() })
+    if (!res.ok) return { ok: false }
+    const data = await res.json().catch(() => ({}))
+    return { ok: true, softDeleted: data?.softDeleted, message: data?.message }
+  } catch { return { ok: false } }
 }
 
 export async function createCategory(dto: unknown): Promise<{ ok: boolean; data: unknown }> {
   try {
     const res = await fetch(`${API_URL}/api/categories`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: adminHeaders(true),
       body: JSON.stringify(dto),
     })
     return { ok: res.ok, data: await res.json() }
@@ -230,7 +259,7 @@ export async function createCategory(dto: unknown): Promise<{ ok: boolean; data:
 export async function updateCategory(id: string, dto: unknown): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/api/categories/${id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: adminHeaders(true),
       body: JSON.stringify(dto),
     })
     return res.ok
@@ -239,18 +268,24 @@ export async function updateCategory(id: string, dto: unknown): Promise<boolean>
 
 export async function deleteCategory(id: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const res = await fetch(`${API_URL}/api/categories/${id}`, { method: 'DELETE' })
+    const res = await fetch(`${API_URL}/api/categories/${id}`, { method: 'DELETE', headers: adminHeaders() })
     if (res.ok) return { ok: true }
     const data = await res.json().catch(() => ({}))
     return { ok: false, error: data || 'Error al eliminar' }
   } catch { return { ok: false, error: 'Error de conexión' } }
 }
 
-export async function createOrder(dto: CreateOrderInput): Promise<{ ok: boolean; data: ApiOrder | { error: string } }> {
+// `admin: true` adjunta la X-Admin-Key para que el backend acepte fijar el estado
+// inicial (ventas manuales del panel). El checkout público llama SIN admin: el
+// backend ignora cualquier `status` que venga y la orden nace "pending".
+export async function createOrder(
+  dto: CreateOrderInput,
+  opts?: { admin?: boolean },
+): Promise<{ ok: boolean; data: ApiOrder | { error: string } }> {
   try {
     const res = await fetch(`${API_URL}/api/orders`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: opts?.admin ? adminHeaders(true) : { 'Content-Type': 'application/json' },
       body: JSON.stringify(dto),
     })
     const data = await res.json()

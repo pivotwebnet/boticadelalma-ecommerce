@@ -1,3 +1,4 @@
+using BoticaDelAlma.API.Attributes;
 using BoticaDelAlma.API.Data;
 using BoticaDelAlma.API.DTOs;
 using BoticaDelAlma.API.Models;
@@ -11,6 +12,7 @@ namespace BoticaDelAlma.API.Controllers;
 public class CommentsController(BoticaDbContext db) : ControllerBase
 {
     [HttpGet]
+    [RequireAdminKey]
     public async Task<IActionResult> GetAll()
     {
         var comments = await db.Comments
@@ -39,9 +41,20 @@ public class CommentsController(BoticaDbContext db) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCommentDto dto)
     {
-        var orderExists = await db.Orders.AnyAsync(o => o.Id == dto.OrderId);
-        if (!orderExists)
+        var order = await db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == dto.OrderId);
+
+        if (order is null)
             return BadRequest("La orden no existe.");
+
+        // No se puede reseñar una orden cancelada.
+        if (order.Status == "cancelled")
+            return BadRequest("No se puede reseñar una orden cancelada.");
+
+        // El producto debe pertenecer realmente a esa orden.
+        if (!order.Items.Any(i => i.ProductId == dto.ProductId))
+            return BadRequest("Este producto no pertenece a la orden indicada.");
 
         var alreadyCommented = await db.Comments
             .AnyAsync(c => c.OrderId == dto.OrderId && c.ProductId == dto.ProductId);
@@ -53,7 +66,8 @@ public class CommentsController(BoticaDbContext db) : ControllerBase
         {
             ProductId = dto.ProductId,
             OrderId = dto.OrderId,
-            Author = dto.Author,
+            // El autor se toma del cliente real de la orden (anti-suplantación).
+            Author = order.CustomerName,
             Text = dto.Text,
             Rating = dto.Rating
         };
@@ -69,6 +83,7 @@ public class CommentsController(BoticaDbContext db) : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [RequireAdminKey]
     public async Task<IActionResult> Delete(Guid id)
     {
         var comment = await db.Comments.FindAsync(id);

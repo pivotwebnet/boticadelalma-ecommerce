@@ -17,6 +17,7 @@ public record ProductResponseDto(
     decimal Rating,
     int Reviews,
     string? ImageUrl,
+    int Stock,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -31,7 +32,8 @@ public record CreateProductDto(
     string? Label,
     string[]? Tags,
     bool IsNew,
-    string? ImageUrl
+    string? ImageUrl,
+    int Stock
 );
 
 public record UpdateProductDto(
@@ -44,7 +46,8 @@ public record UpdateProductDto(
     string[]? Tags,
     string? ImageUrl,
     bool? IsNew,
-    bool? IsActive
+    bool? IsActive,
+    int? Stock
 );
 
 public record CategoryResponseDto(

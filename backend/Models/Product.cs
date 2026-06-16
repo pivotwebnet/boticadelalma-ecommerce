@@ -31,6 +31,9 @@ public class Product
     public bool IsNew { get; set; }
     public bool IsActive { get; set; } = true;
 
+    // Stock disponible. Joyería artesanal: muchas piezas son limitadas/únicas.
+    public int Stock { get; set; } = 10;
+
     public decimal Rating { get; set; }
     public int Reviews { get; set; }
 

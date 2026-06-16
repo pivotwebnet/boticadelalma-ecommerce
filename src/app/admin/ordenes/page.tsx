@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { ApiOrder } from '@/lib/api'
+import { useEffect, useState, useCallback } from 'react'
+import { ApiOrder, ApiProduct } from '@/lib/api'
 
 function fmt(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
@@ -22,6 +22,18 @@ const STATUS_COLOR: Record<string, { bg: string; color: string }> = {
   paid:      { bg: 'rgba(155,174,136,.15)', color: '#9bae88' },
   shipped:   { bg: 'rgba(102,134,231,.15)', color: '#6686e7' },
   cancelled: { bg: 'rgba(169,74,60,.15)',   color: '#e06557' },
+}
+
+// Máquina de estados (igual que el backend): a qué estados se puede pasar.
+const NEXT_STATUS: Record<string, string[]> = {
+  pending:   ['paid', 'cancelled'],
+  paid:      ['shipped', 'cancelled'],
+  shipped:   [],
+  cancelled: [],
+}
+
+function fmtMoney(n: number) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -46,10 +58,15 @@ function OrderDrawer({ order, onClose, onStatusChange }: {
   const [status, setStatus] = useState(order.status)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState('')
+
+  const allowedNext = NEXT_STATUS[order.status] ?? []
+  const isFinal = allowedNext.length === 0
 
   const handleSave = async () => {
     if (status === order.status) return
     setSaving(true)
+    setErr('')
     const res = await fetch(`/api/admin/orders/${order.id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -60,6 +77,9 @@ function OrderDrawer({ order, onClose, onStatusChange }: {
       setSaved(true)
       onStatusChange(order.id, status)
       setTimeout(() => setSaved(false), 2000)
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setErr(d?.error ?? 'No se pudo actualizar el estado.')
     }
   }
 
@@ -102,28 +122,46 @@ function OrderDrawer({ order, onClose, onStatusChange }: {
             <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-soft)', marginBottom: 12 }}>
               Estado
             </div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-              {(['pending', 'paid', 'shipped', 'cancelled'] as const).map(s => (
-                <button key={s} onClick={() => setStatus(s)} style={{
-                  padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500,
-                  border: status === s ? 'none' : '1px solid var(--line)',
-                  background: status === s ? (STATUS_COLOR[s]?.bg ?? 'var(--surface-2)') : 'transparent',
-                  color: status === s ? (STATUS_COLOR[s]?.color ?? 'var(--fg)') : 'var(--fg-muted)',
-                  cursor: 'pointer', transition: 'all .15s',
-                }}>
-                  {STATUS_LABEL[s]}
-                </button>
-              ))}
+            <div style={{ marginBottom: 12, fontSize: 12, color: 'var(--fg-muted)' }}>
+              Actual: <StatusBadge status={order.status} />
             </div>
-            <button onClick={handleSave} disabled={saving || status === order.status} style={{
-              padding: '8px 20px', borderRadius: 999, fontSize: 13, fontWeight: 500,
-              background: saved ? 'rgba(155,174,136,.2)' : 'var(--brand-orange)',
-              color: saved ? '#9bae88' : '#fff',
-              border: 'none', cursor: saving || status === order.status ? 'not-allowed' : 'pointer',
-              opacity: status === order.status ? 0.4 : 1, transition: 'all .2s',
-            }}>
-              {saving ? 'Guardando…' : saved ? '✓ Guardado' : 'Guardar cambio'}
-            </button>
+            {isFinal ? (
+              <div style={{ fontSize: 12.5, color: 'var(--fg-soft)', padding: '10px 14px', background: 'var(--surface-2)', borderRadius: 8 }}>
+                {order.status === 'shipped'
+                  ? 'La orden fue enviada. Es un estado final.'
+                  : 'La orden está cancelada. Es un estado final.'}
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                  {allowedNext.map(s => (
+                    <button key={s} onClick={() => setStatus(s)} style={{
+                      padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+                      border: status === s ? 'none' : '1px solid var(--line)',
+                      background: status === s ? (STATUS_COLOR[s]?.bg ?? 'var(--surface-2)') : 'transparent',
+                      color: status === s ? (STATUS_COLOR[s]?.color ?? 'var(--fg)') : 'var(--fg-muted)',
+                      cursor: 'pointer', transition: 'all .15s',
+                    }}>
+                      {STATUS_LABEL[s]}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={handleSave} disabled={saving || status === order.status} style={{
+                  padding: '8px 20px', borderRadius: 999, fontSize: 13, fontWeight: 500,
+                  background: saved ? 'rgba(155,174,136,.2)' : 'var(--brand-orange)',
+                  color: saved ? '#9bae88' : '#fff',
+                  border: 'none', cursor: saving || status === order.status ? 'not-allowed' : 'pointer',
+                  opacity: status === order.status ? 0.4 : 1, transition: 'all .2s',
+                }}>
+                  {saving ? 'Guardando…' : saved ? '✓ Guardado' : 'Guardar cambio'}
+                </button>
+              </>
+            )}
+            {err && (
+              <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(224,101,87,.12)', border: '1px solid rgba(224,101,87,.3)', borderRadius: 7, fontSize: 12.5, color: '#e06557' }}>
+                {err}
+              </div>
+            )}
           </section>
 
           {/* Cliente */}
@@ -206,13 +244,16 @@ export default function OrdenesPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<string>('all')
   const [selected, setSelected] = useState<ApiOrder | null>(null)
+  const [showNew, setShowNew] = useState(false)
 
-  useEffect(() => {
-    fetch('/api/admin/orders')
-      .then(r => r.json())
-      .then(setOrders)
-      .finally(() => setLoading(false))
+  const load = useCallback(async () => {
+    setLoading(true)
+    const data = await fetch('/api/admin/orders').then(r => r.json()).catch(() => [])
+    setOrders(Array.isArray(data) ? data : [])
+    setLoading(false)
   }, [])
+
+  useEffect(() => { load() }, [load])
 
   const handleStatusChange = (id: string, status: string) => {
     setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o))
@@ -232,16 +273,25 @@ export default function OrdenesPage() {
         padding: '32px 40px 24px',
         borderBottom: '1px solid var(--line)',
         position: 'relative',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
       }}>
-        <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
-          Gestión
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+            Gestión
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, margin: 0, color: 'var(--fg)' }}>
+            Órdenes
+          </h1>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>
+            {orders.length} órdenes en total
+          </p>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, margin: 0, color: 'var(--fg)' }}>
-          Órdenes
-        </h1>
-        <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>
-          {orders.length} órdenes en total
-        </p>
+        <button onClick={() => setShowNew(true)} style={{
+          padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+          background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: 'pointer',
+        }}>
+          + Nueva venta manual
+        </button>
         <div style={{
           position: 'absolute', bottom: -1, left: 0, right: 0, height: 1,
           background: 'linear-gradient(90deg, transparent, var(--gold), transparent)',
@@ -342,6 +392,177 @@ export default function OrdenesPage() {
           onStatusChange={handleStatusChange}
         />
       )}
+
+      {showNew && (
+        <NewOrderModal
+          onClose={() => setShowNew(false)}
+          onCreated={() => { setShowNew(false); load() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Modal de carga de venta manual ──────────────────────────────────────────
+type NewItem = { productId: string; quantity: number }
+
+function NewOrderModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [products, setProducts] = useState<ApiProduct[]>([])
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [city, setCity] = useState('')
+  const [notes, setNotes] = useState('')
+  const [status, setStatus] = useState('paid')
+  const [items, setItems] = useState<NewItem[]>([])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const loadProducts = useCallback(async () => {
+    const data = await fetch('/api/admin/products').then(r => r.json()).catch(() => [])
+    setProducts(Array.isArray(data) ? data : [])
+  }, [])
+  useEffect(() => { loadProducts() }, [loadProducts])
+
+  const addItem = () => setItems(prev => [...prev, { productId: '', quantity: 1 }])
+  const updItem = (i: number, patch: Partial<NewItem>) =>
+    setItems(prev => prev.map((it, idx) => idx === i ? { ...it, ...patch } : it))
+  const delItem = (i: number) => setItems(prev => prev.filter((_, idx) => idx !== i))
+
+  const total = items.reduce((s, it) => {
+    const p = products.find(pr => pr.id === it.productId)
+    return s + (p ? p.price * it.quantity : 0)
+  }, 0)
+
+  async function handleSubmit() {
+    setError('')
+    if (!name.trim() || !email.trim()) { setError('Nombre y email del cliente son obligatorios.'); return }
+    const valid = items.filter(it => it.productId && it.quantity > 0)
+    if (valid.length === 0) { setError('Agregá al menos un producto.'); return }
+
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/orders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: name.trim(), customerEmail: email.trim(),
+          customerPhone: phone.trim() || undefined, city: city.trim() || undefined,
+          notes: notes.trim() || undefined, status,
+          items: valid.map(it => ({ productId: it.productId, quantity: it.quantity })),
+        }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setError(d?.error ?? 'No se pudo crear la orden.')
+        return
+      }
+      onCreated()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fieldStyle: React.CSSProperties = {
+    background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 7,
+    padding: '8px 12px', fontSize: 13, color: 'var(--fg)', outline: 'none', width: '100%', boxSizing: 'border-box',
+  }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 10000,
+      background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+    }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{
+        background: 'var(--surface)', border: '1px solid var(--line)',
+        borderRadius: 14, width: '100%', maxWidth: 620, maxHeight: '90vh', overflow: 'auto', padding: 32,
+      }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 24, fontWeight: 500, color: 'var(--fg)', marginBottom: 6 }}>
+          Nueva venta manual
+        </div>
+        <p style={{ fontSize: 12.5, color: 'var(--fg-muted)', margin: '0 0 22px' }}>
+          Para ventas por WhatsApp o presenciales. Los precios se toman del catálogo y se descuenta stock.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+          <input placeholder="Nombre del cliente *" value={name} onChange={e => setName(e.target.value)} style={fieldStyle} />
+          <input placeholder="Email *" value={email} onChange={e => setEmail(e.target.value)} style={fieldStyle} />
+          <input placeholder="Teléfono" value={phone} onChange={e => setPhone(e.target.value)} style={fieldStyle} />
+          <input placeholder="Ciudad" value={city} onChange={e => setCity(e.target.value)} style={fieldStyle} />
+        </div>
+
+        <textarea placeholder="Notas (opcional)" value={notes} onChange={e => setNotes(e.target.value)} rows={2}
+          style={{ ...fieldStyle, marginBottom: 18, resize: 'vertical', fontFamily: 'inherit' }} />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>Productos</span>
+          <button onClick={addItem} style={{
+            padding: '5px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+            background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
+          }}>+ Agregar</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
+          {items.length === 0 && (
+            <div style={{ fontSize: 12.5, color: 'var(--fg-soft)', padding: '10px 0' }}>Todavía no agregaste productos.</div>
+          )}
+          {items.map((it, i) => {
+            const p = products.find(pr => pr.id === it.productId)
+            return (
+              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <select value={it.productId} onChange={e => updItem(i, { productId: e.target.value })}
+                  style={{ ...fieldStyle, flex: 1, cursor: 'pointer' }}>
+                  <option value="">— Producto —</option>
+                  {products.filter(pr => pr.isActive).map(pr => (
+                    <option key={pr.id} value={pr.id} disabled={pr.stock === 0}>
+                      {pr.name} · {fmtMoney(pr.price)} {pr.stock === 0 ? '(agotado)' : `(stock ${pr.stock})`}
+                    </option>
+                  ))}
+                </select>
+                <input type="number" min={1} max={p?.stock ?? 99} value={it.quantity}
+                  onChange={e => updItem(i, { quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                  style={{ ...fieldStyle, width: 70 }} />
+                <button onClick={() => delItem(i)} style={{
+                  width: 32, height: 32, borderRadius: 6, flexShrink: 0,
+                  border: '1px solid rgba(224,101,87,.3)', background: 'transparent', color: '#e06557', cursor: 'pointer',
+                }}>×</button>
+              </div>
+            )
+          })}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+          <span style={{ fontSize: 12, color: 'var(--fg-soft)' }}>Estado inicial:</span>
+          {(['pending', 'paid'] as const).map(s => (
+            <button key={s} onClick={() => setStatus(s)} style={{
+              padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 500,
+              border: status === s ? 'none' : '1px solid var(--line)',
+              background: status === s ? (STATUS_COLOR[s]?.bg ?? 'var(--surface-2)') : 'transparent',
+              color: status === s ? (STATUS_COLOR[s]?.color ?? 'var(--fg)') : 'var(--fg-muted)',
+              cursor: 'pointer',
+            }}>{STATUS_LABEL[s]}</button>
+          ))}
+          <span style={{ marginLeft: 'auto', fontSize: 15, fontWeight: 600, color: 'var(--brand-orange)', fontFamily: 'var(--font-serif)' }}>
+            Total: {fmtMoney(total)}
+          </span>
+        </div>
+
+        {error && (
+          <div style={{ padding: '10px 14px', background: 'rgba(224,101,87,.12)', border: '1px solid rgba(224,101,87,.3)', borderRadius: 7, fontSize: 13, color: '#e06557', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{
+            padding: '9px 20px', borderRadius: 7, fontSize: 13, fontWeight: 500,
+            background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
+          }}>Cancelar</button>
+          <button onClick={handleSubmit} disabled={saving} style={{
+            padding: '9px 24px', borderRadius: 7, fontSize: 13, fontWeight: 600,
+            background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1,
+          }}>{saving ? 'Creando…' : 'Crear venta'}</button>
+        </div>
+      </div>
     </div>
   )
 }

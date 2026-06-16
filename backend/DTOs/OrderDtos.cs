@@ -9,12 +9,16 @@ public record CreateOrderDto(
     string? Address,
     string? City,
     string? Notes,
-    [Required, MinLength(1)] List<CreateOrderItemDto> Items
+    [Required, MinLength(1)] List<CreateOrderItemDto> Items,
+    // Opcional: solo lo usa el panel para cargar ventas manuales ya cobradas.
+    string? Status = null
 );
 
 public record CreateOrderItemDto(
     [Required] string ProductId,
-    [Required] string ProductName,
+    // ProductName y PricePaid los IGNORA el backend: se toman del producto real
+    // en la base de datos para evitar manipulación de precios desde el cliente.
+    string? ProductName,
     int PricePaid,
     [Range(1, 100)] int Quantity
 );

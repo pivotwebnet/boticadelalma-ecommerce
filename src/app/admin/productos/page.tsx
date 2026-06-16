@@ -20,11 +20,12 @@ const TONES = [
 
 type FormState = {
   id: string; name: string; categoryId: string; price: string; originalPrice: string
+  stock: string
   tone: string; label: string; tags: string; imageUrl: string; isNew: boolean; isActive: boolean
 }
 
 const EMPTY_FORM: FormState = {
-  id: '', name: '', categoryId: '', price: '', originalPrice: '',
+  id: '', name: '', categoryId: '', price: '', originalPrice: '', stock: '0',
   tone: 'stone', label: '', tags: '', imageUrl: '', isNew: false, isActive: true,
 }
 
@@ -32,11 +33,22 @@ function productToForm(p: ApiProduct): FormState {
   return {
     id: p.id, name: p.name, categoryId: p.categoryId,
     price: String(p.price), originalPrice: p.originalPrice ? String(p.originalPrice) : '',
+    stock: String(p.stock ?? 0),
     tone: p.tone, label: p.label, tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
     imageUrl: p.imageUrl ?? '',
     isNew: p.isNew, isActive: p.isActive,
   }
 }
+
+// Devuelve un entero >= 0 o null si el texto no es un entero válido.
+function parsePositiveInt(s: string): number | null {
+  const n = Number(s)
+  if (!Number.isInteger(n) || n < 0) return null
+  return n
+}
+
+// Slug válido: minúsculas, números y guiones.
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 function Input({ label, value, onChange, type = 'text', disabled = false }: {
   label: string; value: string; onChange: (v: string) => void; type?: string; disabled?: boolean
@@ -114,6 +126,7 @@ export default function ProductosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -157,13 +170,40 @@ export default function ProductosPage() {
       setError('ID, nombre, categoría y precio son obligatorios.')
       return
     }
+    if (modal === 'create' && !SLUG_RE.test(form.id.trim())) {
+      setError('El ID debe ser un slug: solo minúsculas, números y guiones (ej: "anillo-luna").')
+      return
+    }
+    const price = parsePositiveInt(form.price.trim())
+    if (price === null) {
+      setError('El precio debe ser un número entero (sin decimales).')
+      return
+    }
+    let originalPrice: number | null = null
+    if (form.originalPrice.trim()) {
+      originalPrice = parsePositiveInt(form.originalPrice.trim())
+      if (originalPrice === null) {
+        setError('El precio original debe ser un número entero.')
+        return
+      }
+      if (originalPrice <= price) {
+        setError('El precio original (tachado) debe ser mayor que el precio actual.')
+        return
+      }
+    }
+    const stock = parsePositiveInt(form.stock.trim() || '0')
+    if (stock === null) {
+      setError('El stock debe ser un número entero igual o mayor a 0.')
+      return
+    }
     setSaving(true)
     const body = {
       id: form.id.trim(),
       name: form.name.trim(),
       categoryId: form.categoryId,
-      price: parseInt(form.price) || 0,
-      originalPrice: form.originalPrice ? parseInt(form.originalPrice) : null,
+      price,
+      originalPrice,
+      stock,
       tone: form.tone,
       label: form.label.trim(),
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -187,7 +227,11 @@ export default function ProductosPage() {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         })
-        if (!res.ok) { setError('Error al actualizar producto.'); return }
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}))
+          setError(d?.error ?? 'Error al actualizar producto.')
+          return
+        }
       }
       closeModal()
       await load()
@@ -199,8 +243,13 @@ export default function ProductosPage() {
   async function handleDelete() {
     if (!deleteId) return
     setDeleting(true)
+    setNotice('')
     try {
-      await fetch(`/api/admin/products/${deleteId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/admin/products/${deleteId}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok && data?.softDeleted) {
+        setNotice(data.message ?? 'El producto tiene ventas registradas: se desactivó en lugar de eliminarse.')
+      }
       setDeleteId(null)
       await load()
     } finally {
@@ -249,6 +298,13 @@ export default function ProductosPage() {
         <span style={{ fontSize: 12, color: 'var(--fg-soft)', marginLeft: 'auto' }}>{filtered.length} resultados</span>
       </div>
 
+      {notice && (
+        <div style={{ margin: '0 40px 8px', padding: '10px 14px', background: 'rgba(201,161,122,.12)', border: '1px solid rgba(201,161,122,.3)', borderRadius: 8, fontSize: 13, color: '#c9a17a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{notice}</span>
+          <button onClick={() => setNotice('')} style={{ background: 'none', border: 'none', color: 'var(--fg-soft)', cursor: 'pointer', fontSize: 16 }}>×</button>
+        </div>
+      )}
+
       {/* Table */}
       <div style={{ padding: '0 40px 40px' }}>
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
@@ -260,7 +316,7 @@ export default function ProductosPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['ID', 'Nombre', 'Categoría', 'Precio', 'Etiqueta', 'Estado', 'Acciones'].map(h => (
+                  {['ID', 'Nombre', 'Categoría', 'Precio', 'Stock', 'Etiqueta', 'Estado', 'Acciones'].map(h => (
                     <th key={h} style={{
                       textAlign: 'left', padding: '12px 16px',
                       fontSize: 10.5, letterSpacing: '0.1em', textTransform: 'uppercase',
@@ -285,6 +341,9 @@ export default function ProductosPage() {
                       {p.originalPrice && (
                         <div style={{ fontSize: 11, color: 'var(--fg-soft)', textDecoration: 'line-through' }}>{fmt(p.originalPrice)}</div>
                       )}
+                    </td>
+                    <td style={{ padding: '13px 16px', fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: p.stock === 0 ? '#e06557' : p.stock <= 3 ? '#c9a17a' : 'var(--fg)' }}>
+                      {p.stock === 0 ? 'Agotado' : p.stock}
                     </td>
                     <td style={{ padding: '13px 16px', fontSize: 12, color: 'var(--fg-muted)' }}>{p.label}</td>
                     <td style={{ padding: '13px 16px' }}>
@@ -344,7 +403,8 @@ export default function ProductosPage() {
               <Select label="Tono de color" value={form.tone} onChange={v => setF('tone', v)}
                 options={TONES.map(t => ({ value: t.value, label: t.label }))} />
               <Input label="Precio (ARS)" value={form.price} onChange={v => setF('price', v)} type="number" />
-              <Input label="Precio original (opcional)" value={form.originalPrice} onChange={v => setF('originalPrice', v)} type="number" />
+              <Input label="Precio original (opcional, debe ser mayor)" value={form.originalPrice} onChange={v => setF('originalPrice', v)} type="number" />
+              <Input label="Stock disponible" value={form.stock} onChange={v => setF('stock', v)} type="number" />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>

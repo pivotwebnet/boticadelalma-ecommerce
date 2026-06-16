@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+using BoticaDelAlma.API.Attributes;
 using BoticaDelAlma.API.Data;
 using BoticaDelAlma.API.DTOs;
 using BoticaDelAlma.API.Models;
@@ -8,8 +10,11 @@ namespace BoticaDelAlma.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CategoriesController(BoticaDbContext db) : ControllerBase
+public partial class CategoriesController(BoticaDbContext db) : ControllerBase
 {
+    [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
+    private static partial Regex SlugRegex();
+
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] bool includeInactive = false)
     {
@@ -30,8 +35,12 @@ public class CategoriesController(BoticaDbContext db) : ControllerBase
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
     {
+        if (!SlugRegex().IsMatch(dto.Id))
+            return BadRequest("El ID debe ser un slug: solo minúsculas, números y guiones (ej: 'piedras-naturales').");
+
         if (await db.Categories.AnyAsync(c => c.Id == dto.Id))
             return Conflict($"Ya existe una categoría con ID '{dto.Id}'.");
 
@@ -49,6 +58,7 @@ public class CategoriesController(BoticaDbContext db) : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [RequireAdminKey]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateCategoryDto dto)
     {
         var cat = await db.Categories.FindAsync(id);
@@ -64,6 +74,7 @@ public class CategoriesController(BoticaDbContext db) : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequireAdminKey]
     public async Task<IActionResult> Delete(string id)
     {
         var cat = await db.Categories.FindAsync(id);

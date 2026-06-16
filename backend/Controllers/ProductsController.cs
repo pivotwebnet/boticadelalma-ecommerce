@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using BoticaDelAlma.API.Attributes;
 using BoticaDelAlma.API.Data;
 using BoticaDelAlma.API.DTOs;
 using BoticaDelAlma.API.Models;
@@ -9,8 +11,12 @@ namespace BoticaDelAlma.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController(BoticaDbContext db) : ControllerBase
+public partial class ProductsController(BoticaDbContext db) : ControllerBase
 {
+    // slug: minúsculas, números y guiones (sin espacios ni acentos).
+    [GeneratedRegex("^[a-z0-9]+(?:-[a-z0-9]+)*$")]
+    private static partial Regex SlugRegex();
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] string? categoryId,
@@ -20,12 +26,16 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
         [FromQuery] bool?   isNew,
         [FromQuery] int?    minPrice,
         [FromQuery] int?    maxPrice,
-        [FromQuery] string? sortBy)
+        [FromQuery] string? sortBy,
+        [FromQuery] bool    includeInactive = false)
     {
         var q = db.Products
             .Include(p => p.Category)
-            .Where(p => p.IsActive)
             .AsQueryable();
+
+        // El catálogo público solo muestra activos; el panel admin pide includeInactive=true.
+        if (!includeInactive)
+            q = q.Where(p => p.IsActive);
 
         if (!string.IsNullOrEmpty(categoryId))
             q = q.Where(p => p.CategoryId == categoryId);
@@ -61,74 +71,58 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
         };
 
         var products = await q.ToListAsync();
-
-        var productIds = products.Select(p => p.Id).ToList();
-        var stats = await db.Comments
-            .Where(c => productIds.Contains(c.ProductId))
-            .GroupBy(c => c.ProductId)
-            .Select(g => new {
-                ProductId = g.Key,
-                Count = g.Count(),
-                Avg   = g.Average(c => (decimal)c.Rating)
-            })
-            .ToDictionaryAsync(x => x.ProductId, x => x);
-
-        return Ok(products.Select(p => {
-            var s = stats.GetValueOrDefault(p.Id);
-            return MapToDto(p, s?.Avg ?? 0, s?.Count ?? 0);
-        }));
+        return Ok(products.Select(MapToDto));
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    public async Task<IActionResult> GetById(string id, [FromQuery] bool includeInactive = false)
     {
         var p = await db.Products
             .Include(p => p.Category)
-            .FirstOrDefaultAsync(p => p.Id == id && p.IsActive);
+            .FirstOrDefaultAsync(p => p.Id == id && (includeInactive || p.IsActive));
 
         if (p is null) return NotFound();
-
-        var stats = await db.Comments
-            .Where(c => c.ProductId == id)
-            .GroupBy(c => c.ProductId)
-            .Select(g => new {
-                Count = g.Count(),
-                Avg   = g.Average(c => (decimal)c.Rating)
-            })
-            .FirstOrDefaultAsync();
-
-        return Ok(MapToDto(p, stats?.Avg ?? 0, stats?.Count ?? 0));
+        return Ok(MapToDto(p));
     }
 
     [HttpPost]
+    [RequireAdminKey]
     public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
+        if (!SlugRegex().IsMatch(dto.Id))
+            return BadRequest("El ID debe ser un slug: solo minúsculas, números y guiones (ej: 'anillo-luna').");
+
         if (!await db.Categories.AnyAsync(c => c.Id == dto.CategoryId))
             return BadRequest($"La categoría '{dto.CategoryId}' no existe.");
 
         if (await db.Products.AnyAsync(p => p.Id == dto.Id))
             return Conflict($"Ya existe un producto con ID '{dto.Id}'.");
 
+        var priceError = ValidatePricing(dto.Price, dto.OriginalPrice, dto.Stock);
+        if (priceError is not null) return BadRequest(priceError);
+
         var product = new Product
         {
-            Id          = dto.Id,
-            Name        = dto.Name,
-            CategoryId  = dto.CategoryId,
-            Price       = dto.Price,
+            Id            = dto.Id,
+            Name          = dto.Name,
+            CategoryId    = dto.CategoryId,
+            Price         = dto.Price,
             OriginalPrice = dto.OriginalPrice,
-            Tone        = dto.Tone ?? "sage",
-            Label       = dto.Label ?? string.Empty,
-            Tags        = JsonSerializer.Serialize(dto.Tags ?? []),
-            IsNew       = dto.IsNew,
-            ImageUrl    = dto.ImageUrl,
+            Tone          = dto.Tone ?? "sage",
+            Label         = dto.Label ?? string.Empty,
+            Tags          = JsonSerializer.Serialize(dto.Tags ?? []),
+            IsNew         = dto.IsNew,
+            ImageUrl      = dto.ImageUrl,
+            Stock         = dto.Stock,
         };
 
         db.Products.Add(product);
         await db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = product.Id }, MapToDto(product, 0, 0));
+        return CreatedAtAction(nameof(GetById), new { id = product.Id }, MapToDto(product));
     }
 
     [HttpPut("{id}")]
+    [RequireAdminKey]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateProductDto dto)
     {
         var product = await db.Products.FindAsync(id);
@@ -136,6 +130,13 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
 
         if (dto.CategoryId is not null && !await db.Categories.AnyAsync(c => c.Id == dto.CategoryId))
             return BadRequest($"La categoría '{dto.CategoryId}' no existe.");
+
+        // Valida la combinación final de precio/original/stock.
+        var finalPrice    = dto.Price ?? product.Price;
+        var finalOriginal = dto.OriginalPrice;
+        var finalStock    = dto.Stock ?? product.Stock;
+        var priceError    = ValidatePricing(finalPrice, finalOriginal, finalStock);
+        if (priceError is not null) return BadRequest(priceError);
 
         if (dto.Name        is not null) product.Name        = dto.Name;
         if (dto.CategoryId  is not null) product.CategoryId  = dto.CategoryId;
@@ -147,6 +148,7 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
         if (dto.ImageUrl    is not null) product.ImageUrl    = dto.ImageUrl == "" ? null : dto.ImageUrl;
         if (dto.IsNew.HasValue)          product.IsNew       = dto.IsNew.Value;
         if (dto.IsActive.HasValue)       product.IsActive    = dto.IsActive.Value;
+        if (dto.Stock.HasValue)          product.Stock       = dto.Stock.Value;
         product.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
@@ -154,16 +156,42 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [RequireAdminKey]
     public async Task<IActionResult> Delete(string id)
     {
         var product = await db.Products.FindAsync(id);
         if (product is null) return NotFound();
+
+        // Si el producto tiene historial de ventas, NO se borra (rompería las órdenes):
+        // se desactiva (soft-delete) para conservar el historial.
+        var hasOrderHistory = await db.OrderItems.AnyAsync(oi => oi.ProductId == id);
+        if (hasOrderHistory)
+        {
+            product.IsActive = false;
+            product.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Ok(new { softDeleted = true, message = "El producto tiene ventas registradas, se desactivó en lugar de eliminarse." });
+        }
+
+        // Sin historial: borrado real, limpiando sus reseñas huérfanas.
+        var comments = db.Comments.Where(c => c.ProductId == id);
+        db.Comments.RemoveRange(comments);
         db.Products.Remove(product);
         await db.SaveChangesAsync();
-        return NoContent();
+        return Ok(new { softDeleted = false });
     }
 
-    private static ProductResponseDto MapToDto(Product p, decimal avgRating, int reviewsCount)
+    // Devuelve un mensaje de error o null si la combinación es válida.
+    private static string? ValidatePricing(int price, int? originalPrice, int stock)
+    {
+        if (price < 0) return "El precio no puede ser negativo.";
+        if (stock < 0) return "El stock no puede ser negativo.";
+        if (originalPrice.HasValue && originalPrice.Value <= price)
+            return "El precio original (tachado) debe ser mayor que el precio actual.";
+        return null;
+    }
+
+    private static ProductResponseDto MapToDto(Product p)
     {
         string[] tags;
         try   { tags = JsonSerializer.Deserialize<string[]>(p.Tags) ?? []; }
@@ -171,7 +199,7 @@ public class ProductsController(BoticaDbContext db) : ControllerBase
         return new ProductResponseDto(
             p.Id, p.Name, p.CategoryId, p.Category?.Name,
             p.Price, p.OriginalPrice, p.Tone, p.Label, tags,
-            p.IsNew, p.IsActive, avgRating, reviewsCount,
-            p.ImageUrl, p.CreatedAt, p.UpdatedAt);
+            p.IsNew, p.IsActive, p.Rating, p.Reviews,
+            p.ImageUrl, p.Stock, p.CreatedAt, p.UpdatedAt);
     }
 }
