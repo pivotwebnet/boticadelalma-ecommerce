@@ -1,139 +1,32 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import Script from 'next/script';
 import Icon from '@/components/ui/Icon';
 
 const IG_URL = 'https://www.instagram.com/laboticadelalma1/';
 
-// Widget de Elfsight (feed real de Instagram) embebido en el hover
-const ELFSIGHT_APP_CLASS = 'elfsight-app-48807a4a-735b-4498-9458-d943cfc7a197';
-
-function InstagramPreviewCard({
-  pos, onClose, onMouseEnter, onMouseLeave,
-}: {
-  pos: { top: number; left: number };
-  onClose: () => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
-}) {
-  const cardW = 340;
-  const margin = 12;
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
-  const left = Math.min(pos.left, vw - cardW - margin);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 6, scale: 0.97 }}
-      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed rounded-2xl shadow-2xl bg-white z-[200] max-h-[70vh] overflow-y-auto"
-      style={{ top: pos.top, left, width: cardW }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      data-ig-card="true"
-    >
-      <button
-        className="absolute top-2 right-2 z-10 w-6 h-6 rounded-full bg-black/30 backdrop-blur flex items-center justify-center text-white text-xs"
-        onClick={onClose}
-        aria-label="Cerrar"
-      >✕</button>
-
-      {/* Feed real de Instagram (Elfsight) */}
-      <div className={ELFSIGHT_APP_CLASS} data-elfsight-app-lazy />
-    </motion.div>
-  );
-}
-
 function InstagramLink() {
-  const [open, setOpen] = useState(false);
-  const [cardPos, setCardPos] = useState({ top: 0, left: 0 });
-  const triggerRef = useRef<HTMLLIElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const scheduleClose = () => {
-    closeTimer.current = setTimeout(() => setOpen(false), 120);
-  };
-  const cancelClose = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  };
-
-  const calcPos = () => {
-    if (!triggerRef.current) return;
-    const r = triggerRef.current.getBoundingClientRect();
-    const cardH = 440;
-    const top = r.top - cardH - 8 > 0 ? r.top - cardH - 8 : r.bottom + 8;
-    setCardPos({ top, left: r.left });
-  };
-
-  // Close on outside tap (mobile)
-  useEffect(() => {
-    if (!open) return;
-    const onTap = (e: TouchEvent) => {
-      if (triggerRef.current && !triggerRef.current.contains(e.target as Node)) {
-        // Check if tap is on the fixed card by class
-        const el = e.target as HTMLElement;
-        if (!el.closest('[data-ig-card]')) setOpen(false);
-      }
-    };
-    document.addEventListener('touchstart', onTap);
-    return () => document.removeEventListener('touchstart', onTap);
-  }, [open]);
-
   return (
-    <li ref={triggerRef} className="pt-1">
+    <li className="pt-1">
       <a
         href={IG_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="text-brand-orange font-bold hover:brightness-110 flex items-center gap-2"
-        onPointerEnter={(e) => {
-          if (e.pointerType !== 'mouse') return;
-          cancelClose();
-          calcPos();
-          setOpen(true);
-        }}
-        onPointerLeave={(e) => {
-          if (e.pointerType !== 'mouse') return;
-          scheduleClose();
-        }}
-        onClick={(e) => {
-          const native = e.nativeEvent as PointerEvent;
-          if (native.pointerType === 'mouse') return;
-          e.preventDefault();
-          calcPos();
-          setOpen(prev => !prev);
-        }}
       >
         <Icon name="instagram" size={14} /> Seguinos en Instagram
       </a>
-      <AnimatePresence>
-        {open && (
-          <InstagramPreviewCard
-            pos={cardPos}
-            onClose={() => setOpen(false)}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-          />
-        )}
-      </AnimatePresence>
     </li>
   );
 }
 
 export default function Footer() {
-  const pivotLetters = "PIVOT".split("");
   const whatsappNumber = "3492274535";
   const whatsappMessage = encodeURIComponent("¡Hola! Tengo una consulta sobre...");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
   return (
     <footer className="mt-24 pt-12 pb-8 bg-[#2A5E36] text-white relative overflow-hidden">
-      {/* Plataforma Elfsight (feed real de Instagram en el hover) — carga una sola vez */}
-      <Script src="https://elfsightcdn.com/platform.js" strategy="lazyOnload" />
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:justify-between gap-x-12 gap-y-10 mb-6">
 
@@ -207,56 +100,16 @@ export default function Footer() {
             </a>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="uppercase tracking-widest text-stone-300/60">Diseño y Desarrollo por</span>
-            <motion.a 
-              href="https://www.pivotweb.com.ar/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="group relative flex items-center ml-1"
-              initial="rest"
-              whileHover="hover"
+          <div className="flex items-center gap-1.5">
+            <span className="uppercase tracking-widest text-stone-300/60">Creado por</span>
+            <a
+              href="https://www.pivotweb.com.ar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-serif italic text-base text-white transition-all duration-500 hover:text-brand-orange hover:[text-shadow:0_0_8px_rgba(232,99,21,0.9),0_0_18px_rgba(232,99,21,0.55)]"
             >
-              <span className="font-serif italic text-lg text-white group-hover:text-brand-orange transition-colors duration-300 flex items-center">
-                {pivotLetters.map((letter, i) => (
-                  <motion.span
-                    key={i}
-                    variants={{
-                      rest: { 
-                        opacity: 1, 
-                        y: 0,
-                        filter: "drop-shadow(0 0 0px rgba(232, 99, 21, 0))"
-                      },
-                      hover: { 
-                        opacity: [0, 1],
-                        y: -2,
-                        filter: [
-                          "drop-shadow(0 0 0px rgba(232, 99, 21, 0))",
-                          "drop-shadow(0 4px 12px rgba(232, 99, 21, 0.4))"
-                        ],
-                        transition: { delay: i * 0.08, duration: 0.2 }
-                      }
-                    }}
-                    className="inline-block"
-                  >
-                    {letter}
-                  </motion.span>
-                ))}
-                
-                {/* Blinking Code Cursor with Glow */}
-                <motion.span
-                  variants={{
-                    rest: { opacity: 0 },
-                    hover: { 
-                      opacity: [1, 0, 1],
-                      filter: "drop-shadow(0 0 8px rgba(232, 99, 21, 0.8))",
-                      transition: { repeat: Infinity, duration: 0.8 }
-                    }
-                  }}
-                  className="inline-block w-[7px] h-[2px] bg-brand-orange ml-1 mb-0.5"
-                />
-              </span>
-            </motion.a>
+              PIVOT
+            </a>
           </div>
         </div>
       </div>

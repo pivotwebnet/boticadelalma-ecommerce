@@ -20,15 +20,15 @@ const LEAF_D = 'M0 0 C 5 -2 9 -7 7 -14 C 4 -8 -3 -5 0 0 Z';
 // lo largo de toda la barra. `s` = tamaño, rot ~160° = hoja colgando hacia abajo.
 // `delay` sincroniza cada brote con el avance del trazo.
 const LEAVES: { x: number; y: number; rot: number; s: number; delay: number }[] = [
-  { x: 30,  y: 13, rot: -30, s: 0.9,  delay: 0.25 },
-  { x: 66,  y: 9,  rot: -8,  s: 1.15, delay: 0.38 },
-  { x: 110, y: 15, rot: 28,  s: 0.8,  delay: 0.50 },
-  { x: 186, y: 27, rot: 165, s: 1.0,  delay: 0.64 },
-  { x: 246, y: 18, rot: -18, s: 0.85, delay: 0.78 },
-  { x: 306, y: 9,  rot: 6,   s: 1.15, delay: 0.90 },
-  { x: 350, y: 15, rot: 28,  s: 0.8,  delay: 1.02 },
-  { x: 426, y: 27, rot: 158, s: 1.0,  delay: 1.14 },
-  { x: 470, y: 17, rot: 22,  s: 1.05, delay: 1.24 },
+  { x: 28,  y: 14, rot: -34, s: 0.85, delay: 0.25 },
+  { x: 64,  y: 10, rot: -10, s: 1.1,  delay: 0.38 },
+  { x: 104, y: 15, rot: 24,  s: 0.8,  delay: 0.50 },
+  { x: 158, y: 24, rot: 168, s: 1.05, delay: 0.64 },
+  { x: 222, y: 17, rot: -22, s: 0.9,  delay: 0.78 },
+  { x: 286, y: 11, rot: 8,   s: 1.15, delay: 0.90 },
+  { x: 360, y: 24, rot: 150, s: 0.85, delay: 1.02 },
+  { x: 420, y: 13, rot: 30,  s: 1.0,  delay: 1.14 },
+  { x: 470, y: 12, rot: 18,  s: 1.05, delay: 1.24 },
 ];
 
 export default function SearchBox() {
@@ -78,6 +78,7 @@ export default function SearchBox() {
         className="search-vine"
         viewBox="0 0 480 30"
         fill="none"
+        preserveAspectRatio="none"
         aria-hidden="true"
       >
         {/* Balanceo suave de toda la rama, como si la moviera el viento */}
@@ -86,9 +87,9 @@ export default function SearchBox() {
           animate={{ rotate: [0, 0.8, 0, -0.8, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1.7 }}
         >
-          {/* Tallo */}
+          {/* Tallo — curvas irregulares, sin patrón repetido */}
           <motion.path
-            d="M6 18 C 46 6 86 6 126 18 C 166 30 206 30 246 18 C 286 6 326 6 366 18 C 406 30 446 30 474 18"
+            d="M4 20 C 30 11 64 9 96 14 C 124 18 158 25 188 22 C 222 19 252 6 286 11 C 320 16 360 25 392 19 C 420 14 452 9 476 13"
             stroke="#7C8A54"
             strokeWidth="2"
             strokeLinecap="round"
@@ -99,7 +100,7 @@ export default function SearchBox() {
 
           {/* Zarcillo en espiral al final de la rama */}
           <motion.path
-            d="M474 18 c 9 -1 13 6 8 11 c -3 3 -9 1 -8 -4"
+            d="M476 13 c 9 -1 13 6 8 11 c -3 3 -9 1 -8 -4"
             stroke="#7C8A54"
             strokeWidth="1.6"
             strokeLinecap="round"

@@ -29,10 +29,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${cormorant.variable} ${jetbrains.variable}`}>
-      <head>
-        {/* Behold Instagram feed widget — se activa cuando BEHOLD_FEED_ID está configurado en Footer.tsx */}
-        <script defer src="https://w.behold.so/widget.js" type="module" />
-      </head>
       <body>
         <ApiDataProvider initialCategories={categories} initialProducts={products}>
           <ThemeApplier />

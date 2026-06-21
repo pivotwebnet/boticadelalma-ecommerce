@@ -235,7 +235,7 @@ export default function CatalogClient() {
               {INTENTIONS.map(i => (
                 <button
                   key={i}
-                  className={`chip${intSel.includes(i) ? ' chip-on' : ''}`}
+                  className={`chip capitalize${intSel.includes(i) ? ' chip-on' : ''}`}
                   onClick={() => toggle(intSel, i, setIntSel)}
                 >
                   {i}
@@ -295,7 +295,7 @@ export default function CatalogClient() {
           </div>
 
           {/* Active filter chips */}
-          {(catSel.length > 0 || subcatSel) && (
+          {activeFilters > 0 && (
             <div className="active-cats">
               {catSel.map(id => {
                 const cat = categories.find(c => c.id === id)!;
@@ -322,6 +322,40 @@ export default function CatalogClient() {
                   </button>
                 ) : null;
               })()}
+              {matSel.map(m => (
+                <button
+                  key={`mat-${m}`}
+                  className="chip chip-on"
+                  onClick={() => toggle(matSel, m, setMatSel)}
+                >
+                  {m} ✕
+                </button>
+              ))}
+              {intSel.map(i => (
+                <button
+                  key={`int-${i}`}
+                  className="chip chip-on capitalize"
+                  onClick={() => toggle(intSel, i, setIntSel)}
+                >
+                  {i} ✕
+                </button>
+              ))}
+              {maxPrice < absoluteMax && (
+                <button
+                  className="chip chip-on"
+                  onClick={() => setMaxPrice(absoluteMax)}
+                >
+                  Hasta {fmt(maxPrice)} ✕
+                </button>
+              )}
+              {onlyNew && (
+                <button
+                  className="chip chip-on"
+                  onClick={() => setOnlyNew(false)}
+                >
+                  Novedades ✕
+                </button>
+              )}
             </div>
           )}
 

@@ -236,28 +236,28 @@ export default function IntentionCarousel() {
                     <article
                       className={`intent-card-elite ${item.id}`}
                     >
-                      <div className="relative flex h-full flex-col justify-between p-8 text-center items-center z-10">
+                      <div className="relative flex h-full flex-col justify-between p-7 text-center items-center z-10">
                         <div>
-                          <div className="intent-icon-box mb-8">
+                          <div className="intent-icon-box mb-6">
                             <Image
                               src={item.iconSrc}
                               alt={item.title}
-                              width={44}
-                              height={42}
+                              width={36}
+                              height={34}
                               style={{ objectFit: "contain" }}
                               className="intent-icon"
                             />
                           </div>
-                          <h3 className="intent-title font-serif text-3xl italic tracking-tight">
+                          <h3 className="intent-title font-serif text-2xl italic tracking-tight">
                             {item.title}
                           </h3>
-                          <p className="intent-subtitle mt-4 max-w-[200px] text-[12px] leading-relaxed font-light tracking-[0.1em] uppercase opacity-40">
+                          <p className="intent-subtitle mt-3 max-w-[190px] text-[10px] leading-relaxed font-light tracking-[0.1em] uppercase opacity-40">
                             {item.subtitle}
                           </p>
                         </div>
-                        <div className="mt-8 flex flex-col items-center gap-4">
+                        <div className="mt-7 flex flex-col items-center gap-3">
                           <div className="intent-divider h-px w-8 bg-stone-300" />
-                          <span className="intent-discover text-[10px] uppercase tracking-[0.4em] font-medium">
+                          <span className="intent-discover text-[9px] uppercase tracking-[0.35em] font-medium">
                             Descubrir
                           </span>
                         </div>

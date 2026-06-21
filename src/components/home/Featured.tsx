@@ -20,13 +20,13 @@ export default function Featured({ products, intentionFilter }: FeaturedProps) {
     <section className="section">
       <header className="section-head section-head-row">
         <div>
+          <h2>
+            {intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
+          </h2>
           <span className="eyebrow">
             {intentionFilter ? `Intención · ${intentionFilter}` : 'Lo más querido'}
           </span>
           <VineDecoration className="vine-decor--left" />
-          <h2>
-            {intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
-          </h2>
         </div>
         <Link href="/catalogo" className="link-arrow">
           Ver todo <Icon name="arrow-r" size={14} />
