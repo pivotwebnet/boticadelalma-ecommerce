@@ -28,6 +28,8 @@ export default function GlobalError({
             <button onClick={() => reset()} className="btn btn-primary btn-md">
               Reintentar
             </button>
+            {/* Recarga dura a propósito: resetea todo el estado tras un error crítico */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/" className="btn btn-ghost btn-md">
               Volver al inicio
             </a>
