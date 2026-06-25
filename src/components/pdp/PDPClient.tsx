@@ -55,6 +55,20 @@ export default function PDPClient({ product }: PDPClientProps) {
     ? Math.round((1 - product.price / product.was) * 100)
     : 0;
 
+  const isMaterial = (tag: string) => {
+    const t = tag.toLowerCase().trim();
+    const materialsList = [
+      'plata', 'acero', 'gamuza', 'hilo', 'alpaca', 
+      'piedra', 'bruto', 'cuarzo', 'amatista', 
+      'obsidiana', 'labradorita', 'ojo turco', 'nácar', 
+      'nacar', 'turquesa', 'metal'
+    ];
+    return materialsList.some(m => t.includes(m));
+  };
+
+  const materiales = product.tags.filter(isMaterial);
+  const intenciones = product.tags.filter(t => !isMaterial(t));
+
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imgRef.current) return;
     const r = imgRef.current.getBoundingClientRect();
@@ -183,7 +197,7 @@ export default function PDPClient({ product }: PDPClientProps) {
           </div>
 
           <div className="pdp-perks">
-            <div><Icon name="truck" size={16} stroke={1.3} /><span>Envío gratis sobre $25.000</span></div>
+            <div><Icon name="truck" size={16} stroke={1.3} /><span>Envío a coordinar (Gratis en Rafaela)</span></div>
             <div><Icon name="shield" size={16} stroke={1.3} /><span>Compra protegida</span></div>
             <div><Icon name="leaf" size={16} stroke={1.3} /><span>Empaque de papel reciclado</span></div>
           </div>
@@ -207,7 +221,8 @@ export default function PDPClient({ product }: PDPClientProps) {
                 distinta — esa es su belleza. La energía de {product.name.toLowerCase()} acompaña
                 momentos de reflexión, intención y pausa.
               </p>
-              <p>Materiales: {product.tags.join(', ')}.</p>
+              {materiales.length > 0 && <p><b>Materiales:</b> {materiales.join(', ')}.</p>}
+              {intenciones.length > 0 && <p><b>Propiedades energéticas:</b> {intenciones.join(', ')}.</p>}
             </div>
           )}
           {tab === 'ritual' && (
@@ -225,8 +240,7 @@ export default function PDPClient({ product }: PDPClientProps) {
           )}
           {tab === 'ship' && (
             <p>
-              Envíos a todo el país en 48–72h. Gratis sobre $25.000. Punto de retiro gratuito
-              en Palermo, CABA.
+              Envíos a todo el país a coordinar por WhatsApp (3 a 7 días hábiles). Retiro gratuito en nuestro punto de entrega en Rafaela, Santa Fe.
             </p>
           )}
         </div>
