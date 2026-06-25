@@ -66,7 +66,7 @@ export default function SearchBox() {
   };
 
   const goToCategory = (id: string) => {
-    router.push(`/categoria/${id}`);
+    router.push(`/catalogo?cat=${id}`);
     setOpen(false);
     setQ('');
   };

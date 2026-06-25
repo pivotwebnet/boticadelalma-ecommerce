@@ -23,6 +23,7 @@ interface StoreState {
   setTheme: <K extends keyof Theme>(key: K, value: Theme[K]) => void;
   setPurchase: (p: Purchase) => void;
   clearPurchase: () => void;
+  clearCart: () => void;
   lockCart: () => void;
   showToast: (msg: string) => void;
 }
@@ -95,6 +96,7 @@ export const useStore = create<StoreState>()(
 
       setPurchase: (p) => set({ purchase: p }),
       clearPurchase: () => set({ purchase: null, cartLocked: false }),
+      clearCart: () => set({ cart: [] }),
       lockCart: () => set({ cartLocked: true }),
 
       showToast: (msg) => {

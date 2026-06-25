@@ -252,6 +252,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('30d')
+  const [newOrdersPopup, setNewOrdersPopup] = useState<ApiOrder[] | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -260,9 +261,29 @@ export default function AdminDashboard() {
       fetch('/api/admin/products').then(r => r.json()).catch(() => []),
       fetch('/api/admin/categories').then(r => r.json()).catch(() => []),
     ]).then(([o, p, c]) => {
-      setOrders(Array.isArray(o) ? o : [])
+      const fetchedOrders: ApiOrder[] = Array.isArray(o) ? o : []
+      setOrders(fetchedOrders)
       setProducts(Array.isArray(p) ? p : [])
       setCategories(Array.isArray(c) ? c : [])
+
+      try {
+        const lastVisit = localStorage.getItem('last_admin_visit')
+        if (lastVisit) {
+          const lastVisitDate = new Date(lastVisit)
+          const newOrders = fetchedOrders.filter(ord => new Date(ord.createdAt) > lastVisitDate)
+          if (newOrders.length > 0) {
+            setNewOrdersPopup(newOrders)
+          }
+        }
+      } catch (err) {
+        console.error('Error leyendo last_admin_visit:', err)
+      }
+
+      try {
+        localStorage.setItem('last_admin_visit', new Date().toISOString())
+      } catch (err) {
+        console.error('Error guardando last_admin_visit:', err)
+      }
     }).finally(() => setLoading(false))
   }, [])
 
@@ -542,6 +563,73 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {newOrdersPopup && newOrdersPopup.length > 0 && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, padding: 20
+        }}>
+          <div style={{
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 16, maxWidth: 440, width: '100%',
+            padding: 24, boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+            display: 'flex', flexDirection: 'column', gap: 16
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--brand-orange)' }}>
+              <span style={{ fontSize: 24 }}>✨</span>
+              <h3 style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--fg)', border: 0, padding: 0 }}>
+                ¡Nuevos pedidos!
+              </h3>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--fg-muted)', margin: 0, lineHeight: 1.5 }}>
+              Se registraron <b>{newOrdersPopup.length} {newOrdersPopup.length === 1 ? 'pedido nuevo' : 'pedidos nuevos'}</b> desde tu última visita al panel.
+            </p>
+            <div style={{
+              maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column',
+              gap: 8, padding: '4px 0'
+            }}>
+              {newOrdersPopup.map(ord => (
+                <div key={ord.id} style={{
+                  background: 'var(--surface-2)', border: '1px solid var(--line-soft)',
+                  borderRadius: 8, padding: '10px 12px', fontSize: 12,
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--fg)' }}>{ord.customerName}</div>
+                    <div style={{ fontSize: 10, color: 'var(--fg-soft)' }}>
+                      {new Date(ord.createdAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} · {ord.city}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 700, color: 'var(--brand-orange)', fontVariantNumeric: 'tabular-nums' }}>
+                    {fmt(ord.total)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button
+                className="btn btn-primary btn-md btn-full"
+                style={{ background: 'var(--brand-orange)', border: 'none', color: '#fff', cursor: 'pointer' }}
+                onClick={() => {
+                  setNewOrdersPopup(null);
+                  router.push('/admin/ordenes');
+                }}
+              >
+                Ver en detalle
+              </button>
+              <button
+                className="btn btn-ghost btn-md"
+                style={{ border: '1px solid var(--line)', cursor: 'pointer' }}
+                onClick={() => setNewOrdersPopup(null)}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

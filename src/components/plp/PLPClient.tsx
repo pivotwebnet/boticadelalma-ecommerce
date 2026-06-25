@@ -96,7 +96,7 @@ function PLPInner({ cat }: PLPClientProps) {
 
   const breadcrumbItems = [
     { label: 'Inicio', href: '/' },
-    { label: category?.name ?? cat, href: sub ? `/categoria/${cat}` : undefined },
+    { label: category?.name ?? cat, href: sub ? `/catalogo?cat=${cat}` : undefined },
   ];
   if (subCategory) {
     breadcrumbItems.push({ label: subCategory.name, href: undefined });

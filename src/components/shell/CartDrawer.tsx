@@ -33,9 +33,34 @@ export default function CartDrawer() {
             <span className="drawer-eyebrow">Tu carrito</span>
             <h3>{items.length} {items.length === 1 ? 'pieza' : 'piezas'}</h3>
           </div>
-          <button className="icon-btn" onClick={() => setCartOpen(false)} aria-label="Cerrar">
-            <Icon name="close" size={18} />
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <button className="icon-btn" onClick={() => setCartOpen(false)} aria-label="Cerrar">
+              <Icon name="close" size={18} />
+            </button>
+            {items.length > 0 && (
+              <button
+                className="glow-orange-text hover:opacity-75 transition-opacity"
+                onClick={() => {
+                  setCartOpen(false);
+                  router.push('/carrito');
+                }}
+                style={{
+                  fontSize: '10px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  textDecoration: 'underline',
+                  color: 'var(--brand-orange)',
+                  fontWeight: 600,
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0
+                }}
+              >
+                Ver completo
+              </button>
+            )}
+          </div>
         </header>
 
         {items.length > 0 && (

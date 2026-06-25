@@ -146,7 +146,7 @@ export default function Hero() {
                   <Icon name="arrow-r" size={14} />
                 </motion.span>
               </Link>
-              <Link href="/categoria/collares" className="hero-btn-ghost">
+              <Link href="/catalogo?cat=collares" className="hero-btn-ghost">
                 Ver collares
               </Link>
             </div>

@@ -66,7 +66,7 @@ function EliteCategoryCard({ category }: { category: import('@/lib/types').Categ
       transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       className="w-full"
     >
-      <Link href={`/categoria/${category.id}`} className="group block outline-none">
+      <Link href={`/catalogo?cat=${category.id}`} className="group block outline-none">
         <div 
           className="relative perspective-1000"
           onMouseMove={handleMouseMove}

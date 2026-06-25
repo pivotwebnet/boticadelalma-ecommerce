@@ -25,6 +25,8 @@ export default function CategoryDrawer() {
   const drawerOpen = useStore(s => s.drawerOpen);
   const setDrawerOpen = useStore(s => s.setDrawerOpen);
   const categories = useCategories();
+  const cart = useStore(s => s.cart);
+  const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
 
   // L0: expanded groups; L1: expanded categories
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(['joyeria']));
@@ -91,6 +93,25 @@ export default function CategoryDrawer() {
         </header>
 
         <nav className="drawer-nav">
+          {/* Carrito shortcut */}
+          <ul style={{ marginBottom: 12 }}>
+            <li>
+              <button
+                className={`drawer-link${pathname === '/carrito' ? ' active' : ''}`}
+                onClick={() => goTo('/carrito')}
+              >
+                <span className="dl-name" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Icon name="bag" size={16} />
+                  Ver mi carrito
+                </span>
+                <span className="dl-meta">
+                  {cartCount > 0 ? `${cartCount} ${cartCount === 1 ? 'pieza' : 'piezas'}` : 'Vacío'}
+                  <Icon name="chev-r" size={14} />
+                </span>
+              </button>
+            </li>
+          </ul>
+
           {/* All products shortcut */}
           <ul style={{ marginBottom: 4 }}>
             <li>
@@ -119,7 +140,7 @@ export default function CategoryDrawer() {
                 catName={cat.name}
                 open={openCats.has(cat.id)}
                 onToggle={() => toggleCat(cat.id)}
-                onViewAll={() => goTo(`/categoria/${cat.id}`)}
+                onViewAll={() => goTo(`/catalogo?cat=${cat.id}`)}
               >
                 {cat.subcategories?.map(sub => (
                   <button
@@ -147,7 +168,7 @@ export default function CategoryDrawer() {
                 catName={cat.name}
                 open={openCats.has(cat.id)}
                 onToggle={() => toggleCat(cat.id)}
-                onViewAll={() => goTo(`/categoria/${cat.id}`)}
+                onViewAll={() => goTo(`/catalogo?cat=${cat.id}`)}
               >
                 {cat.subcategories?.map(sub => (
                   <button
@@ -175,7 +196,7 @@ export default function CategoryDrawer() {
                 catName={cat.name}
                 open={openCats.has(cat.id)}
                 onToggle={() => toggleCat(cat.id)}
-                onViewAll={() => goTo(`/categoria/${cat.id}`)}
+                onViewAll={() => goTo(`/catalogo?cat=${cat.id}`)}
               >
                 {cat.subcategories?.map(sub => (
                   <button

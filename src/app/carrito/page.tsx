@@ -37,7 +37,8 @@ export default function CartPage() {
   const updateQty = useStore(s => s.updateQty);
   const removeFromCart = useStore(s => s.removeFromCart);
   const setPurchase = useStore(s => s.setPurchase);
-  const clearCart = useStore(s => s.clearPurchase);
+  const clearCart = useStore(s => s.clearCart);
+  const purchase = useStore(s => s.purchase);
 
   useEffect(() => setMounted(true), []);
 
@@ -137,6 +138,7 @@ export default function CartPage() {
       confirmedAt: new Date().toISOString(),
     });
 
+    clearCart();
     setStep('success');
   };
 
@@ -146,19 +148,40 @@ export default function CartPage() {
     return (
       <main className="cart-page">
         <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Carrito' }]} />
-        <div className="empty-state" style={{ marginTop: 80 }}>
+        <div className="empty-state" style={{ marginTop: 60 }}>
           <Icon name="check" size={48} stroke={1.5} />
           <h2 style={{ marginTop: 16 }}>¡Orden recibida!</h2>
           <p style={{ maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
             Tu orden fue registrada correctamente. Pronto te contactaremos a <b>{fields.customerEmail}</b> para coordinar el pago y el envío.
           </p>
-          <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-            <Link href="/catalogo" className="btn btn-primary btn-md">
-              Seguir comprando
-            </Link>
-            <Link href="/" className="btn btn-ghost btn-md">
-              Ir al inicio
-            </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginTop: 24 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <Link href="/catalogo" className="btn btn-primary btn-md">
+                Seguir comprando
+              </Link>
+              <Link href="/" className="btn btn-ghost btn-md">
+                Ir al inicio
+              </Link>
+            </div>
+            <a
+              href={`https://wa.me/3492274535?text=${encodeURIComponent('¡Hola! Realicé una orden en la web y necesito ayuda. Mi orden es la #' + (purchase?.orderId ? purchase.orderId.slice(0, 8) : ''))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-75 transition-opacity"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '13px',
+                color: 'var(--brand-orange)',
+                fontWeight: 600,
+                marginTop: 8,
+                textDecoration: 'underline'
+              }}
+            >
+              <Icon name="whatsapp" size={15} />
+              ¿Necesitás ayuda con tu orden?
+            </a>
           </div>
         </div>
       </main>

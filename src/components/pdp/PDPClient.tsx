@@ -89,7 +89,7 @@ export default function PDPClient({ product }: PDPClientProps) {
       <Breadcrumb
         items={[
           { label: 'Inicio', href: '/' },
-          { label: category.name, href: `/categoria/${category.id}` },
+          { label: category.name, href: `/catalogo?cat=${category.id}` },
           { label: product.name },
         ]}
       />
