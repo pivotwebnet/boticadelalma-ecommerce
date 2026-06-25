@@ -16,13 +16,16 @@ const SLUG_TO_INTENTION: Record<string, string> = {
   'amor':                 'amor',
   'prosperidad':          'prosperidad',
   'abundancia':           'abundancia',
-  'proteccion':           'protección',
-  'escudos':              'escudos',
-  'calma':                'calma',
+  'escudos-y-proteccion': 'escudos y protección',
+  'calma-y-paz-interior': 'calma y paz interior',
   'crecimiento-personal': 'crecimiento personal',
   'concrecion':           'concreción',
   'comunicacion':         'comunicación',
-  'sanacion':             'sanación',
+  'sanacion-y-procesos':  'sanación y procesos',
+  'proteccion':           'escudos y protección',
+  'escudos':              'escudos y protección',
+  'calma':                'calma y paz interior',
+  'sanacion':             'sanación y procesos',
 };
 
 export default function CatalogClient() {
@@ -35,6 +38,7 @@ export default function CatalogClient() {
   const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [matSel, setMatSel] = useState<string[]>([]);
   const [intSel, setIntSel] = useState<string[]>([]);
+  const [sizeSel, setSizeSel] = useState<string[]>([]);
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
   const [sortOpen, setSortOpen] = useState(false);
@@ -96,16 +100,35 @@ export default function CatalogClient() {
         intSel.some(i => p.tags.some(t => t.toLowerCase().includes(i.toLowerCase())))
       );
     }
+    if (sizeSel.length) {
+      list = list.filter(p =>
+        sizeSel.some(s => {
+          const nameLower = p.name.toLowerCase();
+          const labelLower = p.label.toLowerCase();
+          const sLower = s.toLowerCase();
+          if (sLower === 'pequeña') {
+            return nameLower.includes('pequeñ') || labelLower.includes('pequeñ') || p.tags.some(t => t.toLowerCase().includes('pequeñ'));
+          }
+          if (sLower === 'mediana') {
+            return nameLower.includes('median') || labelLower.includes('median') || p.tags.some(t => t.toLowerCase().includes('median'));
+          }
+          if (sLower === 'grande') {
+            return nameLower.includes('grand') || labelLower.includes('grand') || p.tags.some(t => t.toLowerCase().includes('grand'));
+          }
+          return false;
+        })
+      );
+    }
     if (onlyNew) list = list.filter(p => p.new);
     if (sort === 'price-asc') list = [...list].sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') list = [...list].sort((a, b) => b.price - a.price);
     if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
 
     return list;
-  }, [products, catSel, subcatSel, maxPrice, matSel, intSel, onlyNew, sort]);
+  }, [products, catSel, subcatSel, maxPrice, matSel, intSel, sizeSel, onlyNew, sort]);
 
   const activeFilters =
-    catSel.length + (subcatSel ? 1 : 0) + (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + (onlyNew ? 1 : 0);
+    catSel.length + (subcatSel ? 1 : 0) + (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + sizeSel.length + (onlyNew ? 1 : 0);
 
   const clearFilters = () => {
     setCatSel([]);
@@ -113,6 +136,7 @@ export default function CatalogClient() {
     setMaxPrice(absoluteMax);
     setMatSel([]);
     setIntSel([]);
+    setSizeSel([]);
     setOnlyNew(false);
   };
 
@@ -228,6 +252,23 @@ export default function CatalogClient() {
             ))}
           </div>
 
+          {/* Tamaño (Solo si se filtra piedras o en general si hay piedras) */}
+          {(catSel.length === 0 || catSel.includes('piedras')) && (
+            <div className="filter-group">
+              <h4>Tamaño</h4>
+              {['Pequeña', 'Mediana', 'Grande'].map(s => (
+                <label key={s} className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={sizeSel.includes(s)}
+                    onChange={() => toggle(sizeSel, s, setSizeSel)}
+                  />
+                  <span>{s}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
           {/* Intención */}
           <div className="filter-group">
             <h4>Intención</h4>
@@ -329,6 +370,15 @@ export default function CatalogClient() {
                   onClick={() => toggle(matSel, m, setMatSel)}
                 >
                   {m} ✕
+                </button>
+              ))}
+              {sizeSel.map(s => (
+                <button
+                  key={`size-${s}`}
+                  className="chip chip-on"
+                  onClick={() => toggle(sizeSel, s, setSizeSel)}
+                >
+                  {s} ✕
                 </button>
               ))}
               {intSel.map(i => (

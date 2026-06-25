@@ -291,6 +291,19 @@ export async function deleteCategory(id: string): Promise<{ ok: boolean; error?:
   } catch { return { ok: false, error: 'Error de conexión' } }
 }
 
+export async function reordenarCategorias(idsOrdenados: string[]): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_URL}/api/categories/reordenar`, {
+      method: 'POST',
+      headers: adminHeaders(true),
+      body: JSON.stringify(idsOrdenados),
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 // `admin: true` adjunta la X-Admin-Key para que el backend acepte fijar el estado
 // inicial (ventas manuales del panel). El checkout público llama SIN admin: el
 // backend ignora cualquier `status` que venga y la orden nace "pending".

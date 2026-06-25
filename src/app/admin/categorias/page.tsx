@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { ApiCategory } from '@/lib/api'
+import { Reorder } from 'framer-motion'
 
 type FormState = { id: string; name: string; icon: string; isActive: boolean }
 
@@ -81,15 +82,72 @@ export default function CategoriasPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
   const [error, setError] = useState('')
+  const [isReordering, setIsReordering] = useState(false)
+  const [reorderedCats, setReorderedCats] = useState<ApiCategory[]>([])
 
   const load = useCallback(async () => {
     setLoading(true)
-    const data = await fetch('/api/admin/categories').then(r => r.json()).catch(() => [])
-    setCategories(Array.isArray(data) ? data : [])
-    setLoading(false)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/categories')
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setError(d?.error ?? 'Error al cargar las categorías.')
+        setCategories([])
+      } else {
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          setCategories(data)
+        } else {
+          setError('El servidor devolvió un formato incorrecto.')
+          setCategories([])
+        }
+      }
+    } catch {
+      setError('Error de conexión con el servidor backend.')
+      setCategories([])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  function startReordering() {
+    setReorderedCats([...categories])
+    setIsReordering(true)
+    setError('')
+  }
+
+  function cancelReordering() {
+    setIsReordering(false)
+    setReorderedCats([])
+    setError('')
+  }
+
+  async function saveReordering() {
+    setSaving(true)
+    setError('')
+    try {
+      const ids = reorderedCats.map(c => c.id)
+      const res = await fetch('/api/admin/categories/reordenar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setError(d?.error ?? 'Error al guardar el nuevo orden.')
+        return
+      }
+      setIsReordering(false)
+      await load()
+    } catch {
+      setError('Error de conexión al guardar el orden.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function openCreate() { setForm(EMPTY_FORM); setError(''); setModal('create') }
   function openEdit(c: ApiCategory) { setForm(categoryToForm(c)); setError(''); setModal('edit') }
@@ -105,8 +163,6 @@ export default function CategoriasPage() {
     setSaving(true)
     try {
       if (modal === 'create') {
-        // El orden se asigna solo: la nueva categoría va al final. Así la dueña
-        // nunca tiene que pensar en números ni puede repetir un mismo orden.
         const nextOrder = categories.length
           ? Math.max(...categories.map(c => c.sortOrder)) + 1
           : 0
@@ -122,7 +178,6 @@ export default function CategoriasPage() {
           return
         }
       } else {
-        // En edición no se toca el orden (se conserva el que ya tenía).
         const res = await fetch(`/api/admin/categories/${form.id}`, {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: form.name.trim(), icon: form.icon, isActive: form.isActive }),
@@ -161,88 +216,173 @@ export default function CategoriasPage() {
         <div>
           <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Gestión</div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, margin: 0, color: 'var(--fg)' }}>Categorías</h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>{categories.length} categorías registradas</p>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>
+            {isReordering ? 'Modo Reordenador Activo' : `${categories.length} categorías registradas`}
+          </p>
         </div>
-        <button onClick={openCreate} style={{
-          padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-          background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: 'pointer',
-        }}>
-          + Nueva categoría
-        </button>
+        
+        <div style={{ display: 'flex', gap: 10 }}>
+          {isReordering ? (
+            <>
+              <button onClick={cancelReordering} disabled={saving} style={{
+                padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)',
+                cursor: saving ? 'wait' : 'pointer',
+              }}>
+                Cancelar
+              </button>
+              <button onClick={saveReordering} disabled={saving} style={{
+                padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: 'var(--brand-orange)', color: '#fff', border: 'none',
+                cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1,
+              }}>
+                {saving ? 'Guardando…' : 'Guardar orden'}
+              </button>
+            </>
+          ) : (
+            <>
+              {categories.length > 1 && (
+                <button onClick={startReordering} style={{
+                  padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                  background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
+                }}>
+                  ⇄ Reordenar
+                </button>
+              )}
+              <button onClick={openCreate} style={{
+                padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: 'pointer',
+              }}>
+                + Nueva categoría
+              </button>
+            </>
+          )}
+        </div>
         <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--gold), transparent)', opacity: 0.5 }} />
       </div>
 
-      {/* Cards grid */}
-      <div style={{ padding: '32px 40px 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-        {loading ? (
-          <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>Cargando…</div>
-        ) : categories.length === 0 ? (
-          <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>No hay categorías.</div>
-        ) : (
-          categories.map((c, idx) => (
-            <div key={c.id} style={{
-              background: 'var(--surface)', border: '1px solid var(--line)',
-              borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden',
-            }}>
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 2,
-                background: c.isActive
-                  ? 'linear-gradient(90deg, transparent, var(--brand-orange), transparent)'
-                  : 'linear-gradient(90deg, transparent, var(--line), transparent)',
-                opacity: 0.7,
-              }} />
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div>
-                  <div style={{ fontSize: 22, marginBottom: 6, lineHeight: 1 }}>
+      {error && !modal && (
+        <div style={{ margin: '24px 40px 0', padding: '12px 18px', background: 'rgba(224,101,87,.12)', border: '1px solid rgba(224,101,87,.3)', borderRadius: 8, fontSize: 13, color: '#e06557' }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {isReordering ? (
+        <div style={{ padding: '32px 40px 40px', maxWidth: 680, margin: '0 auto' }}>
+          <div style={{ padding: '16px 20px', background: 'rgba(230,175,46,.08)', border: '1px solid rgba(230,175,46,.25)', borderRadius: 10, fontSize: 13, color: 'var(--fg-muted)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+            <span>💡</span>
+            <span>Arrastrá las categorías desde el ícono de agarre <strong>⋮⋮</strong> para reordenarlas. Al terminar, hacé clic en <strong>Guardar orden</strong>.</span>
+          </div>
+          
+          <Reorder.Group axis="y" values={reorderedCats} onReorder={setReorderedCats} style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {reorderedCats.map((c, index) => (
+              <Reorder.Item key={c.id} value={c} style={{
+                background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12,
+                padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                cursor: 'grab', userSelect: 'none',
+              }} whileDrag={{ scale: 1.02, boxShadow: '0 8px 25px rgba(0,0,0,0.35)', border: '1px solid var(--brand-orange)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ color: 'var(--fg-soft)', fontSize: 20, cursor: 'grab', paddingRight: 6, userSelect: 'none' }}>
+                    ⋮⋮
+                  </div>
+                  <div style={{ fontSize: 24, lineHeight: 1 }}>
                     {ICON_OPTIONS.find(i => i.value === c.icon)?.label.split(' ')[0] ?? '⬡'}
                   </div>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, color: 'var(--fg)' }}>{c.name}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)', marginTop: 2 }}>{c.id}</div>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 500, color: 'var(--fg)' }}>{c.name}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)' }}>{c.id}</div>
+                  </div>
                 </div>
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px',
-                  borderRadius: 999, fontSize: 10,
-                  background: c.isActive ? 'rgba(155,174,136,.15)' : 'rgba(255,255,255,.06)',
-                  color: c.isActive ? '#9bae88' : 'var(--fg-soft)',
-                }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: c.isActive ? '#9bae88' : 'var(--fg-soft)' }} />
-                  {c.isActive ? 'Activa' : 'Inactiva'}
-                </span>
-              </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                  <span style={{
+                    fontSize: 10, padding: '3px 9px', borderRadius: 999,
+                    background: c.isActive ? 'rgba(155,174,136,.12)' : 'rgba(255,255,255,.05)',
+                    color: c.isActive ? '#9bae88' : 'var(--fg-soft)',
+                  }}>
+                    {c.isActive ? 'Activa' : 'Inactiva'}
+                  </span>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--accent)', minWidth: 40, textAlign: 'right', fontFamily: 'var(--font-serif)' }}>
+                    {index + 1}º
+                  </div>
+                </div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+        </div>
+      ) : (
+        /* Cards grid */
+        <div style={{ padding: '32px 40px 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
+          {loading ? (
+            <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>Cargando…</div>
+          ) : categories.length === 0 ? (
+            <div style={{ gridColumn: '1/-1', padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>No hay categorías.</div>
+          ) : (
+            categories.map((c, idx) => (
+              <div key={c.id} style={{
+                background: 'var(--surface)', border: '1px solid var(--line)',
+                borderRadius: 12, padding: 22, position: 'relative', overflow: 'hidden',
+              }}>
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+                  background: c.isActive
+                    ? 'linear-gradient(90deg, transparent, var(--brand-orange), transparent)'
+                    : 'linear-gradient(90deg, transparent, var(--line), transparent)',
+                  opacity: 0.7,
+                }} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <div>
+                    <div style={{ fontSize: 22, marginBottom: 6, lineHeight: 1 }}>
+                      {ICON_OPTIONS.find(i => i.value === c.icon)?.label.split(' ')[0] ?? '⬡'}
+                    </div>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 500, color: 'var(--fg)' }}>{c.name}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)', marginTop: 2 }}>{c.id}</div>
+                  </div>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px',
+                    borderRadius: 999, fontSize: 10,
+                    background: c.isActive ? 'rgba(155,174,136,.15)' : 'rgba(255,255,255,.06)',
+                    color: c.isActive ? '#9bae88' : 'var(--fg-soft)',
+                  }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: c.isActive ? '#9bae88' : 'var(--fg-soft)' }} />
+                    {c.isActive ? 'Activa' : 'Inactiva'}
+                  </span>
+                </div>
 
-              <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Productos</div>
-                  <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{c.productCount}</div>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Productos</div>
+                    <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{c.productCount}</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Posición</div>
+                    <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{idx + 1}º</div>
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--fg-soft)', marginBottom: 3 }}>Posición</div>
-                  <div style={{ fontSize: 22, fontFamily: 'var(--font-serif)', fontWeight: 500, color: 'var(--fg)' }}>{idx + 1}º</div>
-                </div>
-              </div>
 
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => openEdit(c)} style={{
-                  flex: 1, padding: '7px 0', borderRadius: 7, fontSize: 12, fontWeight: 500,
-                  background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
-                }}>Editar</button>
-                <button
-                  onClick={() => { setDeleteId(c.id); setDeleteError('') }}
-                  disabled={c.productCount > 0}
-                  title={c.productCount > 0 ? 'No se puede eliminar: tiene productos' : ''}
-                  style={{
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => openEdit(c)} style={{
                     flex: 1, padding: '7px 0', borderRadius: 7, fontSize: 12, fontWeight: 500,
-                    background: 'transparent',
-                    border: `1px solid ${c.productCount > 0 ? 'var(--line)' : 'rgba(224,101,87,.3)'}`,
-                    color: c.productCount > 0 ? 'var(--fg-soft)' : '#e06557',
-                    cursor: c.productCount > 0 ? 'not-allowed' : 'pointer',
-                    opacity: c.productCount > 0 ? 0.5 : 1,
-                  }}>Eliminar</button>
+                    background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: 'pointer',
+                  }}>Editar</button>
+                  <button
+                    onClick={() => { setDeleteId(c.id); setDeleteError('') }}
+                    disabled={c.productCount > 0}
+                    title={c.productCount > 0 ? 'No se puede eliminar: tiene productos' : ''}
+                    style={{
+                      flex: 1, padding: '7px 0', borderRadius: 7, fontSize: 12, fontWeight: 500,
+                      background: 'transparent',
+                      border: `1px solid ${c.productCount > 0 ? 'var(--line)' : 'rgba(224,101,87,.3)'}`,
+                      color: c.productCount > 0 ? 'var(--fg-soft)' : '#e06557',
+                      cursor: c.productCount > 0 ? 'not-allowed' : 'pointer',
+                      opacity: c.productCount > 0 ? 0.5 : 1,
+                    }}>Eliminar</button>
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Create / Edit Modal */}
       {modal && (

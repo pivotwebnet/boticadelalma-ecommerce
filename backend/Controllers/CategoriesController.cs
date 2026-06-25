@@ -57,6 +57,28 @@ public partial class CategoriesController(BoticaDbContext db) : ControllerBase
             cat.Id, cat.Name, cat.Icon, cat.IsActive, cat.SortOrder, 0));
     }
 
+    [HttpPost("reordenar")]
+    [RequireAdminKey]
+    public async Task<IActionResult> Reordenar([FromBody] List<string> idsOrdenados)
+    {
+        if (idsOrdenados == null || idsOrdenados.Count == 0)
+            return BadRequest("La lista de IDs no puede estar vacía.");
+
+        var categorias = await db.Categories.ToListAsync();
+        for (int i = 0; i < idsOrdenados.Count; i++)
+        {
+            var id = idsOrdenados[i];
+            var cat = categorias.FirstOrDefault(c => c.Id == id);
+            if (cat != null)
+            {
+                cat.SortOrder = i + 1;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     [HttpPut("{id}")]
     [RequireAdminKey]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateCategoryDto dto)

@@ -34,7 +34,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<BoticaDbContext>();
     db.Database.Migrate();
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || !db.Categories.Any())
         await DbSeeder.SeedAsync(db);
 }
 

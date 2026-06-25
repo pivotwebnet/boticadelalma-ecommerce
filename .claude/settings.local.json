@@ -142,7 +142,16 @@
       "Bash(python -c \"import sys,json;[print\\(' ',c['id'],':',c['productCount']\\) for c in json.load\\(sys.stdin\\)]\")",
       "Bash(python -c \"import psycopg2; print\\('psycopg2 OK'\\)\")",
       "Bash(command -v psql)",
-      "PowerShell($up=$false; for\\($i=0;$i -lt 40;$i++\\){ try { $r=Invoke-WebRequest \"http://localhost:5066/api/products\" -UseBasicParsing -TimeoutSec 3; if\\($r.StatusCode -eq 200\\){ \"UP \\(migraciones aplicadas al arrancar\\)\"; $up=$true; break } } catch { Start-Sleep -Milliseconds 1500 } }; if\\(-not $up\\){ \"no respondió\" })"
+      "PowerShell($up=$false; for\\($i=0;$i -lt 40;$i++\\){ try { $r=Invoke-WebRequest \"http://localhost:5066/api/products\" -UseBasicParsing -TimeoutSec 3; if\\($r.StatusCode -eq 200\\){ \"UP \\(migraciones aplicadas al arrancar\\)\"; $up=$true; break } } catch { Start-Sleep -Milliseconds 1500 } }; if\\(-not $up\\){ \"no respondió\" })",
+      "Bash(echo \"dev server starting, pid $!\")",
+      "Bash(taskkill //F //PID 531 //T)",
+      "Bash(python3 -)",
+      "Bash(xargs grep -l \"Tuvimos un inconveniente\")",
+      "Bash(xargs grep -l \"problema inesperado\\\\|Cargando\")",
+      "Bash(taskkill //F //PID 587 //T)",
+      "Bash(taskkill //F //PID 672 //T)",
+      "Bash(rm -rf src/app/probar-error ./_errdump.html)",
+      "Bash(git check-ignore *)"
     ]
   }
 }
