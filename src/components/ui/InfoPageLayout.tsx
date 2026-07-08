@@ -13,10 +13,10 @@ interface InfoPageLayoutProps {
 
 export default function InfoPageLayout({ title, subtitle, eyebrow, children }: InfoPageLayoutProps) {
   return (
-    <main className="min-h-screen pt-32 pb-24">
+    <main className="min-h-screen pt-24 md:pt-26 pb-16">
       {/* Header Section */}
-      <header className="max-w-7xl mx-auto px-6 mb-20 text-left">
-        <div className="mb-12">
+      <header className="max-w-7xl mx-auto px-6 mb-10 text-left">
+        <div className="mb-4 [&_.breadcrumb]:mx-0 [&_.breadcrumb]:px-0 [&_.breadcrumb]:max-w-none [&_.breadcrumb]:mb-0">
           <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: title }]} />
         </div>
         
@@ -24,7 +24,7 @@ export default function InfoPageLayout({ title, subtitle, eyebrow, children }: I
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 0.5, y: 0 }}
-            className="block text-[11px] uppercase tracking-[0.4em] text-stone-500 font-bold mb-6"
+            className="block text-[11px] uppercase tracking-[0.4em] text-stone-500 font-bold mb-4"
           >
             {eyebrow}
           </motion.span>
@@ -33,7 +33,7 @@ export default function InfoPageLayout({ title, subtitle, eyebrow, children }: I
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.8 }}
-          className="font-serif text-5xl md:text-7xl italic tracking-tighter text-stone-800 leading-[0.9] mb-8"
+          className="font-serif text-5xl md:text-7xl italic tracking-tighter text-stone-800 leading-[0.9] mb-4"
         >
           {title}
         </motion.h1>
@@ -42,7 +42,7 @@ export default function InfoPageLayout({ title, subtitle, eyebrow, children }: I
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.6 }}
             transition={{ delay: 0.3 }}
-            className="max-w-2xl mx-auto text-stone-600 leading-relaxed font-light text-lg italic font-serif"
+            className="max-w-2xl text-stone-600 leading-relaxed font-light text-lg italic font-serif"
           >
             {subtitle}
           </motion.p>

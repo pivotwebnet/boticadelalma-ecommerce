@@ -19,6 +19,28 @@ interface CheckoutFields {
 
 type Step = 'cart' | 'checkout' | 'submitting' | 'success';
 
+interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  pricePaid: number;
+  quantity: number;
+}
+
+interface OrderData {
+  id: string;
+  status: string;
+  total: number;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  address?: string;
+  city?: string;
+  notes?: string;
+  createdAt: string;
+  items: OrderItem[];
+}
+
 export default function CartPage() {
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState<Step>('cart');
@@ -32,6 +54,11 @@ export default function CartPage() {
     notes: '',
   });
   const [errors, setErrors] = useState<Partial<Record<keyof CheckoutFields, string>>>({});
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
+
+  const [mpStatus, setMpStatus] = useState<string | null>(null);
+  const [mpOrderId, setMpOrderId] = useState<string | null>(null);
 
   const items = useStore(s => s.cart);
   const updateQty = useStore(s => s.updateQty);
@@ -40,7 +67,93 @@ export default function CartPage() {
   const clearCart = useStore(s => s.clearCart);
   const purchase = useStore(s => s.purchase);
 
-  useEffect(() => setMounted(true), []);
+  const targetOrderId = mpOrderId || purchase?.orderId;
+
+  useEffect(() => {
+    if (step === 'success' && targetOrderId) {
+      setLoadingOrder(true);
+      fetch(`/api/orders/public/${targetOrderId}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          setOrderData(data);
+          setLoadingOrder(false);
+        })
+        .catch(err => {
+          console.error('Error fetching order details:', err);
+          setLoadingOrder(false);
+        });
+    }
+  }, [step, targetOrderId]);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    // 1. Leer parámetros de Mercado Pago de la URL
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const orderId = params.get('orderId');
+    if (status && orderId) {
+      setMpStatus(status);
+      setMpOrderId(orderId);
+      setStep('success');
+      return;
+    }
+
+    // 2. Si el carrito está vacío pero hay una compra reciente (<20 minutos), mostrar pantalla de éxito
+    if (items.length === 0 && purchase && purchase.confirmedAt) {
+      const diff = new Date().getTime() - new Date(purchase.confirmedAt).getTime();
+      const twentyMinutes = 20 * 60 * 1000;
+      if (diff < twentyMinutes) {
+        setStep('success');
+        return;
+      }
+    }
+
+    // 3. Sincronizar stock y precios en tiempo real con la base de datos
+    if (items.length > 0) {
+      fetch('/api/products')
+        .then(res => res.ok ? res.json() : [])
+        .then(freshProducts => {
+          if (!Array.isArray(freshProducts) || freshProducts.length === 0) return;
+          
+          let changed = false;
+          
+          items.forEach(it => {
+            const fresh = freshProducts.find((p: { id: string; price: number; isActive: boolean; stock: number }) => p.id === it.product.id);
+            if (!fresh) {
+              // El producto ya no existe en base de datos: remover
+              removeFromCart(it.product.id);
+              changed = true;
+            } else if (!fresh.isActive) {
+              // El producto está inactivo: remover
+              removeFromCart(it.product.id);
+              changed = true;
+            } else if (fresh.stock === 0) {
+              // Sin stock: remover
+              removeFromCart(it.product.id);
+              changed = true;
+            } else if (fresh.stock < it.qty) {
+              // Stock insuficiente: ajustar a la cantidad máxima disponible
+              updateQty(it.product.id, fresh.stock);
+              changed = true;
+            }
+            
+            // Si el precio cambió en base de datos, lo ideal es alertar y actualizar en Zustand
+            if (fresh && fresh.price !== it.product.price) {
+              // Actualizamos la cantidad para forzar refresco del precio fresco en local
+              updateQty(it.product.id, Math.min(it.qty, fresh.stock));
+              changed = true;
+            }
+          });
+
+          if (changed) {
+            setFormError('Hemos actualizado tu carrito según los precios y el stock actual de la tienda.');
+          }
+        })
+        .catch(err => console.error('Error sincronizando stock del carrito:', err));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchase, items.length]);
 
   const subtotal = items.reduce((s, it) => s + it.product.price * it.qty, 0);
   const isRafaela = fields.city.toLowerCase().trim() === 'rafaela';
@@ -49,8 +162,7 @@ export default function CartPage() {
   const shippingCost = isRafaela ? 0 : 0; 
   const total = subtotal + shippingCost;
   
-  const freeShipGap = isRafaela ? 0 : 0;
-  const freeShipPct = isRafaela ? 100 : 0;
+
 
   const validateField = (key: keyof CheckoutFields, val: string) => {
     let err = '';
@@ -139,50 +251,303 @@ export default function CartPage() {
     });
 
     clearCart();
-    setStep('success');
+
+    if (order.initPoint) {
+      window.location.href = order.initPoint;
+    } else {
+      setStep('success');
+    }
   };
 
   if (!mounted) return null;
 
   if (step === 'success') {
+    if (loadingOrder && !orderData) {
+      return (
+        <main className="cart-page" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16 }}>
+          <div className="spinner" style={{ width: 40, height: 40, border: '3px solid #eae6e1', borderTop: '3px solid #8fa27b', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--fg-soft)' }}>Cargando comprobante de compra...</p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </main>
+      );
+    }
+
+    const data = orderData || {
+      id: targetOrderId || 'Cargando...',
+      status: mpStatus === 'success' ? 'paid' : 'pending',
+      total: items.reduce((acc, it) => acc + it.product.price * it.qty, 0),
+      customerName: purchase?.buyerName || 'Cliente',
+      customerEmail: fields.customerEmail || 'correo@ejemplo.com',
+      customerPhone: fields.customerPhone || '',
+      address: fields.address || '',
+      city: fields.city || '',
+      notes: fields.notes || '',
+      createdAt: new Date().toISOString(),
+      items: items.map(it => ({
+        id: it.product.id,
+        productId: it.product.id,
+        productName: it.product.name,
+        pricePaid: it.product.price,
+        quantity: it.qty
+      }))
+    };
+
+    const isPaid = data.status === 'paid';
+    const isRetiro = !data.address || data.address.trim() === '' || data.address.toLowerCase().includes('retiro') || data.address.toLowerCase().includes('local');
+    const orderItemsCount = data.items?.reduce((acc: number, it: OrderItem) => acc + it.quantity, 0) || 0;
+
+    const fechaPedido = new Date(data.createdAt).toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const isShippingFree = data.total >= 120000 || isRetiro;
+    const shippingText = isShippingFree ? 'Gratis' : 'A coordinar por WhatsApp';
+
     return (
-      <main className="cart-page">
-        <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Carrito' }]} />
-        <div className="empty-state" style={{ marginTop: 60 }}>
-          <Icon name="check" size={48} stroke={1.5} />
-          <h2 style={{ marginTop: 16 }}>¡Orden recibida!</h2>
-          <p style={{ maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
-            Tu orden fue registrada correctamente. Pronto te contactaremos a <b>{fields.customerEmail}</b> para coordinar el pago y el envío.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginTop: 24 }}>
-            <div style={{ display: 'flex', gap: 12 }}>
-              <Link href="/catalogo" className="btn btn-primary btn-md">
-                Seguir comprando
-              </Link>
-              <Link href="/" className="btn btn-ghost btn-md">
-                Ir al inicio
-              </Link>
-            </div>
-            <a
-              href={`https://wa.me/3492274535?text=${encodeURIComponent('¡Hola! Realicé una orden en la web y necesito ayuda. Mi orden es la #' + (purchase?.orderId ? purchase.orderId.slice(0, 8) : ''))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:opacity-75 transition-opacity"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: '13px',
-                color: 'var(--brand-orange)',
+      <main className="cart-page" style={{ paddingBottom: 100 }}>
+        <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Carrito' }, { label: 'Comprobante' }]} />
+        
+        <div style={{ maxWidth: 640, margin: '40px auto 0', padding: '0 16px' }}>
+          {/* Tarjeta de Éxito Principal */}
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: '24px',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
+            padding: '32px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 28
+          }}>
+            
+            {/* Header del Ticket */}
+            <div style={{ textAlign: 'center', borderBottom: '1px dashed var(--border)', paddingBottom: 24 }}>
+              <div style={{ 
+                fontFamily: 'var(--font-mono)', 
+                fontSize: 12, 
+                color: 'var(--fg-muted)', 
+                letterSpacing: '0.05em',
+                marginBottom: 8
+              }}>
+                ORDEN: #{data.id.slice(0, 8).toUpperCase()}
+              </div>
+              <h2 style={{ 
+                fontFamily: 'var(--font-serif)', 
+                fontSize: 22, 
                 fontWeight: 600,
-                marginTop: 8,
-                textDecoration: 'underline'
-              }}
-            >
-              <Icon name="whatsapp" size={15} />
-              ¿Necesitás ayuda con tu orden?
-            </a>
+                color: 'var(--fg)',
+                margin: '0 0 12px 0'
+              }}>
+                {isPaid ? '¡Pago aprobado con éxito!' : '¡Orden registrada con éxito!'}
+              </h2>
+              <div style={{ 
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 14px',
+                borderRadius: '50px',
+                fontSize: 13,
+                fontWeight: 500,
+                background: isPaid ? '#eaf5eb' : '#fff4eb',
+                color: isPaid ? '#2d6a3f' : '#b25e00'
+              }}>
+                <Icon name={isPaid ? 'check' : 'info'} size={14} />
+                {isPaid ? 'Pago confirmado. ¡Vamos a preparar tu pedido!' : 'Pago pendiente de acreditación'}
+              </div>
+            </div>
+
+            {/* Punto de Entrega Destacado */}
+            <div style={{ 
+              background: 'var(--surface-2)', 
+              borderRadius: '16px', 
+              padding: '20px',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              gap: 14
+            }}>
+              <div style={{ color: 'var(--brand-orange)', marginTop: 2 }}>
+                <Icon name="map-pin" size={20} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--fg-muted)', fontWeight: 600, marginBottom: 4 }}>
+                  {isRetiro ? 'Retirás en punto de entrega' : 'Envío a domicilio'}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--fg)', lineHeight: 1.4 }}>
+                  {isRetiro ? 'A. LINCOLN 85 (RAFAELA)' : `${(data.address || '').toUpperCase()}`}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--fg-soft)', marginTop: 2 }}>
+                  {isRetiro ? 'Lincoln 85, Rafaela, Santa Fe, CP 2300' : `${data.city || ''}, Santa Fe, Argentina`}
+                </div>
+              </div>
+            </div>
+
+            {/* Listado de Productos */}
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)', marginBottom: 16 }}>
+                Tu pedido · {orderItemsCount} {orderItemsCount === 1 ? 'producto' : 'productos'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {data.items?.map((item: OrderItem) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, fontSize: 13.5 }}>
+                    <div style={{ color: 'var(--fg)', flex: 1, lineHeight: 1.4 }}>
+                      <span style={{ textTransform: 'uppercase', fontSize: 12.5, fontWeight: 500 }}>{item.productName}</span>
+                      <span style={{ color: 'var(--fg-soft)', marginLeft: 8 }}>× {item.quantity}</span>
+                    </div>
+                    <div style={{ fontWeight: 600, color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}>
+                      {fmt(item.pricePaid * item.quantity)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bloque Financiero Totales */}
+              <div style={{ borderTop: '1px solid var(--border)', marginTop: 20, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13.5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--fg-soft)' }}>
+                  <span>Subtotal</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(data.total)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--fg-soft)' }}>
+                  <span>Costo de envío</span>
+                  <span style={{ color: isShippingFree ? '#2d6a3f' : 'inherit', fontWeight: isShippingFree ? 500 : 'normal' }}>
+                    {shippingText}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border)', marginTop: 6, paddingTop: 14, fontSize: 17, fontWeight: 700, color: 'var(--fg)' }}>
+                  <span>Total</span>
+                  <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--accent)' }}>{fmt(data.total)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Pago por Transferencia si aplica */}
+            {!isPaid && (
+              <div style={{
+                background: '#fdfcf7',
+                border: '1.5px solid #c9a17a',
+                borderRadius: '16px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12
+              }}>
+                <h4 style={{ margin: 0, color: '#c9a17a', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                  Instrucciones de Pago
+                </h4>
+                <p style={{ fontSize: 13.5, color: 'var(--fg-soft)', margin: 0, lineHeight: 1.5 }}>
+                  Para concretar tu compra, realizá la transferencia bancaria por el total a nuestra cuenta oficial:
+                </p>
+                <div style={{ 
+                  background: 'var(--surface-2)', 
+                  padding: '14px', 
+                  borderRadius: '10px', 
+                  fontFamily: 'var(--font-mono)', 
+                  fontSize: 12.5, 
+                  color: 'var(--fg)', 
+                  lineHeight: 1.8,
+                  border: '1px solid var(--border)'
+                }}>
+                  <strong>Banco:</strong> Banco Credicoop<br />
+                  <strong>Titular:</strong> Botica del Alma S.H.<br />
+                  <strong>CBU:</strong> 1910274855027402770274<br />
+                  <strong>Alias:</strong> botica.del.alma
+                </div>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText('botica.del.alma');
+                    alert('¡Alias de cuenta copiado!');
+                  }}
+                  className="btn btn-ghost btn-sm"
+                  style={{ alignSelf: 'flex-start', color: '#c9a17a', gap: 6 }}
+                >
+                  <Icon name="copy" size={13} /> Copiar Alias
+                </button>
+                <p style={{ fontSize: 12, color: 'var(--fg-muted)', fontStyle: 'italic', margin: 0 }}>
+                  * Una vez transferido, envianos el comprobante por WhatsApp o respondiendo al email.
+                </p>
+              </div>
+            )}
+
+            {/* Como seguir el pedido */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--fg)', marginBottom: 6 }}>
+                Cómo seguir el pedido
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--fg-soft)', margin: 0, lineHeight: 1.5 }}>
+                Te enviamos un correo electrónico a <strong>{data.customerEmail}</strong> con los detalles y el comprobante de esta orden, para que puedas llevar el seguimiento de tu compra en cualquier momento.
+              </p>
+            </div>
+
+            {/* Información Detallada del Pedido */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--fg)', marginBottom: 16 }}>
+                Información del pedido
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 32px', fontSize: 13, color: 'var(--fg-soft)' }}>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--fg-muted)', marginBottom: 4 }}>E-mail</div>
+                  <div style={{ wordBreak: 'break-all' }}>{data.customerEmail}</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--fg-muted)', marginBottom: 4 }}>Forma de entrega</div>
+                  <div>{isRetiro ? 'Retiro en Lincoln 85' : 'Envío a domicilio'}</div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--fg-muted)', marginBottom: 4 }}>Datos de facturación</div>
+                  <div>
+                    {data.customerName}<br />
+                    {data.customerPhone && <>{data.customerPhone}<br /></>}
+                    {!isRetiro && <>{data.address}, {data.city}</>}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--fg-muted)', marginBottom: 4 }}>Pedido realizado</div>
+                  <div>{fechaPedido}</div>
+                </div>
+                {data.notes && (
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <div style={{ fontWeight: 600, color: 'var(--fg-muted)', marginBottom: 4 }}>Notas del cliente</div>
+                    <div style={{ fontStyle: 'italic', background: 'var(--surface-2)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      &quot;{data.notes}&quot;
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CTA Soporte WhatsApp */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20, textAlign: 'center' }}>
+              <a
+                href={`https://wa.me/5493492274535?text=${encodeURIComponent('¡Hola! Realicé una orden en la web y necesito ayuda. Mi orden es la #' + data.id.slice(0, 8).toUpperCase())}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group btn btn-md btn-whatsapp rounded-full"
+              >
+                <Icon name="whatsapp" size={18} className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+                <span>¿Necesitás ayuda? Comunicate con nosotros</span>
+              </a>
+            </div>
+
           </div>
+
+          {/* Botones de navegación inferiores */}
+          <div style={{ display: 'flex', gap: 12, marginTop: 24, justifyContent: 'center' }}>
+            <Link href="/catalogo" className="btn btn-ghost btn-md">
+              Seguir comprando
+            </Link>
+            <Link href="/" className="btn btn-ghost btn-md">
+              Ir al inicio
+            </Link>
+          </div>
+
         </div>
       </main>
     );

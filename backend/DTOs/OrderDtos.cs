@@ -39,7 +39,8 @@ public record OrderResponseDto(
     string? Notes,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    List<OrderItemResponseDto> Items
+    List<OrderItemResponseDto> Items,
+    string? InitPoint = null
 );
 
 public record OrderItemResponseDto(

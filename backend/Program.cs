@@ -1,4 +1,5 @@
 using BoticaDelAlma.API.Data;
+using BoticaDelAlma.API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,8 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<BoticaDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddSingleton<EmailService>();
 
 // Orígenes permitidos para CORS, configurables por "AllowedOrigins" (coma-separado);
 // por defecto el front local. OJO: CORS lo aplica el navegador, NO protege contra

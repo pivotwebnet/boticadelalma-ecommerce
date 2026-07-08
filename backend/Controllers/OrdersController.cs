@@ -2,6 +2,7 @@ using BoticaDelAlma.API.Attributes;
 using BoticaDelAlma.API.Data;
 using BoticaDelAlma.API.DTOs;
 using BoticaDelAlma.API.Models;
+using BoticaDelAlma.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,7 @@ namespace BoticaDelAlma.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class OrdersController(BoticaDbContext db, IConfiguration config) : ControllerBase
+public class OrdersController(BoticaDbContext db, IConfiguration config, EmailService emails) : ControllerBase
 {
     private static readonly string[] ValidStatuses = ["pending", "paid", "shipped", "cancelled"];
 
@@ -38,6 +39,17 @@ public class OrdersController(BoticaDbContext db, IConfiguration config) : Contr
     [HttpGet("{id:guid}")]
     [RequireAdminKey]
     public async Task<IActionResult> GetById(Guid id)
+    {
+        var order = await db.Orders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order is null) return NotFound();
+        return Ok(MapToResponse(order));
+    }
+
+    [HttpGet("public/{id:guid}")]
+    public async Task<IActionResult> GetPublicById(Guid id)
     {
         var order = await db.Orders
             .Include(o => o.Items)
@@ -145,7 +157,23 @@ public class OrdersController(BoticaDbContext db, IConfiguration config) : Contr
         await db.SaveChangesAsync();
         await tx.CommitAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = order.Id }, MapToResponse(order));
+        // Enviar mail de confirmación asíncronamente en segundo plano
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await emails.SendOrderConfirmationAsync(order);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al enviar mail en segundo plano: {ex.Message}");
+            }
+        });
+
+        var initPoint = await TryGenerateMercadoPagoPreference(order);
+        var response = MapToResponse(order) with { InitPoint = initPoint };
+
+        return CreatedAtAction(nameof(GetById), new { id = order.Id }, response);
     }
 
     [HttpPatch("{id:guid}/status")]
@@ -193,6 +221,70 @@ public class OrdersController(BoticaDbContext db, IConfiguration config) : Contr
         var diff = 0;
         for (var i = 0; i < provided.Length; i++) diff |= provided[i] ^ expected[i];
         return diff == 0;
+    }
+
+    private async Task<string?> TryGenerateMercadoPagoPreference(Order order)
+    {
+        var accessToken = config["MercadoPago:AccessToken"];
+        if (string.IsNullOrEmpty(accessToken)) return null;
+
+        try
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+            var siteUrl = config["SiteUrl"] ?? "http://localhost:3000";
+            var apiUrl = config["ApiUrl"] ?? "http://localhost:5000";
+
+            var payload = new
+            {
+                items = order.Items.Select(i => new
+                {
+                    title = i.ProductName,
+                    unit_price = (double)i.PricePaid,
+                    quantity = i.Quantity,
+                    currency_id = "ARS"
+                }).ToList(),
+                payer = new
+                {
+                    name = order.CustomerName,
+                    email = order.CustomerEmail
+                },
+                back_urls = new
+                {
+                    success = $"{siteUrl}/carrito?status=success&orderId={order.Id}",
+                    failure = $"{siteUrl}/carrito?status=failure&orderId={order.Id}",
+                    pending = $"{siteUrl}/carrito?status=pending&orderId={order.Id}"
+                },
+                auto_return = "approved",
+                external_reference = order.Id.ToString(),
+                notification_url = $"{apiUrl}/api/payments/mercadopago-webhook"
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var res = await client.PostAsync("https://api.mercadopago.com/checkout/preferences", content);
+            if (!res.IsSuccessStatusCode)
+            {
+                var errContent = await res.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error al crear preferencia de Mercado Pago: {res.StatusCode} - {errContent}");
+                return null;
+            }
+
+            var responseJson = await res.Content.ReadAsStringAsync();
+            using var doc = System.Text.Json.JsonDocument.Parse(responseJson);
+            if (doc.RootElement.TryGetProperty("init_point", out var initPointProp))
+            {
+                return initPointProp.GetString();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Excepción al conectar con Mercado Pago: {ex.Message}");
+        }
+
+        return null;
     }
 
     private static OrderResponseDto MapToResponse(Order o) => new(

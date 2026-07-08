@@ -21,7 +21,7 @@ function InstagramLink() {
 }
 
 export default function Footer() {
-  const whatsappNumber = "3492274535";
+  const whatsappNumber = "5493492274535";
   const whatsappMessage = encodeURIComponent("¡Hola! Tengo una consulta sobre...");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -57,6 +57,7 @@ export default function Footer() {
               <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Envíos y devoluciones</Link></li>
               <li><Link href="/preguntas-frecuentes" className="hover:text-brand-orange transition-colors">Dudas Frecuentes</Link></li>
               <li><Link href="/cuidados" className="hover:text-brand-orange transition-colors">Guía de cuidados</Link></li>
+              <li className="pt-1"><Link href="/arrepentimiento" className="text-brand-orange font-bold hover:brightness-110">Botón de Arrepentimiento</Link></li>
             </ul>
           </div>
 
@@ -73,9 +74,9 @@ export default function Footer() {
           <div className="flex flex-col items-start">
             <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-6">Información</h4>
             <ul className="flex flex-col gap-3 text-[13px] font-medium text-stone-100/90">
-              <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Términos y condiciones</Link></li>
-              <li><Link href="/envios-y-devoluciones" className="hover:text-brand-orange transition-colors">Política de privacidad</Link></li>
-              <li className="pt-4 flex items-center gap-2 text-stone-300 text-[11px] font-bold uppercase tracking-widest">
+              <li><Link href="/envios-y-devoluciones#terminos" className="hover:text-brand-orange transition-colors">Términos y condiciones</Link></li>
+              <li><Link href="/envios-y-devoluciones#privacidad" className="hover:text-brand-orange transition-colors">Política de privacidad</Link></li>
+              <li className="pt-3 flex items-center gap-2 text-stone-300 text-[11px] font-bold uppercase tracking-widest">
                 <Icon name="shield" size={14} /> Compra 100% Segura
               </li>
             </ul>
@@ -90,13 +91,13 @@ export default function Footer() {
             <span>© 2026 · La Botica del Alma</span>
             <span className="hidden md:inline text-stone-600/40">|</span>
             <a 
-              href="https://www.google.com/maps/search/Rafaela,+Santa+Fe,+Argentina" 
+              href="https://www.google.com/maps/search/A.+Lincoln+85,+Rafaela,+Santa+Fe,+Argentina" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-white transition-all group"
             >
               <Icon name="map-pin" size={10} /> 
-              Rafaela, Santa Fe
+              A. Lincoln 85, Rafaela, Santa Fe
             </a>
           </div>
           

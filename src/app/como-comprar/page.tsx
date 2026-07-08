@@ -35,7 +35,7 @@ export default function ComoComprarPage() {
       subtitle="Comprar en La Botica es un proceso simple y cercano. Podés hacerlo 100% online o coordinar todo por chat."
     >
       {/* Restored Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 py-6">
         {steps.map((step, i) => (
           <div key={i} className="flex gap-6">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent">
@@ -50,7 +50,7 @@ export default function ComoComprarPage() {
       </div>
 
       {/* Kept the new Asesoramiento Section */}
-      <div className="mt-24 border-t border-stone-200 pt-16 text-center">
+      <div className="mt-12 border-t border-stone-200 pt-8 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -67,12 +67,13 @@ export default function ComoComprarPage() {
             Estamos en línea para ayudarte a elegir el cristal ideal o coordinar tu retiro sin cargo en Rafaela.
           </p>
           <a 
-            href="https://wa.me/3492274535" 
+            href="https://wa.me/5493492274535" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="btn btn-primary btn-md mt-4"
+            className="group btn btn-md btn-whatsapp rounded-full mt-4"
           >
-            Hablar por WhatsApp
+            <Icon name="whatsapp" size={18} className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+            <span>Hablar por WhatsApp</span>
           </a>
         </motion.div>
       </div>

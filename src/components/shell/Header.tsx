@@ -12,7 +12,7 @@ import SearchBox from './SearchBox';
 const ANNOUNCE_ITEMS = [
   '· ENVÍO GRATIS DESDE $120.000 ·',
   '· 3 cuotas sin interés ·',
-  '· PUNTO DE RETIRO EN RAFAELA, SANTA FE ·',
+  '· PUNTO DE RETIRO EN A. LINCOLN 85 (RAFAELA) ·',
 ];
 // Una "mitad" repite los mensajes hasta superar el ancho de pantalla;
 // se duplica (HALF + HALF) para que translateX(-50%) cicle sin cortes.
@@ -185,6 +185,8 @@ export default function Header() {
               setDrawerOpen(true)
             }
             aria-label="Menú"
+            data-tooltip="Menú de categorías"
+            data-tooltip-dir="down"
           >
 
             <Icon
@@ -292,6 +294,8 @@ export default function Header() {
               "
               onClick={() => setFavsOpen(true)}
               aria-label="Favoritos"
+              data-tooltip="Ver favoritos"
+              data-tooltip-dir="down"
             >
 
               <Icon
@@ -322,6 +326,8 @@ export default function Header() {
                 setCartOpen(true)
               }
               aria-label="Carrito"
+              data-tooltip="Ver carrito"
+              data-tooltip-dir="down"
             >
 
               <Icon

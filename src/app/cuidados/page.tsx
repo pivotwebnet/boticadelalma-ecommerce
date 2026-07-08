@@ -52,11 +52,11 @@ export default function CuidadosPage() {
       title="Guía de Cuidados"
       subtitle="Consejos para mantener la energía y belleza de tus cristales, velas y piezas únicas."
     >
-      <div className="mb-16">
+      <div className="mb-8">
         <Accordion items={careItems} />
       </div>
 
-      <div className="p-12 rounded-[3rem] bg-accent/5 border border-accent/10 flex flex-col items-center gap-6 text-center">
+      <div className="p-8 rounded-[3rem] bg-accent/5 border border-accent/10 flex flex-col items-center gap-6 text-center">
         <Icon name="leaf" size={40} className="text-accent/40" />
         <p className="text-stone-600 italic font-serif text-lg">&ldquo;Cuidar tus objetos es una forma de honrar tu propia energía.&rdquo;</p>
       </div>

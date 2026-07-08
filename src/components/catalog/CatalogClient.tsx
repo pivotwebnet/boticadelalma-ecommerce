@@ -8,6 +8,7 @@ import { fmt } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Icon from '@/components/ui/Icon';
 import ProductCard from '@/components/ui/ProductCard';
+import { motion } from 'framer-motion';
 
 type SortKey = 'relevance' | 'price-asc' | 'price-desc' | 'rating';
 type ViewMode = 'grid' | 'rows';
@@ -42,6 +43,13 @@ export default function CatalogClient() {
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
   const [sortOpen, setSortOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [catSel, subcatSel, maxPrice, matSel, intSel, sizeSel, onlyNew, sort]);
 
   // Sync filters from URL params — re-runs on every navigation (incl. desde el menú)
   useEffect(() => {
@@ -81,6 +89,36 @@ export default function CatalogClient() {
   ];
 
   const currentSortLabel = sortOptions.find(o => o.key === sort)?.label;
+
+  // Materiales e Intenciones disponibles dinámicamente según la categoría/subcategoría activa
+  const { availableMaterials, availableIntentions } = useMemo(() => {
+    let list = products;
+    if (catSel.length) {
+      list = list.filter(p => catSel.includes(p.cat));
+    }
+    if (subcatSel) {
+      list = list.filter(p => p.subcat === subcatSel);
+    }
+
+    const availMats = MATERIALS.filter(m =>
+      list.some(p => p.tags.some(t => t.toLowerCase().includes(m.toLowerCase())))
+    );
+
+    const availInts = INTENTIONS.filter(i =>
+      list.some(p => p.tags.some(t => t.toLowerCase().includes(i.toLowerCase())))
+    );
+
+    return {
+      availableMaterials: availMats,
+      availableIntentions: availInts,
+    };
+  }, [products, catSel, subcatSel]);
+
+  // Limpiar selecciones de materiales o intenciones que dejan de estar disponibles
+  useEffect(() => {
+    setMatSel(prev => prev.filter(m => availableMaterials.includes(m)));
+    setIntSel(prev => prev.filter(i => availableIntentions.includes(i)));
+  }, [availableMaterials, availableIntentions]);
 
   const filtered = useMemo(() => {
     let list = products;
@@ -140,6 +178,68 @@ export default function CatalogClient() {
     setOnlyNew(false);
   };
 
+  const PRODUCTS_PER_PAGE = 12;
+  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return filtered.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  const renderPageButtons = () => {
+    const buttons = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        buttons.push(i);
+      }
+    } else {
+      buttons.push(1);
+      if (currentPage > 3) {
+        buttons.push('ellipsis-start');
+      }
+      
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!buttons.includes(i)) {
+          buttons.push(i);
+        }
+      }
+      
+      if (currentPage < totalPages - 2) {
+        buttons.push('ellipsis-end');
+      }
+      if (!buttons.includes(totalPages)) {
+        buttons.push(totalPages);
+      }
+    }
+
+    return buttons.map((b, idx) => {
+      if (b === 'ellipsis-start' || b === 'ellipsis-end') {
+        return (
+          <li key={`ell-${idx}`} className="page-item disabled">
+            <span className="page-link border-none bg-transparent hover:bg-transparent select-none cursor-default">
+              ...
+            </span>
+          </li>
+        );
+      }
+      return (
+        <li key={`page-${b}`} className={`page-item ${currentPage === b ? 'active' : ''}`}>
+          <button
+            onClick={() => {
+              setCurrentPage(b as number);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="page-link"
+          >
+            {b}
+          </button>
+        </li>
+      );
+    });
+  };
+
   return (
     <main className="plp">
       <Breadcrumb items={[{ label: 'Inicio', href: '/' }, { label: 'Catálogo' }]} />
@@ -149,9 +249,23 @@ export default function CatalogClient() {
         <p>{filtered.length} piezas · seleccionadas a mano</p>
       </header>
 
+      <div className="max-w-6xl mx-auto px-4 lg:px-0">
+        <button
+          type="button"
+          className="filters-toggle-btn"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Icon name="filter" size={14} />
+          <span>{showFilters ? 'Ocultar filtros' : 'Filtrar productos'}</span>
+          {activeFilters > 0 && (
+            <span className="filters-badge-count">{activeFilters}</span>
+          )}
+        </button>
+      </div>
+
       <div className="plp-body">
         {/* Sidebar */}
-        <aside className="filters">
+        <aside className={`filters${showFilters ? ' show' : ''}`}>
           <div className="filter-head">
             <Icon name="filter" size={14} />
             <span>Filtros</span>
@@ -238,19 +352,21 @@ export default function CatalogClient() {
           </div>
 
           {/* Material */}
-          <div className="filter-group">
-            <h4>Material</h4>
-            {MATERIALS.map(m => (
-              <label key={m} className="check-row">
-                <input
-                  type="checkbox"
-                  checked={matSel.includes(m)}
-                  onChange={() => toggle(matSel, m, setMatSel)}
-                />
-                <span>{m}</span>
-              </label>
-            ))}
-          </div>
+          {availableMaterials.length > 0 && (
+            <div className="filter-group">
+              <h4>Material</h4>
+              {availableMaterials.map(m => (
+                <label key={m} className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={matSel.includes(m)}
+                    onChange={() => toggle(matSel, m, setMatSel)}
+                  />
+                  <span>{m}</span>
+                </label>
+              ))}
+            </div>
+          )}
 
           {/* Tamaño (Solo si se filtra piedras o en general si hay piedras) */}
           {(catSel.length === 0 || catSel.includes('piedras')) && (
@@ -270,20 +386,22 @@ export default function CatalogClient() {
           )}
 
           {/* Intención */}
-          <div className="filter-group">
-            <h4>Intención</h4>
-            <div className="chip-group">
-              {INTENTIONS.map(i => (
-                <button
-                  key={i}
-                  className={`chip capitalize${intSel.includes(i) ? ' chip-on' : ''}`}
-                  onClick={() => toggle(intSel, i, setIntSel)}
-                >
-                  {i}
-                </button>
-              ))}
+          {availableIntentions.length > 0 && (
+            <div className="filter-group">
+              <h4>Intención</h4>
+              <div className="chip-group">
+                {availableIntentions.map(i => (
+                  <button
+                    key={i}
+                    className={`chip capitalize${intSel.includes(i) ? ' chip-on' : ''}`}
+                    onClick={() => toggle(intSel, i, setIntSel)}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Solo novedades */}
           <div className="filter-group">
@@ -326,10 +444,20 @@ export default function CatalogClient() {
               </div>
             </div>
             <div className="view-toggle">
-              <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}>
+              <button 
+                className={view === 'grid' ? 'on' : ''} 
+                onClick={() => setView('grid')}
+                data-tooltip="Vista en cuadrícula"
+                aria-label="Vista en cuadrícula"
+              >
                 <Icon name="grid" size={14} />
               </button>
-              <button className={view === 'rows' ? 'on' : ''} onClick={() => setView('rows')}>
+              <button 
+                className={view === 'rows' ? 'on' : ''} 
+                onClick={() => setView('rows')}
+                data-tooltip="Vista en lista"
+                aria-label="Vista en lista"
+              >
                 <Icon name="rows" size={14} />
               </button>
             </div>
@@ -418,11 +546,59 @@ export default function CatalogClient() {
               </button>
             </div>
           ) : (
-            <div className={`product-grid view-${view}`}>
-              {filtered.map(p => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              <motion.div
+                key={currentPage}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                className={`product-grid view-${view}`}
+              >
+                {paginatedProducts.map(p => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </motion.div>
+
+              {totalPages > 1 && (
+                <nav aria-label="Page navigation example" className="mt-12 py-6 border-t border-stone-100 flex justify-center">
+                  <ul className="pagination">
+                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <button
+                        onClick={() => {
+                          setCurrentPage(prev => Math.max(1, prev - 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === 1}
+                        className="page-link"
+                        aria-label="Página anterior"
+                        data-tooltip="Página anterior"
+                      >
+                        <span aria-hidden="true">&lsaquo;</span>
+                        <span className="sr-only">Anterior</span>
+                      </button>
+                    </li>
+
+                    {renderPageButtons()}
+
+                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button
+                        onClick={() => {
+                          setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="page-link"
+                        aria-label="Página siguiente"
+                        data-tooltip="Página siguiente"
+                      >
+                        <span aria-hidden="true">&rsaquo;</span>
+                        <span className="sr-only">Siguiente</span>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              )}
+            </>
           )}
         </section>
       </div>

@@ -111,18 +111,22 @@ export default function SearchBox() {
 
           {/* Hojas */}
           {LEAVES.map((l, i) => (
-            <motion.path
+            <g
               key={i}
-              d={LEAF_D}
-              fill={i % 2 === 0 ? '#8A9A5B' : '#6F7D45'}
-              initial={{ scale: 0, opacity: 0 }}
-              style={{ x: l.x, y: l.y, rotate: l.rot, originX: 0.5, originY: 1 }}
-              animate={{ scale: l.s, opacity: 1 }}
-              transition={{
-                scale: { type: 'spring', stiffness: 320, damping: 13, delay: l.delay },
-                opacity: { duration: 0.25, delay: l.delay },
-              }}
-            />
+              transform={`translate(${l.x}, ${l.y}) rotate(${l.rot})`}
+            >
+              <motion.path
+                d={LEAF_D}
+                fill={i % 2 === 0 ? '#8A9A5B' : '#6F7D45'}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: l.s, opacity: 1 }}
+                style={{ originX: '0px', originY: '0px' }}
+                transition={{
+                  scale: { type: 'spring', stiffness: 320, damping: 13, delay: l.delay },
+                  opacity: { duration: 0.25, delay: l.delay },
+                }}
+              />
+            </g>
           ))}
         </motion.g>
       </svg>
@@ -137,7 +141,12 @@ export default function SearchBox() {
           onFocus={() => setOpen(true)}
         />
         {q && (
-          <button className="clear-search" onClick={() => setQ('')}>
+          <button 
+            className="clear-search" 
+            onClick={() => setQ('')}
+            data-tooltip="Limpiar búsqueda"
+            aria-label="Limpiar búsqueda"
+          >
             <Icon name="close" size={14} />
           </button>
         )}

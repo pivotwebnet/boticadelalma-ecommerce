@@ -7,15 +7,19 @@ import Icon from './Icon';
 interface AccordionItemProps {
   title: string;
   children: React.ReactNode;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
-function AccordionItem({ title, children }: AccordionItemProps) {
-  const [isOpen, setIsOpen] = useState(false);
+function AccordionItem({ title, children, isOpen: controlledIsOpen, onToggle }: AccordionItemProps) {
+  const [localIsOpen, setLocalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : localIsOpen;
+  const toggle = onToggle ? onToggle : () => setLocalIsOpen(!localIsOpen);
 
   return (
     <div className="border-b border-stone-200">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggle}
         className="w-full py-6 flex justify-between items-center text-left group"
       >
         <span className="font-serif text-xl md:text-2xl italic text-stone-800 group-hover:text-brand-orange transition-colors">
@@ -48,14 +52,32 @@ function AccordionItem({ title, children }: AccordionItemProps) {
   );
 }
 
-export default function Accordion({ items }: { items: AccordionItemProps[] }) {
+interface AccordionProps {
+  items: (AccordionItemProps & { id?: string })[];
+  openIndex?: number | null;
+  onToggleIndex?: (index: number | null) => void;
+}
+
+export default function Accordion({ items, openIndex, onToggleIndex }: AccordionProps) {
   return (
     <div className="flex flex-col">
-      {items.map((item, i) => (
-        <AccordionItem key={i} title={item.title}>
-          {item.children}
-        </AccordionItem>
-      ))}
+      {items.map((item, i) => {
+        const isControlled = openIndex !== undefined;
+        const isOpen = isControlled ? openIndex === i : undefined;
+        const onToggle = onToggleIndex ? () => onToggleIndex(openIndex === i ? null : i) : undefined;
+
+        return (
+          <div key={i} id={item.id}>
+            <AccordionItem 
+              title={item.title} 
+              isOpen={isOpen}
+              onToggle={onToggle}
+            >
+              {item.children}
+            </AccordionItem>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import InfoPageLayout from '@/components/ui/InfoPageLayout';
 import Accordion from '@/components/ui/Accordion';
+import Icon from '@/components/ui/Icon';
 
 export default function FAQPage() {
   const faqItems = [
@@ -41,15 +42,23 @@ export default function FAQPage() {
       title="Preguntas Frecuentes"
       subtitle="Aquí encontrarás las respuestas a las consultas más comunes sobre nuestros productos, envíos y rituales."
     >
-      <div className="mb-12">
+      <div className="mb-8">
         <Accordion items={faqItems} />
       </div>
 
-      <div className="text-center py-12 border-t border-stone-200">
+      <div className="text-center py-6 border-t border-stone-200">
         <p className="text-stone-500 font-light italic mb-8">¿No encontraste lo que buscabas?</p>
         <div className="flex flex-col md:flex-row justify-center gap-6">
-          <a href="/contacto" className="btn btn-ghost">Ir a Contacto</a>
-          <a href="https://wa.me/3492274535" target="_blank" rel="noopener noreferrer" className="btn btn-primary">Chatear por WhatsApp</a>
+          <a href="/contacto" className="btn btn-md btn-ghost rounded-full">Ir a Contacto</a>
+          <a 
+            href="https://wa.me/5493492274535" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="group btn btn-md btn-whatsapp rounded-full"
+          >
+            <Icon name="whatsapp" size={18} className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12" />
+            <span>Chatear por WhatsApp</span>
+          </a>
         </div>
       </div>
     </InfoPageLayout>

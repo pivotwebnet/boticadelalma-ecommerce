@@ -183,7 +183,7 @@ function OrderDrawer({ order, onClose, onStatusChange }: {
                 let content: React.ReactNode = v;
                 if (k === 'Email') {
                   const emailBody = encodeURIComponent(
-                    `Hola ${order.customerName}!\n\nTe escribimos desde La Botica del Alma en relación a tu pedido #${order.id.slice(0, 8)}. Queríamos coordinar los detalles para realizar el pago y acordar el método de envío.\n\nLos datos para realizar la transferencia bancaria son:\n- Banco: [COMPLETAR BANCO]\n- CBU: [COMPLETAR CBU]\n- Alias: [COMPLETAR ALIAS]\n- Titular: [COMPLETAR TITULAR]\n\nUna vez realizada la transferencia, por favor envianos el comprobante respondiendo a este correo o por WhatsApp al 3492274535.\n\nMuchas gracias,\nLa Botica del Alma`
+                    `Hola ${order.customerName}!\n\nTe escribimos desde La Botica del Alma en relación a tu pedido #${order.id.slice(0, 8)}. Queríamos coordinar los detalles para realizar el pago y acordar el método de envío.\n\nLos datos para realizar la transferencia bancaria son:\n- Banco: [COMPLETAR BANCO]\n- CBU: [COMPLETAR CBU]\n- Alias: [COMPLETAR ALIAS]\n- Titular: [COMPLETAR TITULAR]\n\nUna vez realizada la transferencia, por favor envianos el comprobante respondiendo a este correo o por WhatsApp al +54 3492274535.\n\nMuchas gracias,\nLa Botica del Alma`
                   );
                   content = (
                     <a
@@ -433,7 +433,7 @@ export default function OrdenesPage() {
                       <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--fg)' }}>{o.customerName}</div>
                       <div style={{ fontSize: 11.5, color: 'var(--fg-soft)' }}>
                         <a
-                          href={`mailto:${o.customerEmail}?subject=Orden %23${o.id.slice(0, 8)} - La Botica del Alma&body=${encodeURIComponent(`Hola ${o.customerName}!\n\nTe escribimos desde La Botica del Alma en relación a tu pedido #${o.id.slice(0, 8)}. Queríamos coordinar los detalles para realizar el pago y acordar el método de envío.\n\nLos datos para realizar la transferencia bancaria son:\n- Banco: [COMPLETAR BANCO]\n- CBU: [COMPLETAR CBU]\n- Alias: [COMPLETAR ALIAS]\n- Titular: [COMPLETAR TITULAR]\n\nUna vez realizada la transferencia, por favor envianos el comprobante respondiendo a este correo o por WhatsApp al 3492274535.\n\nMuchas gracias,\nLa Botica del Alma`)}`}
+                          href={`mailto:${o.customerEmail}?subject=Orden %23${o.id.slice(0, 8)} - La Botica del Alma&body=${encodeURIComponent(`Hola ${o.customerName}!\n\nTe escribimos desde La Botica del Alma en relación a tu pedido #${o.id.slice(0, 8)}. Queríamos coordinar los detalles para realizar el pago y acordar el método de envío.\n\nLos datos para realizar la transferencia bancaria son:\n- Banco: [COMPLETAR BANCO]\n- CBU: [COMPLETAR CBU]\n- Alias: [COMPLETAR ALIAS]\n- Titular: [COMPLETAR TITULAR]\n\nUna vez realizada la transferencia, por favor envianos el comprobante respondiendo a este correo o por WhatsApp al +54 3492274535.\n\nMuchas gracias,\nLa Botica del Alma`)}`}
                           onClick={e => e.stopPropagation()}
                           className="hover:opacity-80 transition-opacity"
                           style={{ color: 'var(--fg-soft)', textDecoration: 'underline' }}

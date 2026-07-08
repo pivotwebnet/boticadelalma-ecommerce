@@ -240,7 +240,7 @@ export default function PDPClient({ product }: PDPClientProps) {
           )}
           {tab === 'ship' && (
             <p>
-              Envíos a todo el país a coordinar por WhatsApp (3 a 7 días hábiles). Retiro gratuito en nuestro punto de entrega en Rafaela, Santa Fe.
+              Envíos a todo el país a coordinar por WhatsApp (3 a 7 días hábiles). Retiro gratuito en nuestro punto de entrega en A. Lincoln 85, Rafaela, Santa Fe.
             </p>
           )}
         </div>

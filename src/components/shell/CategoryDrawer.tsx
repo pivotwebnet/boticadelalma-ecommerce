@@ -7,6 +7,7 @@ import { INTENTIONS } from '@/lib/data';
 import { useCategories } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
 import Image from 'next/image';
+import SearchBox from './SearchBox';
 
 function toSlug(s: string) {
   return s
@@ -93,6 +94,11 @@ export default function CategoryDrawer() {
         </header>
 
         <nav className="drawer-nav">
+          {/* Search Box on mobile/tablets */}
+          <div className="lg:hidden" style={{ padding: '0 24px 16px' }}>
+            <SearchBox />
+          </div>
+
           {/* Carrito shortcut */}
           <ul style={{ marginBottom: 12 }}>
             <li>

@@ -7,7 +7,7 @@ import Icon from './Icon';
 export default function FloatingActions() {
   const [showTop, setShowTop] = useState(false);
   
-  const whatsappNumber = "3492274535";
+  const whatsappNumber = "5493492274535";
   const whatsappMessage = encodeURIComponent("¡Hola! Tengo una consulta sobre...");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
@@ -35,6 +35,8 @@ export default function FloatingActions() {
             onClick={scrollToTop}
             className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-md text-stone-800 shadow-lg border border-white/20 flex items-center justify-center hover:bg-white transition-all active:scale-90"
             aria-label="Volver arriba"
+            data-tooltip="Volver arriba"
+            data-tooltip-dir="left"
           >
             <Icon name="chev-u" size={20} stroke={2.5} />
           </motion.button>
@@ -50,6 +52,8 @@ export default function FloatingActions() {
         whileTap={{ scale: 0.9 }}
         className="w-14 h-14 rounded-full bg-[#25D366] text-white shadow-[0_10px_40px_rgba(37,211,102,0.4)] flex items-center justify-center relative group"
         aria-label="Chatear por WhatsApp"
+        data-tooltip="Chatear por WhatsApp"
+        data-tooltip-dir="left"
       >
         <div className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20 group-hover:hidden" />
         <Icon name="whatsapp" size={32} stroke={0} />

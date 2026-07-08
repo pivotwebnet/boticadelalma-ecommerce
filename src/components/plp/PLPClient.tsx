@@ -39,6 +39,7 @@ function PLPInner({ cat }: PLPClientProps) {
   const [intSel, setIntSel] = useState<string[]>([]);
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
+  const [showFilters, setShowFilters] = useState(false);
 
   const absoluteMax = useMemo(() => {
     const prices = products.filter(p => p.cat === cat).map(p => p.price);
@@ -111,8 +112,22 @@ function PLPInner({ cat }: PLPClientProps) {
         <p>{filtered.length} {filtered.length === 1 ? 'pieza' : 'piezas'} · seleccionadas a mano</p>
       </header>
 
+      <div className="max-w-6xl mx-auto px-4 lg:px-0">
+        <button
+          type="button"
+          className="filters-toggle-btn"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Icon name="filter" size={14} />
+          <span>{showFilters ? 'Ocultar filtros' : 'Filtrar productos'}</span>
+          {activeFilters > 0 && (
+            <span className="filters-badge-count">{activeFilters}</span>
+          )}
+        </button>
+      </div>
+
       <div className="plp-body">
-        <aside className="filters">
+        <aside className={`filters${showFilters ? ' show' : ''}`}>
           <div className="filter-head">
             <Icon name="filter" size={14} />
             <span>Filtros</span>
