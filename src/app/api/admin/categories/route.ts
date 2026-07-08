@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { getCategories, createCategory } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   // El panel admin debe ver también las categorías inactivas (para reactivarlas).
   const categories = await getCategories({ includeInactive: true })

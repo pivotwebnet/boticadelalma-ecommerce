@@ -1,0 +1,46 @@
+Usando la configuración de inicio de C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\Properties\launchSettings.json...
+Compilando...
+C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\Data\DbSeeder.cs(131,19): warning CS8618: El elemento propiedad "Name" que no acepta valores NULL debe contener un valor distinto de NULL al salir del constructor. Considere la posibilidad de agregar el modificador "required'"o declarar el propiedad como un valor que acepta valores NULL. [C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\BoticaDelAlma.API.csproj]
+C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\Data\DbSeeder.cs(132,19): warning CS8618: El elemento propiedad "Id" que no acepta valores NULL debe contener un valor distinto de NULL al salir del constructor. Considere la posibilidad de agregar el modificador "required'"o declarar el propiedad como un valor que acepta valores NULL. [C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\BoticaDelAlma.API.csproj]
+C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\Data\DbSeeder.cs(133,19): warning CS8618: El elemento propiedad "Description" que no acepta valores NULL debe contener un valor distinto de NULL al salir del constructor. Considere la posibilidad de agregar el modificador "required'"o declarar el propiedad como un valor que acepta valores NULL. [C:\Users\Usuario\OneDrive\Escritorio\PIVOT PROJECTS\BOTICA DEL ALMA\boticadelalma-ecommerce\backend\BoticaDelAlma.API.csproj]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (50ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+          "MigrationId" character varying(150) NOT NULL,
+          "ProductVersion" character varying(32) NOT NULL,
+          CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+      );
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      LOCK TABLE "__EFMigrationsHistory" IN ACCESS EXCLUSIVE MODE
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT "MigrationId", "ProductVersion"
+      FROM "__EFMigrationsHistory"
+      ORDER BY "MigrationId";
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Categories" AS c
+          WHERE c."Id" = 'anillos')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Products" AS p
+          WHERE p."Name" = 'Aro ac q Cornalina')
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT p."Id", p."CategoryId", p."CreatedAt", p."ImageUrl", p."Images", p."IsActive", p."IsNew", p."Label", p."Name", p."OriginalPrice", p."Price", p."Rating", p."Reviews", p."Stock", p."Tags", p."Tone", p."UpdatedAt"
+      FROM "Products" AS p
+REMOVED OLD PRODUCTS

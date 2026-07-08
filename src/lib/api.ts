@@ -268,8 +268,11 @@ export async function createCategory(dto: unknown): Promise<{ ok: boolean; data:
       method: 'POST', headers: adminHeaders(true),
       body: JSON.stringify(dto),
     })
-    return { ok: res.ok, data: await res.json() }
-  } catch { return { ok: false, data: { error: 'Error de conexión' } } }
+    const text = await res.text()
+    let data
+    try { data = JSON.parse(text) } catch { data = { error: text } }
+    return { ok: res.ok, data }
+  } catch (e: any) { return { ok: false, data: { error: e.message || 'Error de conexión' } } }
 }
 
 export async function updateCategory(id: string, dto: unknown): Promise<boolean> {

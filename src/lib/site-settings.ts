@@ -10,6 +10,8 @@ export interface SiteSettings {
   // Imagen de fondo del banner principal de la home. Si es null/undefined,
   // la tienda usa la imagen por defecto (/banner3.jpg).
   heroImageUrl?: string | null
+  // Imagen del logo. Si es null/undefined, se usa el logo de texto por defecto.
+  logoUrl?: string | null
 }
 
 export function readSiteSettings(): SiteSettings {

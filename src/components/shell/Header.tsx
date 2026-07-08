@@ -55,8 +55,16 @@ export default function Header() {
   // MOUNT
   // =========================
 
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
   useEffect(() => {
     setMounted(true);
+    fetch('/api/site-settings')
+      .then(r => r.json())
+      .then((s: { logoUrl?: string | null }) => {
+        if (s?.logoUrl) setLogoUrl(s.logoUrl);
+      })
+      .catch(() => {});
   }, []);
 
   // =========================
@@ -214,54 +222,45 @@ export default function Header() {
             }
             aria-label="Inicio"
           >
-
-            <span className="brand-mark">
-
-              <svg
-                width="30"
-                height="30"
-                viewBox="0 0 30 30"
-                fill="none"
-              >
-
-                <circle
-                  cx="15"
-                  cy="15"
-                  r="13"
-                  stroke="currentColor"
-                  strokeWidth="0.8"
-                />
-
-                <path
-                  d="M15 6c-3 3-3 12 0 18M15 6c3 3 3 12 0 18"
-                  stroke="currentColor"
-                  strokeWidth="0.8"
-                  fill="none"
-                />
-
-                <circle
-                  cx="15"
-                  cy="15"
-                  r="2"
-                  fill="currentColor"
-                />
-
-              </svg>
-
-            </span>
-
-            <span className="brand-name">
-
-              <span className="brand-line1">
-                La Botica
-              </span>
-
-              <span className="brand-line2">
-                del Alma
-              </span>
-
-            </span>
-
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="La Botica del Alma" style={{ maxHeight: '40px', maxWidth: '180px', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <span className="brand-mark">
+                  <svg
+                    width="30"
+                    height="30"
+                    viewBox="0 0 30 30"
+                    fill="none"
+                  >
+                    <circle
+                      cx="15"
+                      cy="15"
+                      r="13"
+                      stroke="currentColor"
+                      strokeWidth="0.8"
+                    />
+                    <path
+                      d="M15 6c-3 3-3 12 0 18M15 6c3 3 3 12 0 18"
+                      stroke="currentColor"
+                      strokeWidth="0.8"
+                      fill="none"
+                    />
+                    <circle
+                      cx="15"
+                      cy="15"
+                      r="2"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </span>
+                <span className="brand-name">
+                  <span className="brand-line1">La Botica</span>
+                  <span className="brand-line2">del Alma</span>
+                </span>
+              </>
+            )}
           </button>
 
           {/* SEARCH */}

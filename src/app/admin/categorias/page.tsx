@@ -12,6 +12,15 @@ function categoryToForm(c: ApiCategory): FormState {
   return { id: c.id, name: c.name, icon: c.icon, isActive: c.isActive }
 }
 
+function toSlug(str: string) {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 // El `value` se guarda en la base; el `label` es lo que ve la dueña (en español).
 const ICON_OPTIONS = [
   // Joyería
@@ -174,7 +183,7 @@ export default function CategoriasPage() {
         })
         if (!res.ok) {
           const d = await res.json().catch(() => ({}))
-          setError(typeof d === 'string' ? d : (d?.message ?? d?.title ?? 'Error al crear.'))
+          setError(typeof d === 'string' ? d : (d?.error ?? d?.message ?? d?.title ?? 'Error al crear.'))
           return
         }
       } else {
@@ -399,8 +408,11 @@ export default function CategoriasPage() {
             </div>
 
             <div style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
-              <Input label="ID (slug único)" value={form.id} onChange={v => setF('id', v)} disabled={modal === 'edit'} />
-              <Input label="Nombre" value={form.name} onChange={v => setF('name', v)} />
+              <Input label="Nombre" value={form.name} onChange={v => {
+                setF('name', v);
+                if (modal === 'create') setF('id', toSlug(v));
+              }} />
+              <Input label="ID (slug único generado automáticamente)" value={form.id} onChange={v => setF('id', v)} disabled={true} />
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>Ícono</label>

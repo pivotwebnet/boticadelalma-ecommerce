@@ -109,4 +109,13 @@ public partial class CategoriesController(BoticaDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpDelete("wipe-all-data-temp")]
+    public async Task<IActionResult> WipeAll()
+    {
+        db.Products.RemoveRange(db.Products);
+        db.Categories.RemoveRange(db.Categories);
+        await db.SaveChangesAsync();
+        return Ok("Wiped");
+    }
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Icon from '@/components/ui/Icon';
 
@@ -21,6 +22,17 @@ function InstagramLink() {
 }
 
 export default function Footer() {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then(r => r.json())
+      .then((s: { logoUrl?: string | null }) => {
+        if (s?.logoUrl) setLogoUrl(s.logoUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   const whatsappNumber = "5493492274535";
   const whatsappMessage = encodeURIComponent("¡Hola! Tengo una consulta sobre...");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
@@ -29,7 +41,7 @@ export default function Footer() {
     <footer className="mt-24 pt-12 pb-8 bg-[#2A5E36] text-white relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 relative z-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:justify-between gap-x-12 gap-y-10 mb-6">
-
+          {/* ... columns ... */}
           {/* Col 1: Experiencia del Cliente */}
           <div className="flex flex-col items-start">
             <h4 className="text-[12px] uppercase tracking-[0.4em] font-bold text-stone-300/40 mb-6">Experiencia del Cliente</h4>
@@ -88,6 +100,10 @@ export default function Footer() {
         {/* Footer Base */}
         <div className="pt-4 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-5 text-[11px]">
           <div className="uppercase tracking-[0.2em] text-stone-400 font-medium flex items-center gap-4">
+            {logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="La Botica del Alma" style={{ maxHeight: '30px', objectFit: 'contain' }} />
+            )}
             <span>© 2026 · La Botica del Alma</span>
             <span className="hidden md:inline text-stone-600/40">|</span>
             <a 

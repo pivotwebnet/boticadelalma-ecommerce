@@ -61,13 +61,19 @@ export default function PDPClient({ product }: PDPClientProps) {
       'plata', 'acero', 'gamuza', 'hilo', 'alpaca', 
       'piedra', 'bruto', 'cuarzo', 'amatista', 
       'obsidiana', 'labradorita', 'ojo turco', 'nácar', 
-      'nacar', 'turquesa', 'metal'
+      'nacar', 'turquesa', 'metal', 'hematite', 'madera'
     ];
     return materialsList.some(m => t.includes(m));
   };
 
-  const materiales = product.tags.filter(isMaterial);
-  const intenciones = product.tags.filter(t => !isMaterial(t));
+  const isSku = (tag: string) => {
+    // Detects SKU formats like APT00001, ASM00012, ARPBJ00003, etc.
+    return /^[A-Z]{3,5}\d{4,5}$/i.test(tag.trim());
+  };
+
+  const publicTags = product.tags.filter(t => !isSku(t));
+  const materiales = publicTags.filter(isMaterial);
+  const intenciones = publicTags.filter(t => !isMaterial(t));
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imgRef.current) return;
@@ -158,7 +164,7 @@ export default function PDPClient({ product }: PDPClientProps) {
           </div>
 
           <ul className="pdp-tags">
-            {product.tags.map(t => <li key={t}>· {t}</li>)}
+            {publicTags.map(t => <li key={t}>· {t}</li>)}
           </ul>
 
           <div className="pdp-qty">
