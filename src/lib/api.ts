@@ -170,6 +170,13 @@ export interface ApiProduct {
   stock: number
   createdAt: string
   updatedAt: string
+  // Campos de la planilla de stock (importación Excel)
+  code?: string
+  provider?: string
+  productType?: string
+  stone?: string
+  costPrice?: number
+  minStock?: number
 }
 
 export interface GetProductsParams {

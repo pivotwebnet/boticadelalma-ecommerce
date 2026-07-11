@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import * as XLSX from 'xlsx'
-import { ImportProductRow, ImportResult } from '@/lib/api'
+import { ImportProductRow, ImportResult, ApiProduct } from '@/lib/api'
 
 // Mapeo de encabezados de la planilla de la dueña (Google Sheets) a los campos
 // que necesita el importador. Comparación tolerante a mayúsculas/tildes/espacios.
@@ -82,6 +82,7 @@ export default function ImportarPage() {
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<ImportResult | null>(null)
   const [error, setError] = useState('')
+  const [exporting, setExporting] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   function handleFile(file: File) {
@@ -167,6 +168,42 @@ export default function ImportarPage() {
     }
   }
 
+  // Descarga los productos actuales de la tienda en el mismo formato de columnas
+  // que la planilla de la dueña, para que pueda editarlo y volver a subirlo.
+  async function handleExport() {
+    setExporting(true)
+    setError('')
+    try {
+      const products: ApiProduct[] = await fetch('/api/admin/products')
+        .then(r => (r.ok ? r.json() : []))
+        .catch(() => [])
+      if (!Array.isArray(products) || products.length === 0) {
+        setError('No hay productos para descargar.')
+        return
+      }
+      // Mismas columnas y orden que su Excel (encabezados que el importador reconoce).
+      const data = products.map(p => ({
+        'Código': p.code ?? '',
+        'PROVEEDOR': p.provider ?? '',
+        'Tipo de producto': p.productType ?? '',
+        'PRODUCTO': p.name,
+        'Piedra': p.stone ?? '',
+        'Categoría': p.categoryName ?? '',
+        'Stock actual': p.stock ?? 0,
+        'Costo unidad': p.costPrice ?? '',
+        'Stock mínimo': p.minStock ?? '',
+        'Precio Minorista': p.price ?? 0,
+      }))
+      const ws = XLSX.utils.json_to_sheet(data)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'INVENTARIO')
+      const today = new Date().toISOString().slice(0, 10)
+      XLSX.writeFile(wb, `stock-botica-del-alma-${today}.xlsx`)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const validCount = rows.filter(r => r._valid).length
   const invalidCount = rows.length - validCount
 
@@ -184,6 +221,28 @@ export default function ImportarPage() {
           Se actualizan los productos que ya existan (por Código) y se crean los que sean nuevos,
           junto con las categorías que falten.
         </p>
+      </div>
+
+      <div style={{
+        border: '1px solid var(--line)', borderRadius: 12, padding: '18px 22px', marginBottom: 16,
+        display: 'flex', alignItems: 'center', gap: 16, background: 'var(--surface)', flexWrap: 'wrap',
+      }}>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+          style={{
+            padding: '10px 20px', borderRadius: 8, border: '1px solid var(--brand-orange)',
+            background: 'transparent', color: 'var(--brand-orange)', fontSize: 13.5, fontWeight: 600,
+            cursor: exporting ? 'wait' : 'pointer', opacity: exporting ? 0.6 : 1, whiteSpace: 'nowrap',
+          }}
+        >
+          {exporting ? 'Generando…' : '⬇  Descargar Excel del stock actual'}
+        </button>
+        <span style={{ fontSize: 12.5, color: 'var(--fg-muted)', lineHeight: 1.45 }}>
+          Baja todos los productos en el mismo formato de la planilla. Podés editarlo (precios, stock,
+          productos nuevos) y volver a subirlo acá para actualizar la tienda.
+        </span>
       </div>
 
       <div style={{
