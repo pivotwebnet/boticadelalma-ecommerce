@@ -250,7 +250,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }}>
       {/* Sidebar */}
       <aside style={{
-        width: 220, flexShrink: 0,
+        width: 190, flexShrink: 0,
         background: 'var(--surface)',
         borderRight: '1px solid var(--line)',
         display: 'flex', flexDirection: 'column',
@@ -340,7 +340,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Contenido principal */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div style={{ flex: 1, minWidth: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative' }}>
         {children}
         
         {/* Pila de Notificaciones Críticas (Bottom Right Alert Stack) */}

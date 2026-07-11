@@ -524,7 +524,7 @@ export default function ProductosPage() {
 
       {/* Table */}
       <div style={{ padding: '0 40px 40px' }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 12, overflowX: 'auto' }}>
           {loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--fg-muted)', fontSize: 13 }}>Cargando productos…</div>
           ) : filtered.length === 0 ? (
@@ -556,7 +556,9 @@ export default function ProductosPage() {
                       <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleOne(p.id)}
                         style={{ cursor: 'pointer', accentColor: 'var(--brand-orange)' }} />
                     </td>
-                    <td style={{ padding: '13px 16px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)' }}>{p.id}</td>
+                    <td style={{ padding: '13px 16px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--fg-soft)' }}>
+                      <div title={p.id} style={{ maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.id}</div>
+                    </td>
                     <td style={{ padding: '13px 16px' }}>
                       <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--fg)' }}>{p.name}</div>
                       {p.isNew && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(102,134,231,.15)', color: '#6686e7' }}>NUEVO</span>}
@@ -585,7 +587,7 @@ export default function ProductosPage() {
                         {p.isActive ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td style={{ padding: '13px 16px' }}>
+                    <td style={{ padding: '13px 16px', width: 1, whiteSpace: 'nowrap' }}>
                       <div style={{ display: 'flex', gap: 8 }}>
                         <button onClick={() => openEdit(p)} style={{
                           padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
