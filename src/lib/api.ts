@@ -322,7 +322,7 @@ export async function createCategory(dto: unknown): Promise<{ ok: boolean; data:
     let data
     try { data = JSON.parse(text) } catch { data = { error: text } }
     return { ok: res.ok, data }
-  } catch (e: any) { return { ok: false, data: { error: e.message || 'Error de conexión' } } }
+  } catch (e) { return { ok: false, data: { error: e instanceof Error ? e.message : 'Error de conexión' } } }
 }
 
 export async function updateCategory(id: string, dto: unknown): Promise<boolean> {

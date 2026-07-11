@@ -103,9 +103,9 @@ export default function ImportarPage() {
             const field = HEADER_MAP[normalizeHeader(key)]
             if (!field || field === 'skip') continue
             if (field === 'stock' || field === 'price' || field === 'costPrice' || field === 'minStock') {
-              ;(mapped as any)[field] = toNumber(val)
+              ;(mapped as Record<string, unknown>)[field] = toNumber(val)
             } else {
-              ;(mapped as any)[field] = String(val ?? '').trim()
+              ;(mapped as Record<string, unknown>)[field] = String(val ?? '').trim()
             }
           }
 

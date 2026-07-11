@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { getOrder } from '@/lib/api';
+import { getOrder, getAllOrders } from '@/lib/api';
 import { DATA_DIR } from '@/lib/storage';
 
 export async function POST(req: NextRequest) {
@@ -19,9 +19,8 @@ export async function POST(req: NextRequest) {
 
     // Si es un ID corto (de 8 caracteres), buscamos en la lista completa para obtener el UUID completo
     if (targetOrderId.length === 8) {
-      const { getAllOrders } = require('@/lib/api');
       const allOrders = await getAllOrders();
-      const match = allOrders.find((o: any) => o.id.toLowerCase().startsWith(targetOrderId.toLowerCase()));
+      const match = allOrders.find((o) => o.id.toLowerCase().startsWith(targetOrderId.toLowerCase()));
       if (match) {
         targetOrderId = match.id;
       } else {
