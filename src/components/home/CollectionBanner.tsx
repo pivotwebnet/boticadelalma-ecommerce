@@ -21,7 +21,7 @@ export default function CollectionBanner() {
               className="relative z-10 rounded-[2rem] overflow-hidden shadow-2xl aspect-[16/10]"
             >
               <Image
-                src="https://images.unsplash.com/photo-1567333528660-d4387a67cfbb?auto=format&fit=crop&w=1200&q=85"
+                src="https://images.unsplash.com/photo-1611085583191-a3b181a88401?auto=format&fit=crop&w=1200&q=85"
                 alt="Luna Nueva — colección editorial"
                 fill
                 sizes="(max-width: 1024px) 100vw, 58vw"
