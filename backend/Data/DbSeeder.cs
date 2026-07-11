@@ -29,12 +29,10 @@ public static class DbSeeder
     public static async Task SeedAsync(BoticaDbContext db)
     {
         // ── Categorías ────────────────────────────────────────────────────────────
-        if (!db.Categories.Any(c => c.Id == "anillos"))
+        // Siembra la estructura de categorías SOLO si la tabla está vacía. Nunca borra:
+        // si la clienta ya cargó o editó su catálogo, este bloque no toca nada.
+        if (!db.Categories.Any())
         {
-            db.Products.RemoveRange(db.Products);
-            db.Categories.RemoveRange(db.Categories);
-            await db.SaveChangesAsync();
-
             db.Categories.AddRange(
                 new Category { Id = "anillos",      Name = "Anillos",          Icon = "ring",      SortOrder = 1 },
                 new Category { Id = "collares",     Name = "Collares",         Icon = "necklace",  SortOrder = 2 },
@@ -48,18 +46,11 @@ public static class DbSeeder
             await db.SaveChangesAsync();
         }
 
-        // ── Productos — resembrar si el catálogo está incompleto ─────────────────
-        // Si hay productos con tags viejos (como "calma" o "sanación" sin el sufijo de intención), resembramos.
-        var tieneTagsViejos = db.Products.AsEnumerable().Any(p => {
-            var tags = p.Tags.ToLower();
-            return tags.Contains("\"calma\"") || tags.Contains("\"sanación\"") || tags.Contains("\"protección\"") || tags.Contains("\"escudos\"");
-        });
-
-        if (db.Products.Count() < 130 || tieneTagsViejos || !db.Products.Any(p => p.Id == "ARPBJ00003" && p.Name == "Aros Pasantes de Cornalina"))
+        // ── Productos ────────────────────────────────────────────────────────────
+        // Siembra el catálogo SOLO si no hay ningún producto. Nunca borra ni resiembra
+        // encima de lo que la clienta cargue a mano: sus datos persisten entre reinicios.
+        if (!db.Products.Any())
         {
-            db.Products.RemoveRange(db.Products);
-            await db.SaveChangesAsync();
-
             var now = DateTime.UtcNow;
             db.Products.AddRange(
 

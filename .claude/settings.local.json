@@ -151,7 +151,9 @@
       "Bash(taskkill //F //PID 587 //T)",
       "Bash(taskkill //F //PID 672 //T)",
       "Bash(rm -rf src/app/probar-error ./_errdump.html)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "PowerShell(npm run *)",
+      "Bash(break)"
     ]
   }
 }

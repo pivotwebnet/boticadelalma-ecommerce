@@ -234,7 +234,6 @@ public class OrdersController(BoticaDbContext db, IConfiguration config, EmailSe
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
             var siteUrl = config["SiteUrl"] ?? "http://localhost:3000";
-            var apiUrl = config["ApiUrl"] ?? "http://localhost:5000";
 
             var payload = new
             {
@@ -258,7 +257,9 @@ public class OrdersController(BoticaDbContext db, IConfiguration config, EmailSe
                 },
                 auto_return = "approved",
                 external_reference = order.Id.ToString(),
-                notification_url = $"{apiUrl}/api/payments/mercadopago-webhook"
+                // El webhook entra por el frontend público (Next.js lo reenvía al backend).
+                // Así funciona aunque el backend .NET esté en red interna (ver CONTEXTO.md).
+                notification_url = $"{siteUrl}/api/payments/mercadopago-webhook"
             };
 
             var json = System.Text.Json.JsonSerializer.Serialize(payload);

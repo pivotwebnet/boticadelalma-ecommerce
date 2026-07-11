@@ -17,6 +17,10 @@ const NAV = [
   { href: '/admin/configuracion', label: 'Configuración', icon: '⚙' },
 ]
 
+// Cuánto tiempo queda silenciado un aviso del sistema después de descartarlo.
+// Evita que reaparezca en cada poll (era lo que lo hacía molesto y repetitivo).
+const ALERT_COOLDOWN_MS = 10 * 60 * 1000 // 10 minutos
+
 interface AlertItem {
   id: string;
   type: 'arrepentimiento' | 'new_order' | 'stock' | 'transfer' | 'review';
@@ -37,9 +41,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Guardamos el ID de la última orden conocida para detectar nuevos pedidos
   const lastOrderIdRef = useRef<string | null>(null)
   const isInitialLoadRef = useRef<boolean>(true)
+  // Avisos descartados: id -> timestamp del descarte. Mientras esté dentro del
+  // cooldown, ese aviso no se vuelve a mostrar.
+  const dismissedRef = useRef<Record<string, number>>({})
 
   // Sincronizar alertas locales e iniciar polling
   useEffect(() => {
+    // Recuperar descartes previos (sobreviven a recargas de página).
+    try {
+      dismissedRef.current = JSON.parse(localStorage.getItem('admin_dismissed_alerts') || '{}')
+    } catch { dismissedRef.current = {} }
+
+    const recentlyDismissed = (id: string) => {
+      const t = dismissedRef.current[id]
+      return t != null && Date.now() - t < ALERT_COOLDOWN_MS
+    }
+
     const checkStatusAndSystemData = async () => {
       try {
         // Ejecutar peticiones en paralelo de manera eficiente
@@ -171,11 +188,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           }
         }
 
-        // Actualizamos las alertas del sistema (conservando alertas temporales de nuevo pedido)
+        // Actualizamos las alertas del sistema (conservando alertas temporales de nuevo pedido).
+        // Se omiten los avisos descartados hace poco (cooldown) para que no reaparezcan
+        // en cada poll.
         setAlerts(prev => {
           const temporalAlerts = prev.filter(a => a.type === 'new_order')
-          // Evitar duplicados
-          const filteredSystemAlerts = systemAlerts.filter(sa => !temporalAlerts.some(ta => ta.id === sa.id))
+          const filteredSystemAlerts = systemAlerts.filter(sa =>
+            !recentlyDismissed(sa.id) && !temporalAlerts.some(ta => ta.id === sa.id)
+          )
           return [...temporalAlerts, ...filteredSystemAlerts]
         })
 
@@ -186,8 +206,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     checkStatusAndSystemData()
 
-    // Polling cada 8 segundos para evitar sobrecarga del servidor en desarrollo
-    const interval = setInterval(checkStatusAndSystemData, 8000)
+    // Polling cada 60 segundos: suficiente para avisar de pedidos nuevos sin saturar
+    // ni volverse molesto. Los avisos descartados respetan el cooldown de arriba.
+    const interval = setInterval(checkStatusAndSystemData, 60000)
 
     // Escuchar el evento manual de cancelación
     const handleManualUpdate = () => checkStatusAndSystemData()
@@ -214,6 +235,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       localStorage.removeItem('pending_cancel_id')
       localStorage.removeItem('pending_cancel_name')
     }
+    // Recordar el descarte para que el aviso no reaparezca en cada poll durante el
+    // cooldown (10 min). Pasado ese tiempo, si la situación sigue, vuelve a avisar.
+    dismissedRef.current = { ...dismissedRef.current, [id]: Date.now() }
+    try { localStorage.setItem('admin_dismissed_alerts', JSON.stringify(dismissedRef.current)) } catch {}
     setAlerts(prev => prev.filter(a => a.id !== id))
   }
 

@@ -60,6 +60,13 @@ export default function CartPage() {
   const [mpStatus, setMpStatus] = useState<string | null>(null);
   const [mpOrderId, setMpOrderId] = useState<string | null>(null);
 
+  // Medio de pago elegido en el checkout. 'mercadopago' redirige a pagar el total
+  // exacto; 'transfer' muestra el alias para transferencia bancaria.
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('mercadopago');
+  // Link de pago de Mercado Pago devuelto por el backend (existe solo si la cuenta
+  // de MP ya está conectada con su Access Token).
+  const [initPoint, setInitPoint] = useState<string | null>(null);
+
   const items = useStore(s => s.cart);
   const updateQty = useStore(s => s.updateQty);
   const removeFromCart = useStore(s => s.removeFromCart);
@@ -250,13 +257,18 @@ export default function CartPage() {
       confirmedAt: new Date().toISOString(),
     });
 
+    setInitPoint(order.initPoint ?? null);
     clearCart();
 
-    if (order.initPoint) {
+    // Si eligió Mercado Pago y la cuenta ya está conectada, lo mandamos directo a
+    // pagar el total exacto. Si MP todavía no está conectado (sin Access Token) o
+    // eligió transferencia, mostramos el comprobante con las instrucciones de pago.
+    if (paymentMethod === 'mercadopago' && order.initPoint) {
       window.location.href = order.initPoint;
-    } else {
-      setStep('success');
+      return;
     }
+
+    setStep('success');
   };
 
   if (!mounted) return null;
@@ -427,6 +439,20 @@ export default function CartPage() {
                 </div>
               </div>
             </div>
+
+            {/* Aviso: eligió Mercado Pago pero la cuenta de la tienda aún no está conectada */}
+            {!isPaid && !initPoint && !mpStatus && paymentMethod === 'mercadopago' && (
+              <div style={{ background: '#eef4ff', border: '1.5px solid #9dc0ff', borderRadius: 16, padding: '18px 20px' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#1c5fd0', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+                  Pago con Mercado Pago
+                </h4>
+                <p style={{ fontSize: 13.5, color: 'var(--fg-soft)', margin: 0, lineHeight: 1.5 }}>
+                  Estamos terminando de conectar la cuenta de Mercado Pago de la tienda. En cuanto quede activa,
+                  al elegir esta opción vas a ir directo a pagar el total de <strong>{fmt(data.total)}</strong> con
+                  tarjeta, débito o dinero en cuenta. Por ahora, podés abonar por transferencia con los datos de abajo.
+                </p>
+              </div>
+            )}
 
             {/* Pago por Transferencia si aplica */}
             {!isPaid && (
@@ -771,6 +797,44 @@ export default function CartPage() {
                   (*) Los campos marcados son obligatorios.
                 </p>
 
+                {/* Selector de medio de pago */}
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontWeight: 600, marginBottom: 10 }}>¿Cómo querés pagar?</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {([
+                      { id: 'mercadopago', title: 'Mercado Pago', desc: 'Tarjeta de crédito o débito, dinero en cuenta y cuotas. Pagás el total al instante.' },
+                      { id: 'transfer',    title: 'Transferencia bancaria', desc: 'Te mostramos el alias para transferir el total y enviarnos el comprobante.' },
+                    ] as const).map(opt => {
+                      const active = paymentMethod === opt.id;
+                      return (
+                        <button
+                          type="button"
+                          key={opt.id}
+                          onClick={() => setPaymentMethod(opt.id)}
+                          disabled={step === 'submitting'}
+                          style={{
+                            display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left', width: '100%',
+                            padding: '14px 16px', borderRadius: 12, cursor: 'pointer',
+                            border: active ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                            background: active ? 'var(--surface-2)' : 'var(--surface)',
+                            transition: 'border-color .15s, background .15s',
+                          }}
+                        >
+                          <span style={{
+                            marginTop: 2, width: 18, height: 18, borderRadius: '50%', flexShrink: 0, boxSizing: 'border-box',
+                            border: active ? '5px solid var(--accent)' : '2px solid var(--border)',
+                            transition: 'border .15s',
+                          }} />
+                          <span>
+                            <span style={{ display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--fg)' }}>{opt.title}</span>
+                            <span style={{ display: 'block', fontSize: 12.5, color: 'var(--fg-soft)', marginTop: 2, lineHeight: 1.4 }}>{opt.desc}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {formError && (
                   <p className="auth-error" style={{ marginBottom: 12 }}>{formError}</p>
                 )}
@@ -791,7 +855,9 @@ export default function CartPage() {
                     disabled={step === 'submitting'}
                     style={{ flex: 2 }}
                   >
-                    {step === 'submitting' ? 'Procesando…' : 'Confirmar orden'}
+                    {step === 'submitting'
+                      ? 'Procesando…'
+                      : paymentMethod === 'mercadopago' ? 'Ir a pagar con Mercado Pago' : 'Confirmar pedido'}
                   </button>
                 </div>
               </form>

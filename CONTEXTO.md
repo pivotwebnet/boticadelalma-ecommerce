@@ -54,6 +54,26 @@ Estas son configuraciones de despliegue (no de código) sin las cuales la API qu
 
 Protecciones ya implementadas en el código (defensa en profundidad): descuento de stock **atómico** (sin sobreventa por compras simultáneas), **rate limiting** por IP en crear orden (8/min) y reseña (5/min), checkout que nunca define estado ni confía en precios del cliente, reseñas verificadas contra la orden real, y anti open-redirect en el login.
 
+## Mercado Pago (Checkout Pro)
+
+El cobro con tarjeta / dinero en cuenta usa **Checkout Pro** (redirección a Mercado Pago). La lógica ya está implementada y se **activa sola** cuando se define el Access Token; mientras esté vacío, la web funciona igual y las órdenes se pagan por **transferencia** (los datos bancarios se muestran en el comprobante y en el mail).
+
+**Flujo:** el cliente confirma la orden → el backend crea una *preferencia* en Mercado Pago y devuelve `initPoint` → el frontend redirige al checkout de MP → tras pagar, el cliente vuelve a `/carrito?status=...&orderId=...` → Mercado Pago avisa el pago por **webhook** → el backend valida el pago contra la API de MP y marca la orden como `paid` (y manda el mail de pago confirmado).
+
+**Dónde está el código:**
+- `backend/Controllers/OrdersController.cs → TryGenerateMercadoPagoPreference` (crea la preferencia).
+- `backend/Controllers/PaymentsController.cs` (recibe y valida el webhook).
+- `src/app/api/payments/mercadopago-webhook/route.ts` (proxy: MP notifica al frontend público y este reenvía al backend interno).
+- `src/app/carrito/page.tsx` (redirige a `initPoint` y procesa el regreso).
+
+**Configuración (backend):**
+- `MercadoPago:AccessToken` — Access Token del **vendedor** (la clienta). Vacío = MP desactivado. En producción, definir por env var: `MercadoPago__AccessToken=APP_USR-...`.
+- `SiteUrl` — URL pública del frontend (para `back_urls` y `notification_url`). En prod: `https://tudominio.com`.
+
+**Importante:** `back_urls` y el webhook deben ser **URLs públicas HTTPS**. En `localhost` el checkout redirige, pero Mercado Pago no puede llamar al webhook ni al `auto_return` (para probar el webhook en local se necesita una URL pública tipo ngrok). En producción, con `SiteUrl` = dominio real, funciona de punta a punta. El webhook entra por el frontend porque el backend .NET está en red interna.
+
+**Qué debe hacer la clienta:** crear/usar su cuenta de Mercado Pago (vendedor) → *Tu negocio → Configuración → Gestión y administración → Tus integraciones* → crear una aplicación (tipo *Pagos online / Checkout Pro*) → copiar el **Access Token de producción** (`APP_USR-...`) y pasarlo para pegarlo en `MercadoPago:AccessToken`. Con eso queda cobrando.
+
 ## Autenticación del Panel Admin (Next.js)
 
 El login del panel (`/admin/login`) vive en el **frontend** (Next.js), no en el backend .NET. Su lógica está en:

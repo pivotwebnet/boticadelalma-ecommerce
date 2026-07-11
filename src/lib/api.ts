@@ -101,6 +101,17 @@ export async function getOrder(id: string): Promise<ApiOrder | null> {
   } catch { return null }
 }
 
+// Lectura pública de una orden (comprobante de compra). No expone datos sensibles
+// más allá de lo que el propio comprador ya conoce; NO requiere clave admin. La usa
+// la pantalla de éxito del carrito para mostrar el detalle de la orden recién creada.
+export async function getPublicOrder(id: string): Promise<ApiOrder | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/orders/public/${id}`, { cache: 'no-store' })
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
 export async function updateOrderStatus(id: string, status: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch(`${API_URL}/api/orders/${id}/status`, {
