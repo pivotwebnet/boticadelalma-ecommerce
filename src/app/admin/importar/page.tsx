@@ -235,9 +235,16 @@ export default function ImportarPage() {
               Avisos: {result.errors.join(' — ')}
             </div>
           )}
-          <div style={{ marginTop: 10, color: 'var(--fg-soft)' }}>
-            Los productos nuevos quedan <strong>inactivos</strong> hasta que les cargues fotos en{' '}
-            <a href="/admin/productos" style={{ color: 'var(--brand-orange)' }}>Productos</a>.
+          <div style={{
+            marginTop: 14, padding: '14px 18px', borderRadius: 10,
+            background: 'rgba(224,101,87,0.10)', border: '1px solid rgba(224,101,87,0.35)',
+            borderLeft: '5px solid var(--brand-orange)',
+            fontSize: 16, lineHeight: 1.55, fontWeight: 500, color: 'var(--fg)',
+          }}>
+            ⚠️ <strong>Importante:</strong> los productos nuevos quedan{' '}
+            <strong style={{ color: 'var(--brand-orange)' }}>INACTIVOS</strong> y no se ven en la tienda
+            hasta que les cargues las fotos en{' '}
+            <a href="/admin/productos" style={{ color: 'var(--brand-orange)', fontWeight: 600 }}>Productos</a>.
           </div>
         </div>
       )}
