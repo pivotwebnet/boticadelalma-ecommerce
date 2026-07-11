@@ -37,7 +37,7 @@ Funcionalidades del panel (frontend):
 
 El estado escribible del frontend (contraseña del panel, configuración de la tienda y **fotos subidas** del banner y de productos) se guarda en disco bajo un directorio configurable por la env **`DATA_DIR`** (`src/lib/storage.ts`). Las imágenes subidas van a `DATA_DIR/uploads` y se sirven por `GET /api/media/<archivo>` (no por `/public`, que se hornea en la imagen Docker).
 
-- **Coolify — frontend (Next.js)**: agregar un **Persistent Storage** montado en `/app/data` y definir `DATA_DIR=/app/data`. Sin esto, cada redeploy borra la contraseña del panel (`admin.json`), la configuración (`site-settings.json`) y las fotos subidas. Otras envs: `API_URL` (URL interna del backend .NET), `BACKEND_ADMIN_KEY` (= `AdminApiKey` del backend), `ADMIN_SESSION_SECRET`.
+- **Coolify — frontend (Next.js)**: agregar un **Persistent Storage** montado en `/app/data` y definir `DATA_DIR=/app/data`. Sin esto, cada redeploy borra la contraseña del panel (`admin.json`), la configuración (`site-settings.json`) y las fotos subidas. Otras envs: `API_URL` (URL interna del backend .NET), `BACKEND_ADMIN_KEY` (= `AdminApiKey` del backend), `ADMIN_SESSION_SECRET`, `NEXT_PUBLIC_SITE_URL` (dominio público real, para SEO — ver sección **SEO y metadatos**).
 - **Coolify — backend (.NET)**: definir `AdminApiKey` (= `BACKEND_ADMIN_KEY` del frontend) y la cadena de conexión a la base Postgres (otro servicio de Coolify con su propio volumen).
 - **Cloudflare**: `/api/media/*` responde con `Cache-Control: immutable` (el filename es único → una foto nueva es otra URL, no quedan cacheadas viejas). `/api/site-settings` va con `no-store` para que un cambio de banner se vea al instante. Máx 6 MB por imagen. No usar reglas "Cache Everything" sobre `/api/*` ni `/admin/*`.
 - **DonWeb**: solo el dominio → DNS apuntando a Cloudflare, y Cloudflare al server de Coolify. Sin impacto en la app.
@@ -73,6 +73,21 @@ El cobro con tarjeta / dinero en cuenta usa **Checkout Pro** (redirección a Mer
 **Importante:** `back_urls` y el webhook deben ser **URLs públicas HTTPS**. En `localhost` el checkout redirige, pero Mercado Pago no puede llamar al webhook ni al `auto_return` (para probar el webhook en local se necesita una URL pública tipo ngrok). En producción, con `SiteUrl` = dominio real, funciona de punta a punta. El webhook entra por el frontend porque el backend .NET está en red interna.
 
 **Qué debe hacer la clienta:** crear/usar su cuenta de Mercado Pago (vendedor) → *Tu negocio → Configuración → Gestión y administración → Tus integraciones* → crear una aplicación (tipo *Pagos online / Checkout Pro*) → copiar el **Access Token de producción** (`APP_USR-...`) y pasarlo para pegarlo en `MercadoPago:AccessToken`. Con eso queda cobrando.
+
+## SEO y metadatos
+
+La web genera automáticamente los metadatos que necesitan Google y las redes (previews de WhatsApp/Instagram/Facebook). Todo se arma con las convenciones de archivos de Next.js (App Router):
+
+- **Favicon / ícono**: `src/app/icon.jpg` y `src/app/apple-icon.jpg` (copias del logo). Aparecen en la pestaña del navegador y al guardar la web en iOS.
+- **OG / Twitter image**: `src/app/opengraph-image.tsx` genera una imagen de marca **1200×630** al vuelo (crema + verde + oro, sin depender de assets externos). `src/app/twitter-image.tsx` reutiliza la misma. Es lo que se ve al compartir un link de la web.
+- **Sitemap**: `src/app/sitemap.ts` → `/sitemap.xml` dinámico: páginas fijas + un `<url>` por cada **producto y categoría activos** (los trae del backend en cada request).
+- **robots.txt**: `src/app/robots.ts` permite indexar todo salvo `/admin`, `/api`, `/carrito` y `/favoritos`; apunta al sitemap.
+- **Metadata global**: en `src/app/layout.tsx` (`metadataBase`, Open Graph, Twitter card, keywords, canonical).
+
+**Configuración (frontend):**
+- `NEXT_PUBLIC_SITE_URL` — dominio público real (ej: `https://laboticadelalma.com`). Lo usan `metadataBase`, el sitemap, el robots y las OG images para generar URLs absolutas. Está centralizado en `src/lib/site.ts`. **Si no se define, se usa un dominio placeholder**; hay que setearlo en producción con el dominio verdadero para que las URLs del sitemap y las previews sean correctas.
+
+> Los metadatos se validan en cada `next build` (las rutas `/opengraph-image`, `/sitemap.xml` y `/robots.txt` se generan en el build). No hace falta mantenerlos a mano.
 
 ## Autenticación del Panel Admin (Next.js)
 
