@@ -36,6 +36,40 @@ function toNumber(v: unknown): number {
   return isNaN(n) ? 0 : n
 }
 
+// La planilla de la dueña no completa la columna "Categoría", pero sí "Tipo de producto".
+// Cuando falta la categoría, derivamos una de las 8 categorías reales de la tienda a partir
+// del tipo. La clave se normaliza (sin tildes, sin espacios, minúsculas) para tolerar
+// variantes como "Aros"/"AROS"/"aros" o "Tobillera/pulsera"/"Tobillera/ pulsera".
+const TYPE_TO_CATEGORY: Record<string, string> = {
+  aros: 'Aros', aritos: 'Aros',
+  dije: 'Dijes', amuleto: 'Dijes',
+  anillo: 'Anillos',
+  collar: 'Collares', collarcaucho: 'Collares', mala: 'Collares',
+  pulsera: 'Pulseras',
+  tobillerapulsera: 'Tobilleras',
+  piedra: 'Piedras Naturales', piedras: 'Piedras Naturales', huevo: 'Piedras Naturales', corazon: 'Piedras Naturales',
+  relicario: 'Complementos', relicariocompletoconpiedraycadena: 'Complementos',
+  botellas: 'Complementos', frasco: 'Complementos', guashas: 'Complementos', kit: 'Complementos',
+  llavero: 'Complementos', pendulo: 'Complementos', cadena: 'Complementos', perforaoreja: 'Complementos',
+  punzon: 'Complementos', vara: 'Complementos',
+}
+
+function normalizeValue(v: string): string {
+  const decomposed = v.normalize('NFD')
+  let stripped = ''
+  for (const ch of decomposed) {
+    const code = ch.codePointAt(0) ?? 0
+    if (code < 0x0300 || code > 0x036f) stripped += ch
+  }
+  return stripped.toLowerCase().replace(/[^a-z0-9]+/g, '')
+}
+
+// Tipo conocido → su categoría; tipo desconocido o vacío → "Complementos" (cajón general).
+function categoryFromType(productType: string): string {
+  const key = normalizeValue(productType)
+  return TYPE_TO_CATEGORY[key] ?? 'Complementos'
+}
+
 interface ParsedRow extends ImportProductRow {
   _rowIndex: number
   _valid: boolean
@@ -76,7 +110,8 @@ export default function ImportarPage() {
 
           const code = mapped.code ?? ''
           const name = mapped.name ?? ''
-          const categoryName = mapped.categoryName ?? ''
+          // Si la planilla no trae categoría, la derivamos del "Tipo de producto".
+          const categoryName = (mapped.categoryName || '').trim() || categoryFromType(mapped.productType ?? '')
           let issue: string | undefined
           if (!code) issue = 'Sin código'
           else if (!name) issue = 'Sin nombre de producto'

@@ -309,6 +309,11 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         var categories = await db.Categories.ToListAsync();
         var existingProducts = await db.Products.ToDictionaryAsync(p => p.Code ?? p.Id, p => p);
 
+        // IDs (slugs) ya ocupados. Incluye los productos existentes y los que se van creando
+        // en este mismo lote, para que dos filas con nombres parecidos no generen el mismo Id
+        // (EF Core no puede trackear dos entidades con la misma clave y se caería toda la importación).
+        var usedIds = new HashSet<string>(existingProducts.Values.Select(p => p.Id), StringComparer.OrdinalIgnoreCase);
+
         foreach (var row in rows)
         {
             if (string.IsNullOrWhiteSpace(row.Code) || string.IsNullOrWhiteSpace(row.Name))
@@ -354,7 +359,7 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
             }
             else
             {
-                var id = await UniqueSlugAsync(row.Name, row.Code);
+                var id = UniqueSlug(row.Name, row.Code, usedIds);
                 product = new Product
                 {
                     Id          = id,
@@ -395,16 +400,22 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         return string.IsNullOrEmpty(slug) ? Guid.NewGuid().ToString("N")[..8] : slug;
     }
 
-    private async Task<string> UniqueSlugAsync(string name, string code)
+    // Genera un Id (slug) único a partir del nombre, evitando choques tanto con la base
+    // como con los productos ya generados en el mismo lote (usedIds se actualiza en el acto).
+    private static string UniqueSlug(string name, string code, HashSet<string> usedIds)
     {
         var baseSlug = Slugify(name);
+        if (string.IsNullOrEmpty(baseSlug)) baseSlug = Slugify(code);
+        // La columna Id es varchar(50); recortamos dejando margen para el sufijo de unicidad.
+        if (baseSlug.Length > 45) baseSlug = baseSlug[..45].TrimEnd('-');
         var slug = baseSlug;
         var suffix = 2;
-        while (await db.Products.AnyAsync(p => p.Id == slug))
+        while (usedIds.Contains(slug))
         {
             slug = $"{baseSlug}-{suffix}";
             suffix++;
         }
+        usedIds.Add(slug);
         return slug;
     }
 }
