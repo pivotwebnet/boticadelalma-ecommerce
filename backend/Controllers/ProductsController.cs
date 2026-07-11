@@ -290,6 +290,121 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
             p.Id, p.Name, p.CategoryId, p.Category?.Name,
             p.Price, p.OriginalPrice, p.Tone, p.Label, tags,
             p.IsNew, p.IsActive, p.Rating, p.Reviews,
-            p.ImageUrl, images, p.Stock, p.CreatedAt, p.UpdatedAt);
+            p.ImageUrl, images, p.Stock, p.CreatedAt, p.UpdatedAt,
+            p.Code, p.Provider, p.ProductType, p.Stone, p.CostPrice, p.MinStock);
+    }
+
+    // Importación masiva desde la planilla de stock (Excel/Google Sheets) de la dueña.
+    // Matchea por Código: si existe lo actualiza, si no lo crea. Crea categorías que falten.
+    [HttpPost("import")]
+    [RequireAdminKey]
+    public async Task<IActionResult> Import([FromBody] List<ImportProductRowDto> rows)
+    {
+        if (rows is null || rows.Count == 0)
+            return BadRequest("No se recibieron filas para importar.");
+
+        var errors = new List<string>();
+        int created = 0, updated = 0, categoriesCreated = 0;
+
+        var categories = await db.Categories.ToListAsync();
+        var existingProducts = await db.Products.ToDictionaryAsync(p => p.Code ?? p.Id, p => p);
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.Code) || string.IsNullOrWhiteSpace(row.Name))
+            {
+                errors.Add($"Fila sin código o nombre válido, se omitió.");
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(row.CategoryName))
+            {
+                errors.Add($"'{row.Name}' ({row.Code}): sin categoría, se omitió.");
+                continue;
+            }
+
+            var category = categories.FirstOrDefault(c =>
+                string.Equals(c.Name, row.CategoryName, StringComparison.OrdinalIgnoreCase));
+            if (category is null)
+            {
+                var categoryId = Slugify(row.CategoryName);
+                category = new Category
+                {
+                    Id = categoryId,
+                    Name = row.CategoryName.Trim(),
+                    SortOrder = categories.Count + 1,
+                };
+                db.Categories.Add(category);
+                categories.Add(category);
+                categoriesCreated++;
+            }
+
+            if (existingProducts.TryGetValue(row.Code, out var product))
+            {
+                product.Name        = row.Name.Trim();
+                product.CategoryId  = category.Id;
+                product.Price       = row.Price;
+                product.Stock       = row.Stock;
+                product.Provider    = row.Provider;
+                product.ProductType = row.ProductType;
+                product.Stone       = row.Stone;
+                product.CostPrice   = row.CostPrice;
+                product.MinStock    = row.MinStock;
+                product.UpdatedAt   = DateTime.UtcNow;
+                updated++;
+            }
+            else
+            {
+                var id = await UniqueSlugAsync(row.Name, row.Code);
+                product = new Product
+                {
+                    Id          = id,
+                    Code        = row.Code.Trim(),
+                    Name        = row.Name.Trim(),
+                    CategoryId  = category.Id,
+                    Price       = row.Price,
+                    Stock       = row.Stock,
+                    Provider    = row.Provider,
+                    ProductType = row.ProductType,
+                    Stone       = row.Stone,
+                    CostPrice   = row.CostPrice,
+                    MinStock    = row.MinStock,
+                    // Nuevo producto sin fotos todavía: queda inactivo hasta que se le
+                    // carguen imágenes a mano en el panel, para no mostrar un producto vacío.
+                    IsActive    = false,
+                };
+                db.Products.Add(product);
+                existingProducts[row.Code] = product;
+                created++;
+            }
+        }
+
+        await db.SaveChangesAsync();
+        return Ok(new ImportResultDto(created, updated, categoriesCreated, errors.ToArray()));
+    }
+
+    private static string Slugify(string text)
+    {
+        var slug = text.Trim().ToLowerInvariant();
+        slug = Regex.Replace(slug, "[áàä]", "a");
+        slug = Regex.Replace(slug, "[éèë]", "e");
+        slug = Regex.Replace(slug, "[íìï]", "i");
+        slug = Regex.Replace(slug, "[óòö]", "o");
+        slug = Regex.Replace(slug, "[úùü]", "u");
+        slug = Regex.Replace(slug, "ñ", "n");
+        slug = Regex.Replace(slug, "[^a-z0-9]+", "-").Trim('-');
+        return string.IsNullOrEmpty(slug) ? Guid.NewGuid().ToString("N")[..8] : slug;
+    }
+
+    private async Task<string> UniqueSlugAsync(string name, string code)
+    {
+        var baseSlug = Slugify(name);
+        var slug = baseSlug;
+        var suffix = 2;
+        while (await db.Products.AnyAsync(p => p.Id == slug))
+        {
+            slug = $"{baseSlug}-{suffix}";
+            suffix++;
+        }
+        return slug;
     }
 }

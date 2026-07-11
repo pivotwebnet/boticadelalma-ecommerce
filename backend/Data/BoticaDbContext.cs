@@ -50,6 +50,8 @@ public class BoticaDbContext(DbContextOptions<BoticaDbContext> options) : DbCont
         {
             entity.Property(p => p.CreatedAt).HasDefaultValueSql("NOW()");
             entity.Property(p => p.UpdatedAt).HasDefaultValueSql("NOW()");
+            // Único cuando hay valor, pero permite muchos productos sin código (NULL).
+            entity.HasIndex(p => p.Code).IsUnique().HasFilter("\"Code\" IS NOT NULL");
         });
     }
 }

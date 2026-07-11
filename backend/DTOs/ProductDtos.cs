@@ -20,7 +20,34 @@ public record ProductResponseDto(
     string[] Images,
     int Stock,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    string? Code,
+    string? Provider,
+    string? ProductType,
+    string? Stone,
+    decimal? CostPrice,
+    int? MinStock
+);
+
+// Una fila de la planilla de stock de la dueña (Google Sheets exportado a Excel/CSV).
+public record ImportProductRowDto(
+    [Required] string Code,
+    [Required] string Name,
+    [Required] string CategoryName,
+    string? Provider,
+    string? ProductType,
+    string? Stone,
+    int Stock,
+    int Price,
+    decimal? CostPrice,
+    int? MinStock
+);
+
+public record ImportResultDto(
+    int Created,
+    int Updated,
+    int CategoriesCreated,
+    string[] Errors
 );
 
 public record CreateProductDto(

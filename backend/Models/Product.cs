@@ -8,6 +8,11 @@ public class Product
     [Key, MaxLength(50)]
     public string Id { get; set; } = string.Empty;
 
+    // Código de producto de la planilla de stock de la dueña (SKU interno).
+    // Es lo que usa el importador de Excel para saber si crea o actualiza.
+    [MaxLength(50)]
+    public string? Code { get; set; }
+
     [Required, MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
@@ -33,6 +38,20 @@ public class Product
 
     // Stock disponible. Joyería artesanal: muchas piezas son limitadas/únicas.
     public int Stock { get; set; } = 10;
+
+    // ── Datos internos de la planilla de stock (no se muestran en la tienda pública) ──
+    [MaxLength(200)]
+    public string? Provider { get; set; }
+
+    [MaxLength(100)]
+    public string? ProductType { get; set; }
+
+    [MaxLength(100)]
+    public string? Stone { get; set; }
+
+    public decimal? CostPrice { get; set; }
+
+    public int? MinStock { get; set; }
 
     public decimal Rating { get; set; }
     public int Reviews { get; set; }

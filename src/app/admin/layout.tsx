@@ -11,6 +11,7 @@ const NAV = [
   { href: '/admin/mensajes', label: 'Mensajes', icon: '✉' },
   { href: '/admin/comentarios', label: 'Reseñas', icon: '◎' },
   { href: '/admin/productos', label: 'Productos', icon: '⬡' },
+  { href: '/admin/importar', label: 'Importar Excel', icon: '⇪' },
   { href: '/admin/categorias', label: 'Categorías', icon: '⊛' },
   { href: '/admin/apariencia', label: 'Apariencia', icon: '✦' },
   { href: '/admin/configuracion', label: 'Configuración', icon: '⚙' },

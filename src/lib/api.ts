@@ -262,6 +262,38 @@ export async function deleteProduct(id: string): Promise<{ ok: boolean; softDele
   } catch { return { ok: false } }
 }
 
+export interface ImportProductRow {
+  code: string
+  name: string
+  categoryName: string
+  provider?: string
+  productType?: string
+  stone?: string
+  stock: number
+  price: number
+  costPrice?: number
+  minStock?: number
+}
+
+export interface ImportResult {
+  created: number
+  updated: number
+  categoriesCreated: number
+  errors: string[]
+}
+
+export async function importProducts(rows: ImportProductRow[]): Promise<{ ok: boolean; data?: ImportResult; error?: string }> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/import`, {
+      method: 'POST', headers: adminHeaders(true),
+      body: JSON.stringify(rows),
+    })
+    const data = await res.json().catch(() => null)
+    if (res.ok) return { ok: true, data }
+    return { ok: false, error: typeof data === 'string' ? data : (data?.error ?? data?.title ?? 'Error al importar') }
+  } catch { return { ok: false, error: 'Error de conexión' } }
+}
+
 export async function createCategory(dto: unknown): Promise<{ ok: boolean; data: unknown }> {
   try {
     const res = await fetch(`${API_URL}/api/categories`, {
