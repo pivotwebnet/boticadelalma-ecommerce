@@ -3,6 +3,19 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 
 const DEFAULT_BANNER = '/banner3.jpg'
+const DEFAULT_LIMITED_IMG = 'https://images.unsplash.com/photo-1611085583191-a3b181a88401?auto=format&fit=crop&w=1200&q=85'
+
+// Textos por defecto de la home (placeholder y valor si el campo queda vacío).
+const TEXT_DEFAULTS = {
+  editorialQuote: 'Lo que eliges, también te elige.',
+  limitedOverline: 'Edición Limitada',
+  limitedTitle: 'Luna Nueva',
+  limitedText: 'Una curaduría de joyas y piedras para acompañar los ciclos: collares de cuarzo lunar, amuletos de protección y complementos energéticos para los nuevos comienzos.',
+  limitedCtaText: 'Ver Colección Completa',
+}
+
+const labelStyle = { display: 'block', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: 'var(--fg-soft)', marginBottom: 6 }
+const fieldStyle = { width: '100%', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 7, padding: '9px 12px', fontSize: 13, color: 'var(--fg)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const, resize: 'vertical' as const }
 
 export default function AparienciaPage() {
   const [currentBanner, setCurrentBanner] = useState<string | null>(null)
@@ -14,6 +27,19 @@ export default function AparienciaPage() {
   const [fileLogo, setFileLogo] = useState<File | null>(null)
   const [previewLogo, setPreviewLogo] = useState<string | null>(null)
   const [busyLogo, setBusyLogo] = useState(false)
+
+  // Textos editables de la home
+  const [texts, setTexts] = useState({
+    editorialQuote: '', limitedOverline: '', limitedTitle: '', limitedText: '', limitedCtaText: '',
+  })
+  const [savingTexts, setSavingTexts] = useState(false)
+
+  // Imagen de la sección "Edición Limitada"
+  const [currentLimitedImg, setCurrentLimitedImg] = useState<string | null>(null)
+  const [fileLimitedImg, setFileLimitedImg] = useState<File | null>(null)
+  const [previewLimitedImg, setPreviewLimitedImg] = useState<string | null>(null)
+  const [busyLimitedImg, setBusyLimitedImg] = useState(false)
+  const limitedImgInputRef = useRef<HTMLInputElement>(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,6 +53,14 @@ export default function AparienciaPage() {
     const s = await fetch('/api/admin/banner').then(r => r.json()).catch(() => ({}))
     setCurrentBanner(s?.heroImageUrl ?? null)
     setCurrentLogo(s?.logoUrl ?? null)
+    setTexts({
+      editorialQuote: s?.editorialQuote ?? '',
+      limitedOverline: s?.limitedOverline ?? '',
+      limitedTitle: s?.limitedTitle ?? '',
+      limitedText: s?.limitedText ?? '',
+      limitedCtaText: s?.limitedCtaText ?? '',
+    })
+    setCurrentLimitedImg(s?.limitedImageUrl ?? null)
     setLoading(false)
   }, [])
 
@@ -110,15 +144,65 @@ export default function AparienciaPage() {
     } finally { setBusyLogo(false) }
   }
 
+  async function saveTexts() {
+    setSavingTexts(true); setError(''); setOk('')
+    try {
+      const res = await fetch('/api/admin/content', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(texts),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) setOk('Textos guardados. Ya se ven en la página de inicio.')
+      else setError(d?.error ?? 'No se pudieron guardar los textos.')
+    } finally { setSavingTexts(false) }
+  }
+
+  function pickLimitedImg(f: File | null) {
+    setError(''); setOk('')
+    if (!f) { setFileLimitedImg(null); setPreviewLimitedImg(null); return }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(f.type)) {
+      setError('Formato no permitido. Usá JPG, PNG, WebP o AVIF.'); return
+    }
+    if (f.size > 6 * 1024 * 1024) { setError('La imagen supera el máximo de 6 MB.'); return }
+    setFileLimitedImg(f)
+    setPreviewLimitedImg(URL.createObjectURL(f))
+  }
+
+  async function uploadLimitedImg() {
+    if (!fileLimitedImg) return
+    setBusyLimitedImg(true); setError(''); setOk('')
+    try {
+      const fd = new FormData(); fd.append('file', fileLimitedImg)
+      const res = await fetch('/api/admin/limited-image', { method: 'POST', body: fd })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setOk('Imagen de la sección actualizada. Ya se ve en la página de inicio.')
+        setFileLimitedImg(null); setPreviewLimitedImg(null)
+        if (limitedImgInputRef.current) limitedImgInputRef.current.value = ''
+        setCurrentLimitedImg(d?.limitedImageUrl ?? null)
+      } else setError(d?.error ?? 'No se pudo subir la imagen.')
+    } finally { setBusyLimitedImg(false) }
+  }
+
+  async function resetLimitedImg() {
+    setBusyLimitedImg(true); setError(''); setOk('')
+    try {
+      const res = await fetch('/api/admin/limited-image', { method: 'DELETE' })
+      if (res.ok) { setOk('Se volvió a la imagen por defecto de la sección.'); setCurrentLimitedImg(null) }
+      else setError('No se pudo restablecer la imagen.')
+    } finally { setBusyLimitedImg(false) }
+  }
+
   const shownBanner = previewBanner ?? currentBanner ?? DEFAULT_BANNER
   const shownLogo = previewLogo ?? currentLogo
+  const shownLimitedImg = previewLimitedImg ?? currentLimitedImg ?? DEFAULT_LIMITED_IMG
 
   return (
     <div>
       <div style={{ padding: '32px 40px 24px', borderBottom: '1px solid var(--line)', position: 'relative' }}>
         <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Tienda</div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 500, margin: 0, color: 'var(--fg)' }}>Apariencia</h1>
-        <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>Configurá la imagen del banner principal y el logotipo de la marca.</p>
+        <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--fg-muted)' }}>Configurá el banner, el logo y los textos e imágenes de la página de inicio.</p>
         <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent, var(--gold), transparent)', opacity: 0.5 }} />
       </div>
 
@@ -242,6 +326,101 @@ export default function AparienciaPage() {
 
           <p style={{ fontSize: 12, color: 'var(--fg-soft)', marginTop: 14, lineHeight: 1.5 }}>
             Recomendado: imagen apaisada (horizontal), mínimo 1600px de ancho, en JPG o WebP. Máximo 6 MB.
+          </p>
+        </div>
+
+        <div style={{ height: 1, background: 'var(--line)', margin: '48px 0' }} />
+
+        {/* ================= TEXTOS DE LA HOME ================= */}
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-soft)', marginBottom: 4 }}>
+            Textos de la home
+          </div>
+          <p style={{ fontSize: 12.5, color: 'var(--fg-soft)', marginBottom: 24, lineHeight: 1.5 }}>
+            Si dejás un campo vacío, la tienda usa el texto por defecto (nunca queda en blanco).
+          </p>
+
+          {/* Frase del final */}
+          <label style={labelStyle}>Frase del final <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--fg-muted)' }}>· la cita al pie de la página de inicio</span></label>
+          <textarea
+            value={texts.editorialQuote}
+            onChange={e => setTexts(t => ({ ...t, editorialQuote: e.target.value }))}
+            placeholder={TEXT_DEFAULTS.editorialQuote} rows={2}
+            style={{ ...fieldStyle, marginBottom: 28 }}
+          />
+
+          {/* Sección Edición Limitada */}
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Sección “Edición Limitada”</div>
+          <p style={{ fontSize: 12, color: 'var(--fg-soft)', marginBottom: 16 }}>El bloque grande con imagen y texto de la home.</p>
+
+          <label style={labelStyle}>Sobretítulo</label>
+          <input value={texts.limitedOverline} onChange={e => setTexts(t => ({ ...t, limitedOverline: e.target.value }))}
+            placeholder={TEXT_DEFAULTS.limitedOverline} style={{ ...fieldStyle, marginBottom: 16 }} />
+
+          <label style={labelStyle}>Título</label>
+          <input value={texts.limitedTitle} onChange={e => setTexts(t => ({ ...t, limitedTitle: e.target.value }))}
+            placeholder={TEXT_DEFAULTS.limitedTitle} style={{ ...fieldStyle, marginBottom: 16 }} />
+
+          <label style={labelStyle}>Párrafo</label>
+          <textarea value={texts.limitedText} onChange={e => setTexts(t => ({ ...t, limitedText: e.target.value }))}
+            placeholder={TEXT_DEFAULTS.limitedText} rows={3} style={{ ...fieldStyle, marginBottom: 16 }} />
+
+          <label style={labelStyle}>Texto del botón</label>
+          <input value={texts.limitedCtaText} onChange={e => setTexts(t => ({ ...t, limitedCtaText: e.target.value }))}
+            placeholder={TEXT_DEFAULTS.limitedCtaText} style={{ ...fieldStyle, marginBottom: 20 }} />
+
+          <button onClick={saveTexts} disabled={savingTexts} style={{
+            padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            background: 'var(--brand-orange)', color: '#fff', border: 'none',
+            cursor: savingTexts ? 'wait' : 'pointer', opacity: savingTexts ? 0.7 : 1,
+          }}>{savingTexts ? 'Guardando…' : 'Guardar textos'}</button>
+        </div>
+
+        {/* Imagen de la sección Edición Limitada */}
+        <div style={{ marginTop: 40 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--fg-soft)', marginBottom: 12 }}>
+            Imagen de la sección “Edición Limitada” {previewLimitedImg && '· vista previa'}
+          </div>
+
+          <div style={{
+            position: 'relative', width: '100%', aspectRatio: '16 / 10', borderRadius: 14, overflow: 'hidden',
+            border: '1px solid var(--line)', background: 'var(--surface-2)', maxWidth: 460,
+          }}>
+            {!loading && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shownLimitedImg} alt="Imagen de la sección" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </div>
+
+          <input
+            ref={limitedImgInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif"
+            onChange={e => pickLimitedImg(e.target.files?.[0] ?? null)} style={{ display: 'none' }}
+          />
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button onClick={() => limitedImgInputRef.current?.click()} disabled={busyLimitedImg} style={{
+              padding: '10px 20px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+              background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg)', cursor: busyLimitedImg ? 'wait' : 'pointer',
+            }}>Elegir imagen…</button>
+
+            {fileLimitedImg && (
+              <button onClick={uploadLimitedImg} disabled={busyLimitedImg} style={{
+                padding: '10px 22px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                background: 'var(--brand-orange)', color: '#fff', border: 'none', cursor: busyLimitedImg ? 'wait' : 'pointer', opacity: busyLimitedImg ? 0.7 : 1,
+              }}>{busyLimitedImg ? 'Subiendo…' : 'Guardar imagen'}</button>
+            )}
+
+            {fileLimitedImg && <span style={{ fontSize: 12.5, color: 'var(--fg-soft)' }}>{fileLimitedImg.name}</span>}
+
+            {!fileLimitedImg && currentLimitedImg && (
+              <button onClick={resetLimitedImg} disabled={busyLimitedImg} style={{
+                padding: '10px 18px', borderRadius: 8, fontSize: 12.5, fontWeight: 500,
+                background: 'transparent', border: '1px solid var(--line)', color: 'var(--fg-muted)', cursor: busyLimitedImg ? 'wait' : 'pointer', marginLeft: 'auto',
+              }}>Volver a la imagen por defecto</button>
+            )}
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--fg-soft)', marginTop: 14, lineHeight: 1.5 }}>
+            Recomendado: imagen apaisada, en JPG o WebP. Máximo 6 MB.
           </p>
         </div>
 

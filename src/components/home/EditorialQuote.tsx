@@ -1,9 +1,23 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Icon from '@/components/ui/Icon';
 
+const DEFAULT_QUOTE = 'Lo que eliges, también te elige.';
+
 export default function EditorialQuote() {
+  // La frase es editable desde el panel (Apariencia → Textos de la home).
+  const [quote, setQuote] = useState(DEFAULT_QUOTE);
+  useEffect(() => {
+    fetch('/api/site-settings')
+      .then(r => r.json())
+      .then((s: { editorialQuote?: string | null }) => {
+        if (s?.editorialQuote) setQuote(s.editorialQuote);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="section py-12 px-4">
       <div className="max-w-4xl mx-auto relative group">
@@ -31,7 +45,7 @@ export default function EditorialQuote() {
             transition={{ duration: 1 }}
           >
             <blockquote className="font-serif text-2xl md:text-4xl italic text-stone-800 leading-[1.5] tracking-tight mb-10 max-w-2xl mx-auto">
-              &ldquo;Lo que eliges, también te elige.&rdquo;
+              &ldquo;{quote}&rdquo;
             </blockquote>
 
             <div className="flex flex-col items-center gap-6">

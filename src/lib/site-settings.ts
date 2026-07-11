@@ -12,6 +12,19 @@ export interface SiteSettings {
   heroImageUrl?: string | null
   // Imagen del logo. Si es null/undefined, se usa el logo de texto por defecto.
   logoUrl?: string | null
+
+  // ── Textos editables de la home (si están vacíos, la tienda usa el texto por
+  // defecto de cada componente, así nunca queda en blanco). ──
+
+  // Cita final de la home (componente EditorialQuote).
+  editorialQuote?: string | null
+  // Sección "Edición Limitada" (componente CollectionBanner).
+  limitedOverline?: string | null
+  limitedTitle?: string | null
+  limitedText?: string | null
+  limitedCtaText?: string | null
+  // Imagen de la sección "Edición Limitada". Si es null, usa la imagen por defecto.
+  limitedImageUrl?: string | null
 }
 
 export function readSiteSettings(): SiteSettings {
