@@ -382,6 +382,8 @@ export default function ProductosPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'' | 'active' | 'inactive' | 'inactive-nophoto' | 'inactive-photo'>('')
+  const [stockFilter, setStockFilter] = useState<'' | 'out' | 'low' | 'in'>('')
   const [page, setPage] = useState(1)
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
@@ -416,13 +418,25 @@ export default function ProductosPage() {
     const sp = new URLSearchParams(window.location.search)
     const s = sp.get('search'); if (s) setSearch(s)
     const c = sp.get('cat'); if (c) setCatFilter(c)
+    const e = sp.get('estado'); if (e === 'active' || e === 'inactive' || e === 'inactive-nophoto' || e === 'inactive-photo') setStatusFilter(e)
+    const st = sp.get('stock'); if (st === 'out' || st === 'low' || st === 'in') setStockFilter(st)
   }, [])
 
   const filtered = products.filter(p => {
     const q = search.toLowerCase()
     const matchSearch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)
     const matchCat = !catFilter || p.categoryId === catFilter
-    return matchSearch && matchCat
+    const hasPhoto = (Array.isArray(p.images) && p.images.length > 0) || !!p.imageUrl
+    const matchStatus = !statusFilter
+      || (statusFilter === 'active' ? p.isActive
+        : statusFilter === 'inactive' ? !p.isActive
+        : statusFilter === 'inactive-nophoto' ? (!p.isActive && !hasPhoto)
+        : /* 'inactive-photo' */ (!p.isActive && hasPhoto))
+    const matchStock = !stockFilter
+      || (stockFilter === 'out' ? p.stock === 0
+        : stockFilter === 'low' ? p.stock > 0 && p.stock <= 3
+        : /* 'in' */ p.stock > 3)
+    return matchSearch && matchCat && matchStatus && matchStock
   })
 
   // Paginación de la tabla. filtered sigue siendo la lista completa (los ajustes
@@ -432,7 +446,7 @@ export default function ProductosPage() {
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
 
   // Al cambiar de filtro, volver a la primera página.
-  useEffect(() => { setPage(1) }, [search, catFilter])
+  useEffect(() => { setPage(1) }, [search, catFilter, statusFilter, stockFilter])
 
   // Productos a los que se aplica el ajuste: los tildados, o —si no hay ninguno
   // tildado— todos los que están filtrados a la vista.
@@ -651,6 +665,45 @@ export default function ProductosPage() {
           <option value="">Todas las categorías</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        <select
+          value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+          style={{
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8,
+            padding: '9px 14px', fontSize: 13, color: 'var(--fg)', outline: 'none', cursor: 'pointer',
+          }}
+        >
+          <option value="">Todos los estados</option>
+          <option value="active">Activos</option>
+          <option value="inactive">Inactivos (todos)</option>
+          <option value="inactive-nophoto">Inactivos · sin foto</option>
+          <option value="inactive-photo">Inactivos · con foto (desactivados)</option>
+        </select>
+        <select
+          value={stockFilter} onChange={e => setStockFilter(e.target.value as typeof stockFilter)}
+          style={{
+            background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8,
+            padding: '9px 14px', fontSize: 13, color: 'var(--fg)', outline: 'none', cursor: 'pointer',
+          }}
+        >
+          <option value="">Todo el stock</option>
+          <option value="out">Agotados (0)</option>
+          <option value="low">Poco stock (1-3)</option>
+          <option value="in">Con stock (4+)</option>
+        </select>
+        {(search !== '' || catFilter !== '' || statusFilter !== '' || stockFilter !== '') && (
+          <button
+            onClick={() => { setSearch(''); setCatFilter(''); setStatusFilter(''); setStockFilter('') }}
+            style={{
+              padding: '9px 14px', borderRadius: 8, fontSize: 12,
+              border: '1px solid var(--line)', background: 'transparent',
+              color: 'var(--fg-muted)', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--fg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--fg-muted)' }}
+          >
+            Limpiar filtros
+          </button>
+        )}
         <span style={{ fontSize: 12, color: 'var(--fg-soft)', marginLeft: 'auto' }}>{filtered.length} resultados</span>
       </div>
 

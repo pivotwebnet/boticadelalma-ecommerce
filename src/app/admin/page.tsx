@@ -204,6 +204,7 @@ const LOW_STOCK_THRESHOLD = 3
 
 function InventoryPanel({ products }: { products: { id: string; name: string; stock: number; isActive: boolean }[] }) {
   const active = products.filter(p => p.isActive)
+  const inactiveCount = products.filter(p => !p.isActive).length
   const outOfStock = active.filter(p => p.stock === 0)
   const lowStock = active.filter(p => p.stock > 0 && p.stock <= LOW_STOCK_THRESHOLD)
   const alerts = [...outOfStock, ...lowStock].sort((a, b) => a.stock - b.stock).slice(0, 8)
@@ -217,6 +218,20 @@ function InventoryPanel({ products }: { products: { id: string; name: string; st
           {outOfStock.length} agotados · {lowStock.length} por agotarse
         </span>
       </div>
+      {/* Mini zona: inactivos (sin foto) — clic lleva al listado ya filtrado */}
+      <Link href="/admin/productos?estado=inactive" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 20px', borderBottom: '1px solid var(--line)', textDecoration: 'none',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--fg-muted)' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--fg-soft)' }} />
+          Inactivos
+        </span>
+        <span style={{
+          fontSize: 12, fontWeight: 700, color: inactiveCount > 0 ? '#c9a17a' : 'var(--fg-soft)',
+          fontVariantNumeric: 'tabular-nums',
+        }}>{inactiveCount}</span>
+      </Link>
       {healthy ? (
         <div style={{ padding: '24px 20px', color: '#9bae88', fontSize: 12.5, textAlign: 'center' }}>
           ✓ Todos los productos activos tienen stock saludable.

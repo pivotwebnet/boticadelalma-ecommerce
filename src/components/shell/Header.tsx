@@ -187,7 +187,6 @@ export default function Header() {
               icon-btn
               menu-btn
               premium-transition
-              hover:opacity-60
             "
             onClick={() =>
               setDrawerOpen(true)
@@ -288,7 +287,6 @@ export default function Header() {
               className="
                 hdr-link
                 premium-transition
-                hover:opacity-60
                 relative
               "
               onClick={() => setFavsOpen(true)}
@@ -318,7 +316,6 @@ export default function Header() {
                 hdr-link
                 bag-link
                 premium-transition
-                hover:opacity-60
                 relative
               "
               onClick={() =>

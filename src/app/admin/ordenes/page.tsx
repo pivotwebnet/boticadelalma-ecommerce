@@ -384,6 +384,20 @@ export default function OrdenesPage() {
             borderRadius: 999, padding: '6px 14px', fontSize: 12.5, color: 'var(--fg)', outline: 'none', width: 220,
           }}
         />
+        {(filter !== 'all' || search !== '') && (
+          <button
+            onClick={() => { setFilter('all'); setSearch('') }}
+            style={{
+              padding: '6px 14px', borderRadius: 999, fontSize: 12.5,
+              border: '1px solid var(--line)', background: 'transparent',
+              color: 'var(--fg-muted)', cursor: 'pointer', transition: 'all .15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--fg)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--fg-muted)' }}
+          >
+            Limpiar filtros
+          </button>
+        )}
       </div>
 
       {/* Tabla */}
