@@ -153,7 +153,11 @@
       "Bash(rm -rf src/app/probar-error ./_errdump.html)",
       "Bash(git check-ignore *)",
       "PowerShell(npm run *)",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(git commit -m '@ *)",
+      "Bash(git commit --amend -m 'feat: favicon, OG image, sitemap y robots para SEO' -m 'Agrega metadatos de marca para buscadores y previews en redes: *)",
+      "Bash(git commit -m 'fix: corregir errores de lint que trababan el build de produccion' -m 'next build fallaba en el paso de ESLint por errores preexistentes: *)",
+      "Bash(git reset *)"
     ]
   }
 }

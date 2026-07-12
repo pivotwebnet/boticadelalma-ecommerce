@@ -848,7 +848,16 @@ export default function ProductosPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 18, marginBottom: 20 }}>
               <Select label="Etiqueta (tipo · material)" value={form.label} onChange={v => setF('label', v)} options={labelOptions} />
               <TagPicker selected={form.tags} onChange={tags => setF('tags', tags)} />
-              <ImageUploader images={form.images} onChange={imgs => setF('images', imgs)} />
+              <ImageUploader
+                images={form.images}
+                onChange={imgs => setForm(f => ({
+                  ...f,
+                  images: imgs,
+                  // Al pasar de sin fotos a con fotos, el producto se activa solo.
+                  // No se auto-desactiva al quitar fotos: eso queda a criterio de la dueña.
+                  isActive: f.images.length === 0 && imgs.length > 0 ? true : f.isActive,
+                }))}
+              />
             </div>
 
             {/* Contenido de las solapas de la ficha */}
@@ -872,10 +881,13 @@ export default function ProductosPage() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
+            <div style={{ display: 'flex', gap: 24, marginBottom: 8 }}>
               <Toggle label="Producto nuevo" checked={form.isNew} onChange={v => setF('isNew', v)} />
               <Toggle label="Activo" checked={form.isActive} onChange={v => setF('isActive', v)} />
             </div>
+            <p style={{ fontSize: 11.5, color: 'var(--fg-soft)', margin: '0 0 24px', lineHeight: 1.5 }}>
+              Al cargar la primera foto, el producto se <strong>activa automáticamente</strong>. Podés desactivarlo a mano si querés mantenerlo oculto.
+            </p>
 
             {error && (
               <div style={{ padding: '10px 14px', background: 'rgba(224,101,87,.12)', border: '1px solid rgba(224,101,87,.3)', borderRadius: 7, fontSize: 13, color: '#e06557', marginBottom: 16 }}>
