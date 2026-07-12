@@ -86,13 +86,14 @@ export default function ContactoPage() {
             <form onSubmit={handleSubmit} className="p-10 rounded-[3rem] bg-accent/5 border border-accent/10 flex flex-col gap-6 h-fit shadow-sm">
               <div className="flex flex-col gap-2">
                 <label htmlFor="nombre" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Nombre Completo *</label>
-                <input 
+                <input
                   id="nombre"
-                  type="text" 
+                  type="text"
                   value={nombre}
                   onChange={(e) => setNombre(e.target.value)}
-                  placeholder="Tu nombre" 
-                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors text-sm" 
+                  placeholder="Tu nombre"
+                  maxLength={100}
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors text-sm"
                   required
                   disabled={loading}
                 />
@@ -100,13 +101,14 @@ export default function ContactoPage() {
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="email" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Correo Electrónico *</label>
-                <input 
+                <input
                   id="email"
-                  type="email" 
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="maria@ejemplo.com" 
-                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors text-sm" 
+                  placeholder="maria@ejemplo.com"
+                  maxLength={150}
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors text-sm"
                   required
                   disabled={loading}
                 />
@@ -114,15 +116,19 @@ export default function ContactoPage() {
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="mensaje" className="text-[10px] uppercase tracking-widest font-bold text-stone-400">Mensaje *</label>
-                <textarea 
+                <textarea
                   id="mensaje"
                   value={mensaje}
                   onChange={(e) => setMensaje(e.target.value)}
-                  placeholder="¿En qué podemos ayudarte?" 
-                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors min-h-[120px] text-sm font-inherit" 
+                  placeholder="¿En qué podemos ayudarte?"
+                  maxLength={2000}
+                  className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 outline-none focus:border-accent transition-colors min-h-[120px] text-sm font-inherit"
                   required
                   disabled={loading}
                 />
+                <span className={`text-[10px] text-right ${mensaje.length >= 1800 ? 'text-brand-orange' : 'text-stone-400'}`}>
+                  {mensaje.length}/2000
+                </span>
               </div>
 
               {error && (

@@ -14,6 +14,12 @@ export interface Product {
   images?: string[];    // galería: solo las fotos realmente cargadas
   new?: boolean;
   fav?: boolean;
+  // Contenido editable de las solapas de la ficha. Si viene vacío, la web
+  // muestra el texto sugerido según el tipo (ver src/lib/product-content.ts).
+  description?: string | null;
+  howToUse?: string | null;
+  care?: string | null;
+  shipping?: string | null;
 }
 
 export interface SubCategory {

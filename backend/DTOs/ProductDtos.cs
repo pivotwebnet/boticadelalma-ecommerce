@@ -26,7 +26,12 @@ public record ProductResponseDto(
     string? ProductType,
     string? Stone,
     decimal? CostPrice,
-    int? MinStock
+    int? MinStock,
+    // Contenido editable de las solapas (null = la web usa el texto sugerido).
+    string? Description,
+    string? HowToUse,
+    string? Care,
+    string? Shipping
 );
 
 // Una fila de la planilla de stock de la dueña (Google Sheets exportado a Excel/CSV).
@@ -62,7 +67,11 @@ public record CreateProductDto(
     bool IsNew,
     string? ImageUrl,
     string[]? Images,
-    int Stock
+    int Stock,
+    string? Description = null,
+    string? HowToUse = null,
+    string? Care = null,
+    string? Shipping = null
 );
 
 public record UpdateProductDto(
@@ -77,7 +86,11 @@ public record UpdateProductDto(
     string[]? Images,
     bool? IsNew,
     bool? IsActive,
-    int? Stock
+    int? Stock,
+    string? Description = null,
+    string? HowToUse = null,
+    string? Care = null,
+    string? Shipping = null
 );
 
 // Ajuste masivo de precios: aplica un % de descuento o aumento a un conjunto

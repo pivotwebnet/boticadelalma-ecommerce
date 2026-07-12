@@ -1,7 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ApiComment, ApiProduct } from '@/lib/api'
+
+// Convierte el slug/ID en texto legible: "dije-acero-luna" → "Dije acero luna".
+// Sirve para las reseñas cuyo producto no está en el catálogo actual (demo o
+// eliminado), donde antes solo se veía un ID cortado e indescifrable.
+function prettifySlug(slug: string): string {
+  const s = slug.replace(/-/g, ' ').trim()
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : slug
+}
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -390,6 +399,7 @@ export default function ComentariosPage() {
 function ProductCell({ productId, products }: { productId: string; products: Record<string, ApiProduct> }) {
   const [hovered, setHovered] = useState(false)
   const product = products[productId]
+  const label = product ? product.name : prettifySlug(productId)
 
   return (
     <div
@@ -397,23 +407,54 @@ function ProductCell({ productId, products }: { productId: string; products: Rec
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <span style={{
-        fontFamily: product ? 'var(--font-sans)' : 'var(--font-mono)',
-        fontSize: product ? 12.5 : 11,
-        background: 'var(--surface-2)',
-        padding: '4px 10px',
-        borderRadius: 6,
-        color: product ? 'var(--fg)' : 'var(--fg-muted)',
-        border: '1px solid var(--line-soft)',
-        cursor: 'default',
-        fontWeight: product ? 500 : 400,
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 6,
-        transition: 'all 0.2s ease',
-      }}>
-        {product ? product.name : `${productId.slice(0, 12)}…`}
-      </span>
+      {/* Pastilla clickeable: lleva al producto filtrado en el panel de Productos. */}
+      <Link
+        href={`/admin/productos?search=${encodeURIComponent(productId)}`}
+        title={product ? `Ver "${product.name}" en Productos` : `Abrir "${label}" en Productos`}
+        style={{
+          fontFamily: 'var(--font-sans)',
+          fontSize: 12.5,
+          maxWidth: 220,
+          background: 'var(--surface-2)',
+          padding: '4px 10px',
+          borderRadius: 6,
+          color: product ? 'var(--fg)' : 'var(--fg-muted)',
+          border: '1px solid var(--line-soft)',
+          cursor: 'pointer',
+          textDecoration: 'none',
+          fontWeight: product ? 500 : 400,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--brand-orange)'; e.currentTarget.style.color = 'var(--fg)' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--line-soft)'; e.currentTarget.style.color = product ? 'var(--fg)' : 'var(--fg-muted)' }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+        <span style={{ fontSize: 10, opacity: 0.6, flexShrink: 0 }}>↗</span>
+      </Link>
+
+      {/* Tarjeta flotante cuando el producto NO está en el catálogo actual. */}
+      {hovered && !product && (
+        <div style={{
+          position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 100, width: 240, background: 'var(--surface)', border: '1px solid var(--line)',
+          borderRadius: 12, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3), 0 8px 10px -6px rgba(0,0,0,0.3)',
+          padding: 12, pointerEvents: 'none', textAlign: 'left',
+          animation: 'tooltip-fade-in 0.15s ease-out forwards',
+        }}>
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--fg-soft)', fontWeight: 600 }}>
+            ID del producto
+          </div>
+          <div style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--fg)', marginTop: 2, wordBreak: 'break-all' }}>
+            {productId}
+          </div>
+          <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'var(--fg-muted)', lineHeight: 1.4 }}>
+            No está en el catálogo actual (puede ser un producto de demostración o uno eliminado). Hacé clic para buscarlo en Productos.
+          </p>
+        </div>
+      )}
 
       {hovered && product && (
         <div style={{

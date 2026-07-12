@@ -1,9 +1,23 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
 import { ApiProduct, ApiCategory } from '@/lib/api'
+import { buildProductContent } from '@/lib/product-content'
+import { MATERIALS, INTENTIONS } from '@/lib/data'
 
 const MAX_IMAGES = 6
+// Productos por página en la tabla del panel (cómodo para revisar de a poco).
+const PAGE_SIZE = 12
+
+// Tipo (singular) de cada categoría, para armar la etiqueta "tipo · material".
+// Si la categoría no está acá, se usa el nombre en minúsculas como respaldo.
+const CATEGORY_TYPE: Record<string, string> = {
+  collares: 'collar', anillos: 'anillo', dijes: 'dije', pulseras: 'pulsera',
+  aros: 'aros', tobilleras: 'tobillera', 'piedras-naturales': 'piedra', complementos: 'complemento',
+}
+function categoryType(catId: string, catName: string): string {
+  return CATEGORY_TYPE[catId] ?? (catName ? catName.toLowerCase() : 'producto')
+}
 
 function fmt(n: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
@@ -23,12 +37,14 @@ const TONES = [
 type FormState = {
   id: string; name: string; categoryId: string; price: string; originalPrice: string
   stock: string
-  tone: string; label: string; tags: string; images: string[]; isNew: boolean; isActive: boolean
+  tone: string; label: string; tags: string[]; images: string[]; isNew: boolean; isActive: boolean
+  description: string; howToUse: string; care: string; shipping: string
 }
 
 const EMPTY_FORM: FormState = {
   id: '', name: '', categoryId: '', price: '', originalPrice: '', stock: '0',
-  tone: 'stone', label: '', tags: '', images: [], isNew: false, isActive: true,
+  tone: 'stone', label: '', tags: [], images: [], isNew: false, isActive: true,
+  description: '', howToUse: '', care: '', shipping: '',
 }
 
 function productToForm(p: ApiProduct): FormState {
@@ -36,9 +52,10 @@ function productToForm(p: ApiProduct): FormState {
     id: p.id, name: p.name, categoryId: p.categoryId,
     price: String(p.price), originalPrice: p.originalPrice ? String(p.originalPrice) : '',
     stock: String(p.stock ?? 0),
-    tone: p.tone, label: p.label, tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
+    tone: p.tone, label: p.label, tags: Array.isArray(p.tags) ? p.tags : [],
     images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.imageUrl ? [p.imageUrl] : []),
     isNew: p.isNew, isActive: p.isActive,
+    description: p.description ?? '', howToUse: p.howToUse ?? '', care: p.care ?? '', shipping: p.shipping ?? '',
   }
 }
 
@@ -179,6 +196,32 @@ function Input({ label, value, onChange, type = 'text', disabled = false }: {
   )
 }
 
+// Cuadro de texto con contador y placeholder (el texto sugerido según el tipo).
+function Textarea({ label, hint, value, onChange, placeholder, maxLength, rows = 4 }: {
+  label: string; hint?: string; value: string; onChange: (v: string) => void
+  placeholder?: string; maxLength: number; rows?: number
+}) {
+  const near = value.length >= maxLength * 0.9
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>{label}</label>
+      <textarea
+        value={value} onChange={e => onChange(e.target.value)}
+        placeholder={placeholder} rows={rows} maxLength={maxLength}
+        style={{
+          background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 7,
+          padding: '8px 12px', fontSize: 13, color: 'var(--fg)', outline: 'none',
+          fontFamily: 'inherit', resize: 'vertical', lineHeight: 1.5,
+        }}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--fg-soft)' }}>
+        <span>{hint}</span>
+        <span style={{ color: near ? 'var(--brand-orange)' : 'var(--fg-soft)' }}>{value.length}/{maxLength}</span>
+      </div>
+    </div>
+  )
+}
+
 function Select({ label, value, onChange, options }: {
   label: string; value: string; onChange: (v: string) => void
   options: { value: string; label: string }[]
@@ -223,12 +266,123 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   )
 }
 
+// Selección de tags por casillas: se elige de las listas fijas de materiales e
+// intenciones (nada de tipear). Así los filtros del catálogo funcionan siempre.
+function TagPicker({ selected, onChange }: { selected: string[]; onChange: (tags: string[]) => void }) {
+  const toggle = (v: string) =>
+    onChange(selected.includes(v) ? selected.filter(x => x !== v) : [...selected, v])
+
+  // Tags ya cargados que no están en las listas conocidas (ej. viejos): se
+  // muestran aparte para poder verlos y quitarlos, sin perderlos en silencio.
+  const known = new Set<string>([...MATERIALS, ...INTENTIONS])
+  const otros = selected.filter(t => !known.has(t))
+
+  const Chip = ({ value }: { value: string }) => {
+    const on = selected.includes(value)
+    return (
+      <button type="button" onClick={() => toggle(value)} style={{
+        padding: '5px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+        border: on ? '1px solid var(--brand-orange)' : '1px solid var(--line)',
+        background: on ? 'rgba(232,99,21,0.12)' : 'transparent',
+        color: on ? 'var(--brand-orange)' : 'var(--fg-muted)', fontWeight: on ? 600 : 400,
+        transition: 'all .12s',
+      }}>{on ? '✓ ' : ''}{value}</button>
+    )
+  }
+
+  const Group = ({ title, options }: { title: string; options: string[] }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+      <span style={{ fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>{title}</span>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {options.map(o => <Chip key={o} value={o} />)}
+      </div>
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>
+        Tags <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--fg-muted)' }}>· elegí los que apliquen</span>
+      </label>
+      <Group title="Materiales" options={MATERIALS} />
+      <Group title="Intenciones" options={INTENTIONS} />
+      {otros.length > 0 && <Group title="Otros (ya cargados)" options={otros} />}
+    </div>
+  )
+}
+
+// Paginación de la tabla: flechas + números con elipsis. La página activa se
+// resalta en naranja de la marca.
+function Pagination({ page, totalPages, total, onPage }: {
+  page: number; totalPages: number; total: number; onPage: (p: number) => void
+}) {
+  if (totalPages <= 1) return null
+
+  // 1 … 4 5 6 … 20 (siempre primera, última y las vecinas de la actual)
+  const nums: (number | '…')[] = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) nums.push(i)
+    else if (nums[nums.length - 1] !== '…') nums.push('…')
+  }
+
+  const baseBtn: CSSProperties = {
+    minWidth: 34, height: 34, padding: '0 10px', borderRadius: 10, fontSize: 13,
+    border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--fg-muted)',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    fontWeight: 500, transition: 'all .12s',
+  }
+  const hoverIn = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.borderColor = 'var(--brand-orange)'; e.currentTarget.style.color = 'var(--fg)'
+  }
+  const hoverOut = (e: ReactMouseEvent<HTMLButtonElement>) => {
+    e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.color = 'var(--fg-muted)'
+  }
+
+  const Arrow = ({ label, to, disabled }: { label: string; to: number; disabled: boolean }) => (
+    <button
+      disabled={disabled} onClick={() => onPage(to)}
+      onMouseEnter={disabled ? undefined : hoverIn} onMouseLeave={disabled ? undefined : hoverOut}
+      style={{ ...baseBtn, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}
+    >{label}</button>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginTop: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Arrow label="‹" to={page - 1} disabled={page <= 1} />
+        {nums.map((n, idx) => n === '…'
+          ? <span key={`e${idx}`} style={{ color: 'var(--fg-soft)', padding: '0 4px' }}>…</span>
+          : (
+            <button
+              key={n} onClick={() => onPage(n)}
+              onMouseEnter={n === page ? undefined : hoverIn} onMouseLeave={n === page ? undefined : hoverOut}
+              style={{
+                ...baseBtn, cursor: 'pointer',
+                border: n === page ? 'none' : '1px solid var(--line)',
+                background: n === page ? 'var(--brand-orange)' : 'var(--surface)',
+                color: n === page ? '#fff' : 'var(--fg-muted)',
+                fontWeight: n === page ? 700 : 500,
+                boxShadow: n === page ? '0 2px 8px rgba(232,99,21,.25)' : 'none',
+              }}
+            >{n}</button>
+          )
+        )}
+        <Arrow label="›" to={page + 1} disabled={page >= totalPages} />
+      </div>
+      <span style={{ fontSize: 12, color: 'var(--fg-soft)' }}>
+        Página {page} de {totalPages} · {total} producto{total === 1 ? '' : 's'}
+      </span>
+    </div>
+  )
+}
+
 export default function ProductosPage() {
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [catFilter, setCatFilter] = useState('')
+  const [page, setPage] = useState(1)
   const [modal, setModal] = useState<'create' | 'edit' | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -270,6 +424,15 @@ export default function ProductosPage() {
     const matchCat = !catFilter || p.categoryId === catFilter
     return matchSearch && matchCat
   })
+
+  // Paginación de la tabla. filtered sigue siendo la lista completa (los ajustes
+  // masivos operan sobre TODOS los filtrados); paginated es solo lo que se ve.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
+  // Al cambiar de filtro, volver a la primera página.
+  useEffect(() => { setPage(1) }, [search, catFilter])
 
   // Productos a los que se aplica el ajuste: los tildados, o —si no hay ninguno
   // tildado— todos los que están filtrados a la vista.
@@ -373,10 +536,16 @@ export default function ProductosPage() {
       stock,
       tone: form.tone,
       label: form.label.trim(),
-      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      tags: form.tags,
       images: form.images,
       isNew: form.isNew,
       isActive: form.isActive,
+      // Vacío se envía como string vacío: el backend lo guarda como null y la
+      // web vuelve a mostrar el texto sugerido.
+      description: form.description.trim(),
+      howToUse: form.howToUse.trim(),
+      care: form.care.trim(),
+      shipping: form.shipping.trim(),
     }
     try {
       if (modal === 'create') {
@@ -422,6 +591,26 @@ export default function ProductosPage() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  // Texto sugerido de cada solapa según lo cargado en el formulario. Se muestra
+  // como placeholder: si la dueña deja el campo vacío, esto es lo que verá la web.
+  const suggested = buildProductContent({
+    name: form.name,
+    cat: form.categoryId,
+    tags: form.tags,
+  })
+
+  // Opciones de etiqueta: "tipo · material" según la categoría elegida.
+  const catName = categories.find(c => c.id === form.categoryId)?.name ?? ''
+  const tipo = categoryType(form.categoryId, catName)
+  const labelOptions = MATERIALS.map(m => {
+    const v = `${tipo} · ${m.toLowerCase()}`
+    return { value: v, label: v }
+  })
+  // Preserva una etiqueta ya cargada que no esté entre las opciones actuales.
+  if (form.label && !labelOptions.some(o => o.value === form.label)) {
+    labelOptions.unshift({ value: form.label, label: `${form.label} (actual)` })
   }
 
   return (
@@ -547,9 +736,9 @@ export default function ProductosPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p, i) => (
+                {paginated.map((p, i) => (
                   <tr key={p.id} style={{
-                    borderBottom: i < filtered.length - 1 ? '1px solid var(--line-soft)' : 'none',
+                    borderBottom: i < paginated.length - 1 ? '1px solid var(--line-soft)' : 'none',
                     background: selected.has(p.id) ? 'rgba(232,99,21,0.05)' : 'transparent',
                   }}>
                     <td style={{ padding: '13px 16px', width: 36 }}>
@@ -607,6 +796,10 @@ export default function ProductosPage() {
             </table>
           )}
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <Pagination page={currentPage} totalPages={totalPages} total={filtered.length} onPage={setPage} />
+        )}
       </div>
 
       {/* Create / Edit Modal */}
@@ -652,10 +845,31 @@ export default function ProductosPage() {
               <Input label="Stock disponible" value={form.stock} onChange={v => setF('stock', v)} type="number" />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 20 }}>
-              <Input label="Etiqueta (ej: collar · plata)" value={form.label} onChange={v => setF('label', v)} />
-              <Input label="Tags (separados por coma — materiales e intenciones)" value={form.tags} onChange={v => setF('tags', v)} />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 18, marginBottom: 20 }}>
+              <Select label="Etiqueta (tipo · material)" value={form.label} onChange={v => setF('label', v)} options={labelOptions} />
+              <TagPicker selected={form.tags} onChange={tags => setF('tags', tags)} />
               <ImageUploader images={form.images} onChange={imgs => setF('images', imgs)} />
+            </div>
+
+            {/* Contenido de las solapas de la ficha */}
+            <div style={{ borderTop: '1px solid var(--line)', paddingTop: 20, marginBottom: 20 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>
+                Contenido de la ficha (solapas de la página)
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--fg-soft)', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Es lo que se ve en la página del producto. Si dejás un campo vacío, se muestra el texto
+                sugerido (en gris) según el tipo de producto — no queda en blanco.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 18 }}>
+                <Textarea label="Descripción" value={form.description} onChange={v => setF('description', v)}
+                  placeholder={suggested.description} maxLength={1500} rows={5} hint="Vacío = se usa el sugerido" />
+                <Textarea label="Cómo usar" value={form.howToUse} onChange={v => setF('howToUse', v)}
+                  placeholder={suggested.howToUse} maxLength={800} hint="Vacío = se usa el sugerido" />
+                <Textarea label="Cuidados" value={form.care} onChange={v => setF('care', v)}
+                  placeholder={suggested.care} maxLength={800} hint="Vacío = se usa el sugerido" />
+                <Textarea label="Envíos" value={form.shipping} onChange={v => setF('shipping', v)}
+                  placeholder={suggested.shipping} maxLength={800} hint="Vacío = se usa el sugerido" />
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>

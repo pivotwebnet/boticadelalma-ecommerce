@@ -12,6 +12,15 @@ const TEXT_FIELDS = [
   'limitedCtaText',
 ] as const
 
+// Nombres visibles de cada campo, para armar mensajes de error claros.
+const FIELD_LABELS: Record<(typeof TEXT_FIELDS)[number], string> = {
+  editorialQuote: 'Frase del final',
+  limitedOverline: 'Sobretítulo',
+  limitedTitle: 'Título',
+  limitedText: 'Párrafo',
+  limitedCtaText: 'Texto del botón',
+}
+
 const MAX_LEN = 600
 
 export async function GET() {
@@ -36,7 +45,7 @@ export async function POST(req: NextRequest) {
     }
     const trimmed = raw.trim()
     if (trimmed.length > MAX_LEN) {
-      return NextResponse.json({ error: `El texto es demasiado largo (máximo ${MAX_LEN} caracteres).` }, { status: 400 })
+      return NextResponse.json({ error: `El texto de "${FIELD_LABELS[key]}" es demasiado largo (máximo ${MAX_LEN} caracteres).` }, { status: 400 })
     }
     patch[key] = trimmed === '' ? null : trimmed
   }

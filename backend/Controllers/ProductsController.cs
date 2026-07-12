@@ -120,6 +120,10 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
             ImageUrl      = images.Length > 0 ? images[0] : dto.ImageUrl,
             Images        = JsonSerializer.Serialize(images),
             Stock         = dto.Stock,
+            Description   = Nullify(dto.Description),
+            HowToUse      = Nullify(dto.HowToUse),
+            Care          = Nullify(dto.Care),
+            Shipping      = Nullify(dto.Shipping),
         };
 
         db.Products.Add(product);
@@ -167,6 +171,12 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         if (dto.IsNew.HasValue)          product.IsNew       = dto.IsNew.Value;
         if (dto.IsActive.HasValue)       product.IsActive    = dto.IsActive.Value;
         if (dto.Stock.HasValue)          product.Stock       = dto.Stock.Value;
+        // Contenido de las solapas: vacío se guarda como null para que la web
+        // vuelva a mostrar el texto sugerido según el tipo de producto.
+        if (dto.Description is not null) product.Description = Nullify(dto.Description);
+        if (dto.HowToUse    is not null) product.HowToUse    = Nullify(dto.HowToUse);
+        if (dto.Care        is not null) product.Care        = Nullify(dto.Care);
+        if (dto.Shipping    is not null) product.Shipping    = Nullify(dto.Shipping);
         product.UpdatedAt = DateTime.UtcNow;
 
         await db.SaveChangesAsync();
@@ -251,6 +261,9 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
         return Ok(new { softDeleted = false });
     }
 
+    // Normaliza texto opcional: vacío/espacios → null (así la web usa el sugerido).
+    private static string? Nullify(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
     // Devuelve un mensaje de error o null si la combinación es válida.
     private static string? ValidatePricing(int price, int? originalPrice, int stock)
     {
@@ -291,7 +304,8 @@ public partial class ProductsController(BoticaDbContext db) : ControllerBase
             p.Price, p.OriginalPrice, p.Tone, p.Label, tags,
             p.IsNew, p.IsActive, p.Rating, p.Reviews,
             p.ImageUrl, images, p.Stock, p.CreatedAt, p.UpdatedAt,
-            p.Code, p.Provider, p.ProductType, p.Stone, p.CostPrice, p.MinStock);
+            p.Code, p.Provider, p.ProductType, p.Stone, p.CostPrice, p.MinStock,
+            p.Description, p.HowToUse, p.Care, p.Shipping);
     }
 
     // Importación masiva desde la planilla de stock (Excel/Google Sheets) de la dueña.

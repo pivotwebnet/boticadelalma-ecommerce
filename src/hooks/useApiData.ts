@@ -38,7 +38,7 @@ type ApiDataCtx = {
 
 const ApiDataContext = createContext<ApiDataCtx>({
   categories: CATEGORIES,
-  products: PRODUCTS,
+  products: [],
 })
 
 type ProviderProps = {
@@ -48,10 +48,10 @@ type ProviderProps = {
 }
 
 export function ApiDataProvider({ children, initialCategories = [], initialProducts = [] }: ProviderProps) {
-  // Use API as source of truth; fall back to static data when the API is empty
-  const products = initialProducts.length > 0
-    ? initialProducts.map(mapApiProduct)
-    : PRODUCTS
+  // La base de datos es la única fuente de verdad: la web muestra exactamente
+  // los productos que hay en la base. Si no hay ninguno (activo), la tienda
+  // queda vacía — ya no se usa ningún catálogo de demostración de respaldo.
+  const products = initialProducts.map(mapApiProduct)
 
   const catCountMap: Record<string, number> = {}
   initialCategories.forEach(c => { catCountMap[c.id] = c.productCount })

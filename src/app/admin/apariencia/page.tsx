@@ -17,6 +17,21 @@ const TEXT_DEFAULTS = {
 const labelStyle = { display: 'block', fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: 'var(--fg-soft)', marginBottom: 6 }
 const fieldStyle = { width: '100%', background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 7, padding: '9px 12px', fontSize: 13, color: 'var(--fg)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const, resize: 'vertical' as const }
 
+// Máximo de caracteres por campo de texto de la home. Debe coincidir con el
+// tope del servidor en src/app/api/admin/content/route.ts.
+const MAX_LEN = 600
+
+// Contador de caracteres bajo cada campo. Se pone naranja al acercarse al tope.
+function CharCount({ value, style }: { value: string; style?: React.CSSProperties }) {
+  const len = value.length
+  const near = len >= MAX_LEN * 0.9
+  return (
+    <div style={{ fontSize: 11, textAlign: 'right', marginTop: 4, color: near ? 'var(--brand-orange)' : 'var(--fg-soft)', ...style }}>
+      {len}/{MAX_LEN}
+    </div>
+  )
+}
+
 export default function AparienciaPage() {
   const [currentBanner, setCurrentBanner] = useState<string | null>(null)
   const [fileBanner, setFileBanner] = useState<File | null>(null)
@@ -345,9 +360,10 @@ export default function AparienciaPage() {
           <textarea
             value={texts.editorialQuote}
             onChange={e => setTexts(t => ({ ...t, editorialQuote: e.target.value }))}
-            placeholder={TEXT_DEFAULTS.editorialQuote} rows={2}
-            style={{ ...fieldStyle, marginBottom: 28 }}
+            placeholder={TEXT_DEFAULTS.editorialQuote} rows={2} maxLength={MAX_LEN}
+            style={fieldStyle}
           />
+          <CharCount value={texts.editorialQuote} style={{ marginBottom: 28 }} />
 
           {/* Sección Edición Limitada */}
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Sección “Edición Limitada”</div>
@@ -355,19 +371,23 @@ export default function AparienciaPage() {
 
           <label style={labelStyle}>Sobretítulo</label>
           <input value={texts.limitedOverline} onChange={e => setTexts(t => ({ ...t, limitedOverline: e.target.value }))}
-            placeholder={TEXT_DEFAULTS.limitedOverline} style={{ ...fieldStyle, marginBottom: 16 }} />
+            placeholder={TEXT_DEFAULTS.limitedOverline} maxLength={MAX_LEN} style={fieldStyle} />
+          <CharCount value={texts.limitedOverline} style={{ marginBottom: 16 }} />
 
           <label style={labelStyle}>Título</label>
           <input value={texts.limitedTitle} onChange={e => setTexts(t => ({ ...t, limitedTitle: e.target.value }))}
-            placeholder={TEXT_DEFAULTS.limitedTitle} style={{ ...fieldStyle, marginBottom: 16 }} />
+            placeholder={TEXT_DEFAULTS.limitedTitle} maxLength={MAX_LEN} style={fieldStyle} />
+          <CharCount value={texts.limitedTitle} style={{ marginBottom: 16 }} />
 
           <label style={labelStyle}>Párrafo</label>
           <textarea value={texts.limitedText} onChange={e => setTexts(t => ({ ...t, limitedText: e.target.value }))}
-            placeholder={TEXT_DEFAULTS.limitedText} rows={3} style={{ ...fieldStyle, marginBottom: 16 }} />
+            placeholder={TEXT_DEFAULTS.limitedText} rows={3} maxLength={MAX_LEN} style={fieldStyle} />
+          <CharCount value={texts.limitedText} style={{ marginBottom: 16 }} />
 
           <label style={labelStyle}>Texto del botón</label>
           <input value={texts.limitedCtaText} onChange={e => setTexts(t => ({ ...t, limitedCtaText: e.target.value }))}
-            placeholder={TEXT_DEFAULTS.limitedCtaText} style={{ ...fieldStyle, marginBottom: 20 }} />
+            placeholder={TEXT_DEFAULTS.limitedCtaText} maxLength={MAX_LEN} style={fieldStyle} />
+          <CharCount value={texts.limitedCtaText} style={{ marginBottom: 20 }} />
 
           <button onClick={saveTexts} disabled={savingTexts} style={{
             padding: '10px 24px', borderRadius: 8, fontSize: 13, fontWeight: 600,

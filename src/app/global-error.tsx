@@ -8,11 +8,19 @@ export default function GlobalError({
   reset,
 }: {
   error: Error & { digest?: string };
-  reset: () => void;
+  reset?: () => void;
 }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  // En errores críticos (p. ej. ChunkLoadError) Next no siempre pasa `reset`, y
+  // aunque lo pase, reintentar no recarga los chunks rotos. Si hay reset lo
+  // usamos; si no, recargamos la página a mano.
+  const retry = () => {
+    if (typeof reset === 'function') reset();
+    else window.location.reload();
+  };
 
   return (
     <html lang="es">
@@ -25,7 +33,7 @@ export default function GlobalError({
             inconveniente continúa, volvé en unos minutos.
           </p>
           <div className="error-state-actions">
-            <button onClick={() => reset()} className="btn btn-primary btn-md">
+            <button onClick={retry} className="btn btn-primary btn-md">
               Reintentar
             </button>
             {/* Recarga dura a propósito: resetea todo el estado tras un error crítico */}

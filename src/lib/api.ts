@@ -177,6 +177,11 @@ export interface ApiProduct {
   stone?: string
   costPrice?: number
   minStock?: number
+  // Contenido editable de las solapas (null = la web usa el texto sugerido)
+  description?: string | null
+  howToUse?: string | null
+  care?: string | null
+  shipping?: string | null
 }
 
 export interface GetProductsParams {

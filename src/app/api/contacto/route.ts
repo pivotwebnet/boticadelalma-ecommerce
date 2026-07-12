@@ -3,6 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { DATA_DIR } from '@/lib/storage';
 
+// Topes de largo para el formulario de contacto público. Deben coincidir con
+// los maxLength del formulario en src/app/contacto/page.tsx.
+const MAX_NOMBRE = 100;
+const MAX_EMAIL = 150;
+const MAX_MENSAJE = 2000;
+
 export async function POST(req: NextRequest) {
   try {
     const { nombre, email, mensaje } = await req.json();
@@ -10,6 +16,25 @@ export async function POST(req: NextRequest) {
     if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
       return NextResponse.json(
         { error: 'Todos los campos (nombre, email y mensaje) son obligatorios.' },
+        { status: 400 }
+      );
+    }
+
+    if (nombre.trim().length > MAX_NOMBRE) {
+      return NextResponse.json(
+        { error: `El nombre es demasiado largo (máximo ${MAX_NOMBRE} caracteres).` },
+        { status: 400 }
+      );
+    }
+    if (email.trim().length > MAX_EMAIL) {
+      return NextResponse.json(
+        { error: `El correo electrónico es demasiado largo (máximo ${MAX_EMAIL} caracteres).` },
+        { status: 400 }
+      );
+    }
+    if (mensaje.trim().length > MAX_MENSAJE) {
+      return NextResponse.json(
+        { error: `El mensaje es demasiado largo (máximo ${MAX_MENSAJE} caracteres).` },
         { status: 400 }
       );
     }

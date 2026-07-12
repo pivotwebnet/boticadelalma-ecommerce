@@ -33,6 +33,21 @@ public class Product
 
     public string Tags { get; set; } = "[]"; // JSON array stored as string
 
+    // ── Contenido editable de la ficha (las 4 solapas de la página del producto).
+    // Si quedan en null/vacío, la web muestra un texto sugerido según el tipo de
+    // producto (material/categoría). La dueña puede sobrescribir cada uno. ──
+    [MaxLength(1500)]
+    public string? Description { get; set; }
+
+    [MaxLength(800)]
+    public string? HowToUse { get; set; }
+
+    [MaxLength(800)]
+    public string? Care { get; set; }
+
+    [MaxLength(800)]
+    public string? Shipping { get; set; }
+
     public bool IsNew { get; set; }
     public bool IsActive { get; set; } = true;
 

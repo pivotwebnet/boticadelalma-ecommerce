@@ -16,21 +16,27 @@ export default function Featured({ products, intentionFilter }: FeaturedProps) {
       )
     : products;
 
+  // Sin filtro y sin productos = toda la tienda está vacía (todavía no se cargó
+  // el catálogo). Es distinto a "esta intención puntual no tiene piezas".
+  const storeEmpty = !intentionFilter && products.length === 0;
+
   return (
     <section className="section">
       <header className="section-head section-head-row">
         <div>
           <h2>
-            {intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
+            {storeEmpty ? 'Nuestra colección' : intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
           </h2>
           <span className="eyebrow">
-            {intentionFilter ? `Intención · ${intentionFilter}` : 'Lo más querido'}
+            {storeEmpty ? 'Muy pronto' : intentionFilter ? `Intención · ${intentionFilter}` : 'Lo más querido'}
           </span>
           <VineDecoration className="vine-decor--left" />
         </div>
-        <Link href="/catalogo" className="link-arrow">
-          Ver todo <Icon name="arrow-r" size={14} />
-        </Link>
+        {!storeEmpty && (
+          <Link href="/catalogo" className="link-arrow">
+            Ver todo <Icon name="arrow-r" size={14} />
+          </Link>
+        )}
       </header>
 
       {filtered.length > 0 ? (
@@ -40,12 +46,37 @@ export default function Featured({ products, intentionFilter }: FeaturedProps) {
           ))}
         </div>
       ) : (
-        <div key={intentionFilter} className="featured-empty featured-animated">
-          <Icon name="sparkle" size={28} stroke={1.2} />
-          <p>Próximamente piezas para <em>{intentionFilter}</em>.</p>
-          <Link href="/catalogo" className="btn btn-ghost btn-sm">
-            Ver todo el catálogo
-          </Link>
+        <div className="featured-empty">
+          <span className="featured-empty-icon">
+            <Icon name="sparkle" size={30} stroke={1.2} />
+          </span>
+          {storeEmpty ? (
+            <>
+              <h3 className="featured-empty-title">Estamos preparando la colección</h3>
+              <p className="featured-empty-msg">
+                Muy pronto vas a encontrar acá nuestras piezas, elegidas y armadas una por una.
+                Si buscás algo especial, escribinos y te ayudamos.
+              </p>
+              <a
+                href="https://wa.me/5493492274535"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary btn-sm"
+              >
+                Consultar por WhatsApp
+              </a>
+            </>
+          ) : (
+            <>
+              <h3 className="featured-empty-title">Próximamente</h3>
+              <p className="featured-empty-msg">
+                Todavía no tenemos piezas para <em>{intentionFilter}</em>. Estamos sumando nuevas creaciones.
+              </p>
+              <Link href="/catalogo" className="btn btn-ghost btn-sm">
+                Ver todo el catálogo
+              </Link>
+            </>
+          )}
         </div>
       )}
     </section>

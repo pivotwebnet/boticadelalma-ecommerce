@@ -13,6 +13,7 @@ import Button from '@/components/ui/Button';
 import ProductPlaceholder from '@/components/ui/ProductPlaceholder';
 import ProductCard from '@/components/ui/ProductCard';
 import CommentSection from '@/components/comments/CommentSection';
+import { buildProductContent } from '@/lib/product-content';
 
 type Tab = 'desc' | 'ritual' | 'care' | 'ship';
 
@@ -55,25 +56,12 @@ export default function PDPClient({ product }: PDPClientProps) {
     ? Math.round((1 - product.price / product.was) * 100)
     : 0;
 
-  const isMaterial = (tag: string) => {
-    const t = tag.toLowerCase().trim();
-    const materialsList = [
-      'plata', 'acero', 'gamuza', 'hilo', 'alpaca', 
-      'piedra', 'bruto', 'cuarzo', 'amatista', 
-      'obsidiana', 'labradorita', 'ojo turco', 'nácar', 
-      'nacar', 'turquesa', 'metal', 'hematite', 'madera'
-    ];
-    return materialsList.some(m => t.includes(m));
-  };
-
   const isSku = (tag: string) => {
     // Detects SKU formats like APT00001, ASM00012, ARPBJ00003, etc.
     return /^[A-Z]{3,5}\d{4,5}$/i.test(tag.trim());
   };
 
   const publicTags = product.tags.filter(t => !isSku(t));
-  const materiales = publicTags.filter(isMaterial);
-  const intenciones = publicTags.filter(t => !isMaterial(t));
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!imgRef.current) return;
@@ -89,6 +77,16 @@ export default function PDPClient({ product }: PDPClientProps) {
     ['care', 'Cuidados'],
     ['ship', 'Envíos'],
   ];
+
+  // Contenido de cada solapa: lo que cargó la dueña, o el texto sugerido según
+  // el tipo de producto si dejó el campo vacío (mismo motor que el panel).
+  const suggested = buildProductContent({ name: product.name, cat: product.cat, tags: product.tags });
+  const tabContent: Record<Tab, string> = {
+    desc: product.description?.trim() || suggested.description,
+    ritual: product.howToUse?.trim() || suggested.howToUse,
+    care: product.care?.trim() || suggested.care,
+    ship: product.shipping?.trim() || suggested.shipping,
+  };
 
   return (
     <main className="pdp">
@@ -220,35 +218,9 @@ export default function PDPClient({ product }: PDPClientProps) {
           ))}
         </nav>
         <div className="tabs-body">
-          {tab === 'desc' && (
-            <div>
-              <p>
-                Pieza seleccionada a mano desde pequeños talleres. Cada unidad es levemente
-                distinta — esa es su belleza. La energía de {product.name.toLowerCase()} acompaña
-                momentos de reflexión, intención y pausa.
-              </p>
-              {materiales.length > 0 && <p><b>Materiales:</b> {materiales.join(', ')}.</p>}
-              {intenciones.length > 0 && <p><b>Propiedades energéticas:</b> {intenciones.join(', ')}.</p>}
-            </div>
-          )}
-          {tab === 'ritual' && (
-            <ul className="steps">
-              <li><b>1.</b> Limpiá la pieza con sahumerio de salvia o palo santo.</li>
-              <li><b>2.</b> Dedicá una intención clara antes de usarla.</li>
-              <li><b>3.</b> Llevala cerca en los momentos que necesites su energía.</li>
-            </ul>
-          )}
-          {tab === 'care' && (
-            <p>
-              Guardá en lugar seco, lejos de la luz directa. Si es metal, puliselo con un paño
-              suave. Evitá perfumes y cremas en contacto directo.
-            </p>
-          )}
-          {tab === 'ship' && (
-            <p>
-              Envíos a todo el país a coordinar por WhatsApp (3 a 7 días hábiles). Retiro gratuito en nuestro punto de entrega en A. Lincoln 85, Rafaela, Santa Fe.
-            </p>
-          )}
+          {tabContent[tab].split('\n\n').map((para, i) => (
+            <p key={i} style={{ whiteSpace: 'pre-line' }}>{para}</p>
+          ))}
         </div>
       </div>
 
