@@ -8,6 +8,7 @@ const DEFAULT_LIMITED_IMG = 'https://images.unsplash.com/photo-1611085583191-a3b
 // Textos por defecto de la home (placeholder y valor si el campo queda vacío).
 const TEXT_DEFAULTS = {
   editorialQuote: 'Lo que eliges, también te elige.',
+  editorialQuoteAuthor: '',
   limitedOverline: 'Edición Limitada',
   limitedTitle: 'Luna Nueva',
   limitedText: 'Una curaduría de joyas y piedras para acompañar los ciclos: collares de cuarzo lunar, amuletos de protección y complementos energéticos para los nuevos comienzos.',
@@ -45,7 +46,7 @@ export default function AparienciaPage() {
 
   // Textos editables de la home
   const [texts, setTexts] = useState({
-    editorialQuote: '', limitedOverline: '', limitedTitle: '', limitedText: '', limitedCtaText: '',
+    editorialQuote: '', editorialQuoteAuthor: '', limitedOverline: '', limitedTitle: '', limitedText: '', limitedCtaText: '',
   })
   const [savingTexts, setSavingTexts] = useState(false)
 
@@ -70,6 +71,7 @@ export default function AparienciaPage() {
     setCurrentLogo(s?.logoUrl ?? null)
     setTexts({
       editorialQuote: s?.editorialQuote ?? '',
+      editorialQuoteAuthor: s?.editorialQuoteAuthor ?? '',
       limitedOverline: s?.limitedOverline ?? '',
       limitedTitle: s?.limitedTitle ?? '',
       limitedText: s?.limitedText ?? '',
@@ -363,7 +365,17 @@ export default function AparienciaPage() {
             placeholder={TEXT_DEFAULTS.editorialQuote} rows={2} maxLength={MAX_LEN}
             style={fieldStyle}
           />
-          <CharCount value={texts.editorialQuote} style={{ marginBottom: 28 }} />
+          <CharCount value={texts.editorialQuote} style={{ marginBottom: 16 }} />
+
+          {/* Autor / subtítulo de la frase (opcional) */}
+          <label style={labelStyle}>Autor / subtítulo <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--fg-muted)' }}>· opcional — el autor de la cita u otra línea debajo</span></label>
+          <input
+            value={texts.editorialQuoteAuthor}
+            onChange={e => setTexts(t => ({ ...t, editorialQuoteAuthor: e.target.value }))}
+            placeholder="Ej: — Rumi   ·   dejalo vacío para no mostrar nada" maxLength={MAX_LEN}
+            style={fieldStyle}
+          />
+          <CharCount value={texts.editorialQuoteAuthor} style={{ marginBottom: 28 }} />
 
           {/* Sección Edición Limitada */}
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--fg)', marginBottom: 4 }}>Sección “Edición Limitada”</div>

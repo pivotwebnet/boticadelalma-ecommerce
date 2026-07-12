@@ -6,6 +6,7 @@ export const runtime = 'nodejs'
 // Campos de texto editables desde el panel (Apariencia → Textos de la home).
 const TEXT_FIELDS = [
   'editorialQuote',
+  'editorialQuoteAuthor',
   'limitedOverline',
   'limitedTitle',
   'limitedText',
@@ -15,6 +16,7 @@ const TEXT_FIELDS = [
 // Nombres visibles de cada campo, para armar mensajes de error claros.
 const FIELD_LABELS: Record<(typeof TEXT_FIELDS)[number], string> = {
   editorialQuote: 'Frase del final',
+  editorialQuoteAuthor: 'Autor / subtítulo',
   limitedOverline: 'Sobretítulo',
   limitedTitle: 'Título',
   limitedText: 'Párrafo',

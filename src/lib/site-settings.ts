@@ -18,6 +18,8 @@ export interface SiteSettings {
 
   // Cita final de la home (componente EditorialQuote).
   editorialQuote?: string | null
+  // Subtítulo/autor opcional debajo de la cita (ej: el autor de la frase u otra línea).
+  editorialQuoteAuthor?: string | null
   // Sección "Edición Limitada" (componente CollectionBanner).
   limitedOverline?: string | null
   limitedTitle?: string | null

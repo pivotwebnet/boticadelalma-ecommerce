@@ -9,11 +9,14 @@ const DEFAULT_QUOTE = 'Lo que eliges, también te elige.';
 export default function EditorialQuote() {
   // La frase es editable desde el panel (Apariencia → Textos de la home).
   const [quote, setQuote] = useState(DEFAULT_QUOTE);
+  // Subtítulo/autor opcional debajo de la cita.
+  const [author, setAuthor] = useState('');
   useEffect(() => {
     fetch('/api/site-settings')
       .then(r => r.json())
-      .then((s: { editorialQuote?: string | null }) => {
+      .then((s: { editorialQuote?: string | null; editorialQuoteAuthor?: string | null }) => {
         if (s?.editorialQuote) setQuote(s.editorialQuote);
+        if (s?.editorialQuoteAuthor) setAuthor(s.editorialQuoteAuthor);
       })
       .catch(() => {});
   }, []);
@@ -44,9 +47,15 @@ export default function EditorialQuote() {
             viewport={{ once: true }}
             transition={{ duration: 1 }}
           >
-            <blockquote className="font-serif text-2xl md:text-4xl italic text-stone-800 leading-[1.5] tracking-tight mb-10 max-w-2xl mx-auto">
+            <blockquote className="font-serif text-2xl md:text-4xl italic text-stone-800 leading-[1.5] tracking-tight mb-6 max-w-2xl mx-auto">
               &ldquo;{quote}&rdquo;
             </blockquote>
+
+            {author && (
+              <p className="font-sans text-sm md:text-base tracking-[0.08em] uppercase text-stone-500 mb-8">
+                {author}
+              </p>
+            )}
 
             <div className="flex flex-col items-center gap-6">
               {/* Minimalist divider with leaf */}

@@ -56,6 +56,12 @@ export default function PDPClient({ product }: PDPClientProps) {
     ? Math.round((1 - product.price / product.was) * 100)
     : 0;
 
+  // Stock: si viene undefined (catálogo estático) no se limita.
+  const stock = product.stock;
+  const outOfStock = stock === 0;
+  const lowStock = stock != null && stock > 0 && stock <= 3;
+  const maxQty = stock != null && stock > 0 ? stock : 99;
+
   const isSku = (tag: string) => {
     // Detects SKU formats like APT00001, ASM00012, ARPBJ00003, etc.
     return /^[A-Z]{3,5}\d{4,5}$/i.test(tag.trim());
@@ -168,17 +174,27 @@ export default function PDPClient({ product }: PDPClientProps) {
           <div className="pdp-qty">
             <span className="qty-label">Cantidad</span>
             <div className="qty-stepper">
-              <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Restar">
+              <button onClick={() => setQty(Math.max(1, qty - 1))} aria-label="Restar" disabled={outOfStock}>
                 <Icon name="minus" size={14} />
               </button>
               <span>{qty}</span>
-              <button onClick={() => setQty(qty + 1)} aria-label="Sumar">
+              <button onClick={() => setQty(Math.min(maxQty, qty + 1))} aria-label="Sumar" disabled={outOfStock || qty >= maxQty}>
                 <Icon name="plus" size={14} />
               </button>
             </div>
-            <span className="stock">
-              <span className="dot" /> En stock — envío en 48h
-            </span>
+            {outOfStock ? (
+              <span className="stock stock-out">
+                <span className="dot" /> Sin stock por el momento
+              </span>
+            ) : lowStock ? (
+              <span className="stock stock-low">
+                <span className="dot" /> ¡Últimas {stock} unidades!
+              </span>
+            ) : (
+              <span className="stock">
+                <span className="dot" /> En stock — envío a coordinar
+              </span>
+            )}
           </div>
 
           <div className="pdp-ctas">
@@ -187,9 +203,10 @@ export default function PDPClient({ product }: PDPClientProps) {
               size="lg"
               full
               icon="bag"
+              disabled={outOfStock}
               onClick={() => addToCart(product, qty)}
             >
-              Agregar al carrito — {fmt(product.price * qty)}
+              {outOfStock ? 'Sin stock' : `Agregar al carrito — ${fmt(product.price * qty)}`}
             </Button>
             <button
               className={`icon-btn${isFav ? ' is-active' : ''}`}

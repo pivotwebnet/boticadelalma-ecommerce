@@ -27,6 +27,7 @@ function mapApiProduct(api: ApiProduct): Product {
     // Galería: solo las fotos cargadas. La portada es la primera (o el imageUrl legacy).
     images:  api.images ?? [],
     image:   api.images?.[0] ?? api.imageUrl,
+    stock:   api.stock,
     new:     api.isNew,
   }
 }

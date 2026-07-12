@@ -12,6 +12,7 @@ export interface Product {
   reviews: number;
   image?: string;       // portada (primera foto)
   images?: string[];    // galería: solo las fotos realmente cargadas
+  stock?: number;       // unidades disponibles (0 = agotado)
   new?: boolean;
   fav?: boolean;
   // Contenido editable de las solapas de la ficha. Si viene vacío, la web

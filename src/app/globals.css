@@ -618,6 +618,13 @@ em { font-style: italic; color: var(--accent-ink); }
 .badge-elite { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
 .badge-new { background: white; color: var(--fg); border: 1px solid var(--line-soft); }
 .badge-sale { background: var(--brand-orange); color: white; }
+.badge-out { background: #e06557; color: white; }
+
+/* Producto agotado: se atenúa la portada */
+.product-card.is-out .product-image-el { opacity: 0.5; filter: grayscale(0.35); }
+.btn-quick-add.is-disabled { opacity: 0.7; cursor: not-allowed; box-shadow: none; }
+/* El quick-add de agotados se muestra siempre (no solo en hover) para dejar claro el estado */
+.product-card.is-out .quick-add-wrap { transform: translateY(0); }
 
 .quick-add-wrap {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -887,6 +894,8 @@ em { font-style: italic; color: var(--accent-ink); }
 .qty-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .stock { font-size: 13px; color: var(--success); display: flex; align-items: center; gap: 8px; }
 .stock .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.stock.stock-low { color: #c9a17a; }
+.stock.stock-out { color: #e06557; }
 
 .pdp-ctas {
   display: flex;
@@ -1256,6 +1265,8 @@ em { font-style: italic; color: var(--accent-ink); }
 .qty-stepper { display: inline-flex; align-items: center; background: #fff; border: 1px solid var(--line-soft); border-radius: 999px; padding: 3px; height: 36px; }
 .qty-stepper button { width: 30px; height: 30px; border-radius: 50%; border: 0; background: transparent; display: grid; place-content: center; color: var(--fg); transition: all 0.3s; }
 .qty-stepper button:hover { background: var(--surface-2); }
+.qty-stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.qty-stepper button:disabled:hover { background: transparent; }
 .qty-stepper span { min-width: 32px; text-align: center; font-size: 14px; font-weight: 500; }
 .qty-sm { height: 30px; }
 .qty-sm button { width: 24px; height: 24px; }

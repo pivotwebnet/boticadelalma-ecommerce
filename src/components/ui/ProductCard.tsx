@@ -25,12 +25,13 @@ export default function ProductCard({ product, density }: ProductCardProps) {
 
   const isFav = mounted && favs.includes(product.id);
   const d = density ?? themeDensity;
+  const outOfStock = product.stock === 0;
   const discount = product.was
     ? Math.round((1 - product.price / product.was) * 100)
     : 0;
 
   return (
-    <article className={`product-card group density-${d}`}>
+    <article className={`product-card group density-${d}${outOfStock ? ' is-out' : ''}`}>
       <div className="product-media" onClick={() => router.push(`/producto/${product.id}`)}>
         <div className="product-image-wrap">
           {product.image ? (
@@ -54,17 +55,24 @@ export default function ProductCard({ product, density }: ProductCardProps) {
         </button>
 
         <div className="product-badges">
-          {product.new && <span className="badge-elite badge-new">Novedad</span>}
-          {discount > 0 && <span className="badge-elite badge-sale">-{discount}%</span>}
+          {outOfStock && <span className="badge-elite badge-out">Agotado</span>}
+          {!outOfStock && product.new && <span className="badge-elite badge-new">Novedad</span>}
+          {!outOfStock && discount > 0 && <span className="badge-elite badge-sale">-{discount}%</span>}
         </div>
 
         <div className="quick-add-wrap">
-          <button
-            className="btn-quick-add"
-            onClick={e => { e.stopPropagation(); addToCart(product); }}
-          >
-            <Icon name="plus" size={16} /> <span>Añadir al carrito</span>
-          </button>
+          {outOfStock ? (
+            <button className="btn-quick-add is-disabled" disabled onClick={e => e.stopPropagation()}>
+              <span>Sin stock</span>
+            </button>
+          ) : (
+            <button
+              className="btn-quick-add"
+              onClick={e => { e.stopPropagation(); addToCart(product); }}
+            >
+              <Icon name="plus" size={16} /> <span>Añadir al carrito</span>
+            </button>
+          )}
         </div>
       </div>
 
