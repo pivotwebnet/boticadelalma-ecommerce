@@ -24,6 +24,20 @@ export function writeCredentials(creds: AdminCredentials): void {
   fs.writeFileSync(CREDS_FILE, JSON.stringify(creds, null, 2), 'utf-8')
 }
 
+// Comparación en tiempo constante: recorre SIEMPRE la longitud del valor esperado
+// y acumula diferencias con XOR, sin cortar al primer byte distinto. Así el tiempo
+// de respuesta no filtra cuántos caracteres coincidieron (evita timing attacks).
+export function safeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder()
+  const ba = enc.encode(a)
+  const bb = enc.encode(b)
+  let diff = ba.length ^ bb.length
+  for (let i = 0; i < bb.length; i++) {
+    diff |= ba[i % ba.length] ^ bb[i]
+  }
+  return diff === 0
+}
+
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
 }
@@ -54,6 +68,6 @@ export async function verifyPassword(password: string, creds: AdminCredentials):
     const bits = await crypto.subtle.deriveBits(
       { name: 'PBKDF2', salt: saltBuf, iterations: 100_000, hash: 'SHA-256' }, key, 256,
     )
-    return toHex(new Uint8Array(bits)) === creds.hash
+    return safeEqual(toHex(new Uint8Array(bits)), creds.hash)
   } catch { return false }
 }

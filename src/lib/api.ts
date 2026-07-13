@@ -7,6 +7,17 @@ const API_URL = process.env.API_URL ?? 'http://localhost:5066'
 // Debe coincidir con AdminApiKey del backend. Vacía en dev = sin exigencia.
 const ADMIN_KEY = process.env.BACKEND_ADMIN_KEY ?? ''
 
+// Aviso ruidoso: en producción, sin BACKEND_ADMIN_KEY, si el backend .NET queda
+// alcanzable desde internet cualquiera podría operar sus endpoints admin (leer
+// órdenes con datos personales, crear/borrar productos). El middleware de Next solo
+// protege las rutas de Next, NO el backend. Verificar que el backend exija la key
+// y/o no sea público. Ver deploy_env_checklist.
+if (process.env.NODE_ENV === 'production' && !ADMIN_KEY) {
+  console.error(
+    '[SEGURIDAD] BACKEND_ADMIN_KEY no está definido en producción: el backend admin podría quedar sin autenticación.',
+  )
+}
+
 // Headers para llamadas administrativas (mutaciones y lecturas privadas).
 function adminHeaders(json = false): Record<string, string> {
   const h: Record<string, string> = {}

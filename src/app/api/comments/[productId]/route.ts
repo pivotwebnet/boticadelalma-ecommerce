@@ -47,9 +47,19 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   const { productId } = await params
-  const { text, rating, orderId, author } = await req.json()
 
-  if (!orderId) {
+  let payload: unknown
+  try {
+    payload = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Petición inválida' }, { status: 400 })
+  }
+  if (typeof payload !== 'object' || payload === null) {
+    return NextResponse.json({ error: 'Se requiere el ID de orden' }, { status: 400 })
+  }
+  const { text, rating, orderId, author } = payload as Record<string, unknown>
+
+  if (typeof orderId !== 'string' || !orderId.trim()) {
     return NextResponse.json({ error: 'Se requiere el ID de orden' }, { status: 400 })
   }
 
@@ -61,16 +71,23 @@ export async function POST(req: NextRequest, { params }: Params) {
     )
   }
 
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+  if (!Number.isInteger(rating) || (rating as number) < 1 || (rating as number) > 5) {
     return NextResponse.json({ error: 'La calificación debe ser entre 1 y 5' }, { status: 400 })
   }
 
+  // El nombre lo controla el cliente: lo acotamos a 60 caracteres y, si viene vacío
+  // o no es texto, usamos el default. (El backend valida que la orden sea real.)
+  const cleanAuthor =
+    typeof author === 'string' && author.trim()
+      ? author.trim().slice(0, 60)
+      : 'Comprador verificado'
+
   const result = await createComment({
     productId,
-    orderId,
-    author: author || 'Comprador verificado',
+    orderId: orderId.trim(),
+    author: cleanAuthor,
     text: trimmed,
-    rating,
+    rating: rating as number,
   })
 
   if (!result.ok) {

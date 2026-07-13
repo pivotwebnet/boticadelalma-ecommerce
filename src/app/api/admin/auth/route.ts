@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSessionToken, SESSION_COOKIE } from '@/lib/admin-auth'
-import { credentialsExist, readCredentials, verifyPassword } from '@/lib/admin-credentials'
+import { credentialsExist, readCredentials, verifyPassword, safeEqual } from '@/lib/admin-credentials'
+import { clientIp as trustedIp } from '@/lib/rate-limit'
 
 // Rate limiting simple en memoria: bloquea tras varios intentos fallidos por IP.
 const MAX_ATTEMPTS = 5
 const WINDOW_MS = 15 * 60 * 1000 // 15 minutos
 const attempts = new Map<string, { count: number; first: number }>()
-
-function clientIp(req: NextRequest): string {
-  const fwd = req.headers.get('x-forwarded-for')
-  return fwd ? fwd.split(',')[0].trim() : 'local'
-}
 
 function checkLocked(ip: string): boolean {
   const rec = attempts.get(ip)
@@ -29,7 +25,7 @@ function registerFailure(ip: string): void {
 }
 
 export async function POST(req: NextRequest) {
-  const ip = clientIp(req)
+  const ip = trustedIp(req)
   if (checkLocked(ip)) {
     return NextResponse.json(
       { error: 'Demasiados intentos fallidos. Esperá unos minutos e intentá de nuevo.' },
@@ -37,9 +33,16 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { password } = await req.json()
+  let password: unknown
+  try {
+    ({ password } = await req.json())
+  } catch {
+    return NextResponse.json({ error: 'Petición inválida' }, { status: 400 })
+  }
 
-  if (!password) {
+  // Tipamos y acotamos: solo string, y con un tope de largo para que nadie mande
+  // megabytes de "contraseña" y haga trabajar de más al hash/compare.
+  if (typeof password !== 'string' || password.length === 0 || password.length > 512) {
     return NextResponse.json({ error: 'Contraseña requerida' }, { status: 400 })
   }
 
@@ -50,8 +53,8 @@ export async function POST(req: NextRequest) {
     // El cliente ya configuró su propia contraseña — el env var queda ignorado
     valid = await verifyPassword(password, stored)
   } else if (process.env.ADMIN_PASSWORD) {
-    // Acceso inicial con contraseña temporal del .env
-    valid = password === process.env.ADMIN_PASSWORD
+    // Acceso inicial con contraseña temporal del .env (comparación constant-time)
+    valid = safeEqual(password, process.env.ADMIN_PASSWORD)
   } else {
     return NextResponse.json(
       { error: 'Configuración inicial requerida', setupRequired: true },

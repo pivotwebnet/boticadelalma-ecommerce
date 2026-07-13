@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import { DATA_DIR } from '@/lib/storage';
+import { escapeHtml } from '@/lib/utils';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 // Topes de largo para el formulario de contacto público. Deben coincidir con
 // los maxLength del formulario en src/app/contacto/page.tsx.
@@ -10,10 +12,25 @@ const MAX_EMAIL = 150;
 const MAX_MENSAJE = 2000;
 
 export async function POST(req: NextRequest) {
-  try {
-    const { nombre, email, mensaje } = await req.json();
+  // Anti-spam: máx 5 consultas por minuto por IP (evita inundar el mail y Resend).
+  if (!rateLimit(`contacto:${clientIp(req)}`, 5, 60_000)) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
+      { status: 429 }
+    );
+  }
 
-    if (!nombre?.trim() || !email?.trim() || !mensaje?.trim()) {
+  try {
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 });
+    }
+    const { nombre, email, mensaje } = (payload ?? {}) as Record<string, unknown>;
+
+    if (typeof nombre !== 'string' || typeof email !== 'string' || typeof mensaje !== 'string' ||
+        !nombre.trim() || !email.trim() || !mensaje.trim()) {
       return NextResponse.json(
         { error: 'Todos los campos (nombre, email y mensaje) son obligatorios.' },
         { status: 400 }
@@ -98,11 +115,11 @@ export async function POST(req: NextRequest) {
             subject: `Nuevo mensaje de contacto de ${nuevoContacto.nombre}`,
             html: `
               <h2>Nueva consulta desde la Web</h2>
-              <p><strong>Nombre:</strong> ${nuevoContacto.nombre}</p>
-              <p><strong>Email de contacto:</strong> ${nuevoContacto.email}</p>
+              <p><strong>Nombre:</strong> ${escapeHtml(nuevoContacto.nombre)}</p>
+              <p><strong>Email de contacto:</strong> ${escapeHtml(nuevoContacto.email)}</p>
               <p><strong>Mensaje:</strong></p>
               <p style="background: #f4f4f4; padding: 15px; border-radius: 8px; font-style: italic;">
-                "${nuevoContacto.mensaje}"
+                "${escapeHtml(nuevoContacto.mensaje)}"
               </p>
               <hr />
               <p style="font-size: 11px; color: #777;">Recibido el ${new Date(nuevoContacto.fecha).toLocaleString('es-AR')}</p>

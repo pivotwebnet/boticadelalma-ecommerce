@@ -3,12 +3,29 @@ import fs from 'fs';
 import path from 'path';
 import { getOrder, getAllOrders } from '@/lib/api';
 import { DATA_DIR } from '@/lib/storage';
+import { escapeHtml } from '@/lib/utils';
+import { rateLimit, clientIp } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
-  try {
-    const { orderId, email } = await req.json();
+  // Anti-abuso: máx 10 por minuto por IP. También frena que se use el endpoint para
+  // sondear qué órdenes existen probando IDs a mansalva.
+  if (!rateLimit(`arrepentimiento:${clientIp(req)}`, 10, 60_000)) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
+      { status: 429 }
+    );
+  }
 
-    if (!orderId || !email) {
+  try {
+    let payload: unknown;
+    try {
+      payload = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Petición inválida.' }, { status: 400 });
+    }
+    const { orderId, email } = (payload ?? {}) as Record<string, unknown>;
+
+    if (typeof orderId !== 'string' || typeof email !== 'string' || !orderId.trim() || !email.trim()) {
       return NextResponse.json(
         { error: 'El ID de la orden y el correo electrónico son obligatorios.' },
         { status: 400 }
@@ -136,10 +153,10 @@ export async function POST(req: NextRequest) {
               <h2>Solicitud de Arrepentimiento (Revocación de Compra)</h2>
               <p>El cliente ha solicitado cancelar su compra. <strong>Debés revisar si ya hiciste el pedido al mayorista antes de cancelarla en el panel.</strong></p>
               <hr />
-              <p><strong>ID de Orden:</strong> ${order.id}</p>
-              <p><strong>Cliente:</strong> ${order.customerName} (${order.customerEmail})</p>
-              <p><strong>Monto Total de la Orden:</strong> $${order.total}</p>
-              <p><strong>Estado Actual de la Orden:</strong> ${order.status}</p>
+              <p><strong>ID de Orden:</strong> ${escapeHtml(order.id)}</p>
+              <p><strong>Cliente:</strong> ${escapeHtml(order.customerName)} (${escapeHtml(order.customerEmail)})</p>
+              <p><strong>Monto Total de la Orden:</strong> $${escapeHtml(order.total)}</p>
+              <p><strong>Estado Actual de la Orden:</strong> ${escapeHtml(order.status)}</p>
               <p><strong>Fecha de Compra:</strong> ${new Date(order.createdAt).toLocaleString('es-AR')}</p>
               <p><strong>Fecha de Solicitud de Arrepentimiento:</strong> ${new Date(nuevaSolicitud.fechaSolicitud).toLocaleString('es-AR')}</p>
               <hr />

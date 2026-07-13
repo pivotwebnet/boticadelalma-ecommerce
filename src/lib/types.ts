@@ -76,6 +76,7 @@ export interface Purchase {
   orderId: string;       // ID de la orden en el backend .NET
   paymentId?: string;    // ID de MercadoPago (integración futura)
   buyerName: string;
+  buyerEmail?: string;   // Se usa para desbloquear el comprobante completo (verifica pertenencia)
   products: string[];    // IDs de productos comprados
   confirmedAt: string;
 }

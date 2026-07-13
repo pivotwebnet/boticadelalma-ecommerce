@@ -79,7 +79,12 @@ export default function CartPage() {
   useEffect(() => {
     if (step === 'success' && targetOrderId) {
       setLoadingOrder(true);
-      fetch(`/api/orders/public/${targetOrderId}`)
+      // Pasamos el email del comprador (persistido en `purchase`, sobrevive al
+      // redirect de Mercado Pago) para desbloquear el comprobante completo. Sin él,
+      // la API redacta los datos sensibles.
+      const ownerEmail = purchase?.buyerEmail || fields.customerEmail || '';
+      const qs = ownerEmail ? `?email=${encodeURIComponent(ownerEmail)}` : '';
+      fetch(`/api/orders/public/${targetOrderId}${qs}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           setOrderData(data);
@@ -253,6 +258,7 @@ export default function CartPage() {
     setPurchase({
       orderId: order.id,
       buyerName: fields.customerName.trim(),
+      buyerEmail: fields.customerEmail.trim(),
       products: items.map(it => it.product.id),
       confirmedAt: new Date().toISOString(),
     });
