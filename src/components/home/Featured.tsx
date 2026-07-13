@@ -27,10 +27,10 @@ export default function Featured({ products, intentionFilter }: FeaturedProps) {
           <h2>
             {storeEmpty ? 'Nuestra colección' : intentionFilter ? `Piezas para ${intentionFilter}` : 'Piezas destacadas'}
           </h2>
+          <VineDecoration className="vine-decor--left" />
           <span className="eyebrow">
             {storeEmpty ? 'Muy pronto' : intentionFilter ? `Intención · ${intentionFilter}` : 'Lo más querido'}
           </span>
-          <VineDecoration className="vine-decor--left" />
         </div>
         {!storeEmpty && (
           <Link href="/catalogo" className="link-arrow">

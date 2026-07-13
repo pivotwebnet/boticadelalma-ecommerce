@@ -20,15 +20,16 @@ const LEAF_D = 'M0 0 C 5 -2 9 -7 7 -14 C 4 -8 -3 -5 0 0 Z';
 // lo largo de toda la barra. `s` = tamaño, rot ~160° = hoja colgando hacia abajo.
 // `delay` sincroniza cada brote con el avance del trazo.
 const LEAVES: { x: number; y: number; rot: number; s: number; delay: number }[] = [
-  { x: 28,  y: 14, rot: -34, s: 0.85, delay: 0.25 },
-  { x: 64,  y: 10, rot: -10, s: 1.1,  delay: 0.38 },
-  { x: 104, y: 15, rot: 24,  s: 0.8,  delay: 0.50 },
-  { x: 158, y: 24, rot: 168, s: 1.05, delay: 0.64 },
-  { x: 222, y: 17, rot: -22, s: 0.9,  delay: 0.78 },
-  { x: 286, y: 11, rot: 8,   s: 1.15, delay: 0.90 },
-  { x: 360, y: 24, rot: 150, s: 0.85, delay: 1.02 },
-  { x: 420, y: 13, rot: 30,  s: 1.0,  delay: 1.14 },
-  { x: 470, y: 12, rot: 18,  s: 1.05, delay: 1.24 },
+  { x: 28,  y: 14, rot: -34, s: 1.0,  delay: 0.25 },
+  { x: 64,  y: 10, rot: -10, s: 1.3,  delay: 0.38 },
+  { x: 104, y: 15, rot: 24,  s: 0.95, delay: 0.50 },
+  { x: 158, y: 24, rot: 168, s: 1.25, delay: 0.64 },
+  { x: 222, y: 17, rot: -22, s: 1.05, delay: 0.78 },
+  { x: 286, y: 11, rot: 8,   s: 1.35, delay: 0.90 },
+  { x: 360, y: 24, rot: 150, s: 1.0,  delay: 1.02 },
+  { x: 420, y: 13, rot: 30,  s: 1.2,  delay: 1.14 },
+  { x: 452, y: 24, rot: 158, s: 1.0,  delay: 1.24 },
+  { x: 478, y: 12, rot: 18,  s: 1.25, delay: 1.34 },
 ];
 
 export default function SearchBox() {
