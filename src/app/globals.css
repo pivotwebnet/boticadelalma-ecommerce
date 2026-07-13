@@ -20,6 +20,7 @@
   --brand-mint: #bcd8cc;
   --brand-blue: #6686e7;
   --brand-orange: #E86315;
+  --brand-orange-dark: #c4520f;
   --brand-navy:   #0f172a;
   --line:      #d9d1be;
   --line-soft: #e8e2d1;
@@ -203,9 +204,9 @@ em { font-style: italic; color: var(--accent-ink); }
 .btn-lg { height: 62px; padding: 0 42px; font-size: 14px; }
 
 .btn-primary { background: var(--brand-orange); color: white; border-color: var(--brand-orange); }
-.btn-primary:hover { background: var(--brand-navy); }
+.btn-primary:hover { background: var(--brand-orange-dark); border-color: var(--brand-orange-dark); }
 .btn-whatsapp { background: var(--brand-orange); color: white; border-color: var(--brand-orange); box-shadow: 0 4px 14px rgba(232, 99, 21, 0.12); }
-.btn-whatsapp:hover { background: var(--brand-navy); border-color: var(--brand-navy); box-shadow: 0 6px 20px rgba(15, 23, 42, 0.15); }
+.btn-whatsapp:hover { background: var(--brand-orange-dark); border-color: var(--brand-orange-dark); box-shadow: 0 6px 20px rgba(196, 82, 15, 0.18); }
 .btn-ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
 .btn-ghost:hover { background: var(--surface); border-color: var(--fg-soft); }
 .btn-secondary { background: var(--surface-2); color: var(--fg); }
