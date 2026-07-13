@@ -4,12 +4,12 @@ import path from 'path';
 import { getOrder, getAllOrders } from '@/lib/api';
 import { DATA_DIR } from '@/lib/storage';
 import { escapeHtml } from '@/lib/utils';
-import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { tooMany } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
-  // Anti-abuso: máx 10 por minuto por IP. También frena que se use el endpoint para
-  // sondear qué órdenes existen probando IDs a mansalva.
-  if (!rateLimit(`arrepentimiento:${clientIp(req)}`, 10, 60_000)) {
+  // Anti-abuso: máx 10 por minuto por IP + tope global. También frena que se use el
+  // endpoint para sondear qué órdenes existen probando IDs a mansalva.
+  if (tooMany(req, 'arrepentimiento', 10, 60_000)) {
     return NextResponse.json(
       { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
       { status: 429 }

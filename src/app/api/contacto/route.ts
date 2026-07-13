@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { DATA_DIR } from '@/lib/storage';
 import { escapeHtml } from '@/lib/utils';
-import { rateLimit, clientIp } from '@/lib/rate-limit';
+import { tooMany } from '@/lib/rate-limit';
 
 // Topes de largo para el formulario de contacto público. Deben coincidir con
 // los maxLength del formulario en src/app/contacto/page.tsx.
@@ -12,8 +12,8 @@ const MAX_EMAIL = 150;
 const MAX_MENSAJE = 2000;
 
 export async function POST(req: NextRequest) {
-  // Anti-spam: máx 5 consultas por minuto por IP (evita inundar el mail y Resend).
-  if (!rateLimit(`contacto:${clientIp(req)}`, 5, 60_000)) {
+  // Anti-spam: máx 5 consultas por minuto por IP (evita inundar el mail y Resend) + tope global.
+  if (tooMany(req, 'contacto', 5, 60_000)) {
     return NextResponse.json(
       { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
       { status: 429 }

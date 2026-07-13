@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPublicOrder } from '@/lib/api'
 import type { ApiOrder } from '@/lib/api'
+import { tooMany } from '@/lib/rate-limit'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -45,6 +46,14 @@ function redact(order: ApiOrder) {
 // se pasa `?email=` y coincide con el de la orden (pertenencia); de lo contrario
 // se devuelve una versión redactada.
 export async function GET(req: NextRequest, { params }: Params) {
+  // Lectura que reenvía al backend y, además, frena sondeos de IDs por fuerza bruta.
+  if (tooMany(req, 'order-public', 60, 60_000)) {
+    return NextResponse.json(
+      { error: 'Demasiadas peticiones. Esperá un momento.' },
+      { status: 429 },
+    )
+  }
+
   const { id } = await params
 
   if (!GUID_RE.test(id)) {

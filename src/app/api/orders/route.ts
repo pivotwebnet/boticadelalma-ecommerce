@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createOrder } from '@/lib/api'
-import { rateLimit, clientIp } from '@/lib/rate-limit'
+import { tooMany } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
-  // Anti-spam / anti-agotamiento de stock: máx 8 órdenes por minuto por IP.
-  if (!rateLimit(`orders:${clientIp(req)}`, 8, 60_000)) {
+  // Anti-spam / anti-agotamiento de stock: máx 8 órdenes por minuto por IP + tope global.
+  if (tooMany(req, 'orders', 8, 60_000)) {
     return NextResponse.json(
       { error: 'Demasiados intentos. Esperá un momento e intentá de nuevo.' },
       { status: 429 },
