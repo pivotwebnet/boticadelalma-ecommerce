@@ -40,6 +40,8 @@ function PLPInner({ cat }: PLPClientProps) {
   const [onlyNew, setOnlyNew] = useState(false);
   const [view, setView] = useState<ViewMode>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 12;
 
   const absoluteMax = useMemo(() => {
     const prices = products.filter(p => p.cat === cat).map(p => p.price);
@@ -93,6 +95,51 @@ function PLPInner({ cat }: PLPClientProps) {
     setMatSel([]);
     setIntSel([]);
     setOnlyNew(false);
+  };
+
+  // Paginación: se renderizan solo PRODUCTS_PER_PAGE por página (antes se
+  // pintaban TODAS las tarjetas de la categoría de una — con Dijes eran 382).
+  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return filtered.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  // Al cambiar de categoría/subcategoría/filtros/orden, volver a la página 1.
+  useEffect(() => { setCurrentPage(1); }, [cat, sub, maxPrice, matSel, intSel, onlyNew, sort]);
+
+  const renderPageButtons = () => {
+    const buttons: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) buttons.push(i);
+    } else {
+      buttons.push(1);
+      if (currentPage > 3) buttons.push('ellipsis-start');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) if (!buttons.includes(i)) buttons.push(i);
+      if (currentPage < totalPages - 2) buttons.push('ellipsis-end');
+      if (!buttons.includes(totalPages)) buttons.push(totalPages);
+    }
+    return buttons.map((b, idx) => {
+      if (b === 'ellipsis-start' || b === 'ellipsis-end') {
+        return (
+          <li key={`ell-${idx}`} className="page-item disabled">
+            <span className="page-link border-none bg-transparent hover:bg-transparent select-none cursor-default">...</span>
+          </li>
+        );
+      }
+      return (
+        <li key={`page-${b}`} className={`page-item ${currentPage === b ? 'active' : ''}`}>
+          <button
+            onClick={() => { setCurrentPage(b as number); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="page-link"
+          >
+            {b}
+          </button>
+        </li>
+      );
+    });
   };
 
   const breadcrumbItems = [
@@ -237,11 +284,47 @@ function PLPInner({ cat }: PLPClientProps) {
               </button>
             </div>
           ) : (
-            <div className={`product-grid view-${view}`}>
-              {filtered.map(p => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
+            <>
+              <div className={`product-grid view-${view}`}>
+                {paginated.map(p => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav aria-label="Paginación" className="mt-12 py-6 border-t border-stone-100 flex justify-center">
+                  <ul className="pagination">
+                    <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                      <button
+                        onClick={() => { setCurrentPage(prev => Math.max(1, prev - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === 1}
+                        className="page-link"
+                        aria-label="Página anterior"
+                        data-tooltip="Página anterior"
+                      >
+                        <span aria-hidden="true">&lsaquo;</span>
+                        <span className="sr-only">Anterior</span>
+                      </button>
+                    </li>
+
+                    {renderPageButtons()}
+
+                    <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                      <button
+                        onClick={() => { setCurrentPage(prev => Math.min(totalPages, prev + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        disabled={currentPage === totalPages}
+                        className="page-link"
+                        aria-label="Página siguiente"
+                        data-tooltip="Página siguiente"
+                      >
+                        <span aria-hidden="true">&rsaquo;</span>
+                        <span className="sr-only">Siguiente</span>
+                      </button>
+                    </li>
+                  </ul>
+                </nav>
+              )}
+            </>
           )}
         </section>
       </div>

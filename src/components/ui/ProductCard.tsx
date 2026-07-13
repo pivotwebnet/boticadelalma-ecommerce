@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/store/useStore';
 import { fmt } from '@/lib/utils';
@@ -13,17 +13,20 @@ interface ProductCardProps {
   density?: 'compact' | 'regular' | 'comfy';
 }
 
-export default function ProductCard({ product, density }: ProductCardProps) {
+function ProductCard({ product, density }: ProductCardProps) {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const addToCart = useStore(s => s.addToCart);
   const toggleFav = useStore(s => s.toggleFav);
-  const favs = useStore(s => s.favs);
+  // Se suscribe SOLO a si este producto es favorito (un booleano), no a todo el
+  // array `favs`. Así, marcar un favorito re-renderiza únicamente esa tarjeta y
+  // no las cientos que hay en pantalla.
+  const favSelected = useStore(s => s.favs.includes(product.id));
   const themeDensity = useStore(s => s.theme.density);
 
   useEffect(() => setMounted(true), []);
 
-  const isFav = mounted && favs.includes(product.id);
+  const isFav = mounted && favSelected;
   const d = density ?? themeDensity;
   const outOfStock = product.stock === 0;
   const discount = product.was
@@ -103,3 +106,7 @@ export default function ProductCard({ product, density }: ProductCardProps) {
     </article>
   );
 }
+
+// memo: si la grilla se re-renderiza (paginación, filtros) pero este producto no
+// cambió, la tarjeta no se vuelve a renderizar.
+export default memo(ProductCard);
