@@ -95,6 +95,10 @@ export default function CartPage() {
           setLoadingOrder(false);
         });
     }
+    // `fields.customerEmail` y `purchase?.buyerEmail` se leen dentro del efecto
+    // pero se omiten a propósito: el comprobante solo debe recargarse al llegar
+    // al paso de éxito o al cambiar la orden, no cada vez que el usuario tipea.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, targetOrderId]);
 
   useEffect(() => {

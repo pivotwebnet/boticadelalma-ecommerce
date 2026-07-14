@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Error al reordenar las categorías en el backend' }, { status: 500 })
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Error en la solicitud' }, { status: 500 })
   }
 }
