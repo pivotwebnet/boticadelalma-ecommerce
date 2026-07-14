@@ -1,4 +1,4 @@
-import { Category, Collection, PriceRange, Product, Tone } from './types';
+import { Category, Product, Tone } from './types';
 
 // ── Verified Unsplash images ──────────────────────────────────────────────────
 const IMG_RING_SILVER    = 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80';
@@ -101,12 +101,6 @@ const CATEGORY_DEFS: Omit<Category, 'count'>[] = [
       { id: 'comp-amuletos',     name: 'Amuletos'                  },
     ],
   },
-];
-
-export const COLLECTIONS: Collection[] = [
-  { id: 'plata',     name: 'Colección Plata',      subtitle: 'Joyería 925 artesanal',    image: IMG_COLLAR_SILVER },
-  { id: 'piedras',   name: 'Piedras del Alma',     subtitle: 'Naturales y sin procesar', image: IMG_AMATISTA      },
-  { id: 'bienestar', name: 'Bienestar & Rituales', subtitle: 'Complementos energéticos', image: IMG_ORACULO       },
 ];
 
 export const TONES: Record<string, Tone> = {
@@ -372,13 +366,6 @@ export const CATEGORIES: Category[] = CATEGORY_DEFS.map(c => ({
   ...c,
   count: PRODUCTS.filter(p => p.cat === c.id).length,
 }));
-
-export const PRICE_RANGES: PriceRange[] = [
-  { id: 'pr1', label: 'Hasta $10.000',     min: 0,     max: 10000    },
-  { id: 'pr2', label: '$10.000 – $20.000', min: 10000, max: 20000    },
-  { id: 'pr3', label: '$20.000 – $30.000', min: 20000, max: 30000    },
-  { id: 'pr4', label: 'Más de $30.000',    min: 30000, max: Infinity },
-];
 
 export const MATERIALS = [
   'Plata', 'Acero quirúrgico', 'Acero dorado', 'Acero blanco', 'Alpaca', 'Gamuza', 'Hilos',

@@ -39,13 +39,6 @@ export interface Category {
   subcategories?: SubCategory[];
 }
 
-export interface Collection {
-  id: string;
-  name: string;
-  subtitle: string;
-  image?: string;
-}
-
 export interface CartItem {
   product: Product;
   qty: number;
@@ -55,13 +48,6 @@ export interface Tone {
   bg: string;
   fg: string;
   label: string;
-}
-
-export interface PriceRange {
-  id: string;
-  label: string;
-  min: number;
-  max: number;
 }
 
 export interface Comment {
