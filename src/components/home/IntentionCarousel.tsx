@@ -1,101 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import VineDecoration from "@/components/ui/VineDecoration";
-
-const ITEMS = [
-  {
-    id: "crecimiento-personal",
-    title: "Crecimiento personal",
-    subtitle: "Evolucionar y florecer",
-    iconSrc: "/icons/crecimiento-personal.svg",
-    bg: "#F6FAF2",
-    hoverBg: "#C2E0AC",
-    hoverText: "#2D5A2D",
-  },
-  {
-    id: "amor",
-    title: "Amor",
-    subtitle: "Conectar emocionalmente",
-    iconSrc: "/icons/amor.svg",
-    bg: "#FCF8F8",
-    hoverBg: "#F6C9CF",
-    hoverText: "#8A5A55",
-  },
-  {
-    id: "abundancia",
-    title: "Abundancia",
-    subtitle: "Expandir lo que tenés",
-    iconSrc: "/icons/abundancia.svg",
-    bg: "#F8FBF3",
-    hoverBg: "#DCEBA8",
-    hoverText: "#5A6A35",
-  },
-  {
-    id: "prosperidad",
-    title: "Prosperidad",
-    subtitle: "Atraer riqueza y fortuna",
-    iconSrc: "/icons/prosperidad.svg",
-    bg: "#FCFAF3",
-    hoverBg: "#F2E2A8",
-    hoverText: "#7A6335",
-  },
-  {
-    id: "escudos-y-proteccion",
-    title: "Escudos y protección",
-    subtitle: "Resguardar tu energía",
-    iconSrc: "/icons/escudos-y-proteccion.svg",
-    bg: "#F4F8FC",
-    hoverBg: "#BFDCF0",
-    hoverText: "#3A4D5C",
-  },
-  {
-    id: "calma-y-paz-interior",
-    title: "Calma y paz interior",
-    subtitle: "Bajar el ruido mental",
-    iconSrc: "/icons/calma-y-paz-interior.svg",
-    bg: "#F4FBF8",
-    hoverBg: "#B6E2D2",
-    hoverText: "#3E5C52",
-  },
-  {
-    id: "concrecion",
-    title: "Concreción",
-    subtitle: "Materializar tus metas",
-    iconSrc: "/icons/concrecion.svg",
-    bg: "#FCF9F3",
-    hoverBg: "#F2CFA6",
-    hoverText: "#5C4D3A",
-  },
-  {
-    id: "comunicacion",
-    title: "Comunicación",
-    subtitle: "Expresar con claridad",
-    iconSrc: "/icons/comunicacion.svg",
-    bg: "#F4F9FC",
-    hoverBg: "#B5DDE7",
-    hoverText: "#3A4D5A",
-  },
-  {
-    id: "sanacion-y-procesos",
-    title: "Sanación y procesos",
-    subtitle: "Restaurar el equilibrio",
-    iconSrc: "/icons/sanacion-y-procesos.svg",
-    bg: "#FBF7FB",
-    hoverBg: "#E2BFDC",
-    hoverText: "#5A3A55",
-  },
-];
-
-const N = ITEMS.length;
-// Three copies: [copy0][copy1][copy2]
-// Start at copy1 (index N) so we can go left/right freely
-const CLONED = [...ITEMS, ...ITEMS, ...ITEMS];
+import Icon from "@/components/ui/Icon";
+import { useIntentions, useIntentionArt } from "@/hooks/useApiData";
+import { slugify } from "@/lib/utils";
+import { resolveCard } from "@/lib/intention-art";
 
 export default function IntentionCarousel() {
+  // Las intenciones se editan desde el panel (Filtros), y su arte también.
+  const intentions = useIntentions();
+  const art = useIntentionArt();
+  const items = useMemo(
+    () => intentions.map((name, i) => resolveCard(name, i, art[slugify(name)])),
+    [intentions, art]
+  );
+  const N = items.length;
+  const cloned = useMemo(() => [...items, ...items, ...items], [items]);
+
   const [visibleCards, setVisibleCards] = useState(4);
   const [idx, setIdx] = useState(N);
   const [animated, setAnimated] = useState(true);
@@ -116,10 +41,10 @@ export default function IntentionCarousel() {
 
   // Autoplay
   useEffect(() => {
-    if (hovered) return;
+    if (hovered || N === 0) return;
     const id = setInterval(() => setIdx((p) => p + 1), 4000);
     return () => clearInterval(id);
-  }, [hovered]);
+  }, [hovered, N]);
 
   // After instant jump (animated=false), re-enable animation on the next paint
   useEffect(() => {
@@ -153,6 +78,8 @@ export default function IntentionCarousel() {
   };
 
   const cardW = 100 / visibleCards;
+
+  if (N === 0) return null;
 
   return (
     <section className="py-8 overflow-hidden">
@@ -208,7 +135,7 @@ export default function IntentionCarousel() {
               }}
               onTransitionEnd={handleTransitionEnd}
             >
-              {CLONED.map((item, i) => (
+              {cloned.map((item, i) => (
                 <div
                   key={`${item.id}-${i}`}
                   className="flex-shrink-0 px-3"
@@ -230,21 +157,27 @@ export default function IntentionCarousel() {
                       <div className="relative flex h-full flex-col justify-between p-7 text-center items-center z-10">
                         <div>
                           <div className="intent-icon-box mb-6">
-                            <Image
-                              src={item.iconSrc}
-                              alt={item.title}
-                              width={36}
-                              height={34}
-                              style={{ objectFit: "contain" }}
-                              className="intent-icon"
-                            />
+                            {item.iconSrc ? (
+                              <Image
+                                src={item.iconSrc}
+                                alt={item.title}
+                                width={36}
+                                height={34}
+                                style={{ objectFit: "contain" }}
+                                className="intent-icon"
+                              />
+                            ) : (
+                              <Icon name="sparkle" size={32} stroke={1.4} className="intent-icon" />
+                            )}
                           </div>
                           <h3 className="intent-title font-serif text-2xl italic tracking-tight">
                             {item.title}
                           </h3>
-                          <p className="intent-subtitle mt-3 max-w-[190px] text-[10px] leading-relaxed font-light tracking-[0.1em] uppercase opacity-40">
-                            {item.subtitle}
-                          </p>
+                          {item.subtitle && (
+                            <p className="intent-subtitle mt-3 max-w-[190px] text-[10px] leading-relaxed font-light tracking-[0.1em] uppercase opacity-40">
+                              {item.subtitle}
+                            </p>
+                          )}
                         </div>
                         <div className="mt-7 flex flex-col items-center gap-3">
                           <div className="intent-divider h-px w-8 bg-stone-300" />
@@ -253,7 +186,7 @@ export default function IntentionCarousel() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* Interactive Layers */}
                       <div className="intent-bg-overlay absolute inset-0 bg-[var(--hover-bg)] opacity-0 transition-opacity duration-700" />
                       <div className="intent-gold-border absolute inset-0 border border-[#D4AF37]/0 transition-all duration-700 pointer-events-none" />
@@ -276,11 +209,11 @@ export default function IntentionCarousel() {
 
         {/* Dots */}
         <div className="mt-4 flex justify-center gap-3">
-          {ITEMS.map((_, i) => (
+          {items.map((_, i) => (
             <button
               key={i}
               onClick={() => setIdx(N + i)}
-              aria-label={`Ir a ${ITEMS[i].title}`}
+              aria-label={`Ir a ${items[i].title}`}
               className={`h-px transition-all duration-700 ${
                 idx % N === i
                   ? "w-12 bg-stone-800"

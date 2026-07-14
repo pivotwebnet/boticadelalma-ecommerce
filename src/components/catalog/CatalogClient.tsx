@@ -2,9 +2,9 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { INTENTIONS, MATERIALS } from '@/lib/data';
-import { useCategories, useProducts } from '@/hooks/useApiData';
-import { fmt } from '@/lib/utils';
+import type { Product } from '@/lib/types';
+import { useCategories, useProducts, useMaterials, useIntentions, useSizes } from '@/hooks/useApiData';
+import { fmt, slugify } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Icon from '@/components/ui/Icon';
 import ProductCard from '@/components/ui/ProductCard';
@@ -29,14 +29,33 @@ const SLUG_TO_INTENTION: Record<string, string> = {
   'sanacion':             'sanación y procesos',
 };
 
+// Raíz de búsqueda para los tamaños por defecto (tolera variantes: "pequeñ" cubre
+// pequeña/pequeño). Un tamaño personalizado usa su propio nombre como raíz.
+const SIZE_STEMS: Record<string, string> = { 'Pequeña': 'pequeñ', 'Mediana': 'median', 'Grande': 'grand' };
+const norm = (x: string) => x.toLowerCase().replace(/[áàä]/g,"a").replace(/[éèë]/g,"e").replace(/[íìï]/g,"i").replace(/[óòö]/g,"o").replace(/[úùü]/g,"u");
+
+// Coincidencia material/intención: los tags del producto contienen el término.
+const tagHas = (p: Product, term: string) =>
+  p.tags.some(t => t.toLowerCase().includes(term.toLowerCase()));
+
+// Coincidencia de tamaño: heurística sobre nombre/label/tags (sin acentos).
+const matchesSize = (p: Product, s: string) => {
+  const stem = norm(SIZE_STEMS[s] ?? s);
+  if (!stem) return false;
+  return norm(`${p.name} ${p.label} ${p.tags.join(' ')}`).includes(stem);
+};
+
 export default function CatalogClient() {
   const categories = useCategories();
   const products = useProducts();
+  const materials = useMaterials();
+  const intentions = useIntentions();
+  const sizes = useSizes();
   const searchParams = useSearchParams();
   const [catSel, setCatSel] = useState<string[]>([]);
   const [subcatSel, setSubcatSel] = useState<string>('');
   const [sort, setSort] = useState<SortKey>('relevance');
-  const [maxPrice, setMaxPrice] = useState<number>(100000);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [matSel, setMatSel] = useState<string[]>([]);
   const [intSel, setIntSel] = useState<string[]>([]);
   const [sizeSel, setSizeSel] = useState<string[]>([]);
@@ -60,15 +79,24 @@ export default function CatalogClient() {
     setCatSel(catParam ? [catParam] : []);
     setSubcatSel(subcatParam ?? '');
 
-    const intention = intencion ? SLUG_TO_INTENTION[intencion] : undefined;
-    setIntSel(intention && INTENTIONS.includes(intention) ? [intention] : []);
-  }, [searchParams]);
+    // Resolvemos el slug de la URL a la intención real: primero por los alias
+    // conocidos, y si no, buscando en la taxonomía por slug (cubre las nuevas).
+    const intention = intencion
+      ? (SLUG_TO_INTENTION[intencion] ?? intentions.find(i => slugify(i) === intencion))
+      : undefined;
+    setIntSel(intention && intentions.includes(intention) ? [intention] : []);
+  }, [searchParams, intentions]);
 
   // Calculate absolute max price from all products
   const absoluteMax = useMemo(() => {
     const prices = products.map(p => p.price);
     return prices.length > 0 ? Math.ceil(Math.max(...prices) / 1000) * 1000 : 100000;
   }, [products]);
+
+  // Tope de precio efectivo: si el usuario no movió el slider (null), es el
+  // máximo real del catálogo, para que el rótulo ("Hasta …") coincida con el
+  // extremo del slider en vez de mostrar un número fijo que no corresponde.
+  const priceCap = maxPrice ?? absoluteMax;
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -90,35 +118,9 @@ export default function CatalogClient() {
 
   const currentSortLabel = sortOptions.find(o => o.key === sort)?.label;
 
-  // Materiales e Intenciones disponibles dinámicamente según la categoría/subcategoría activa
-  const { availableMaterials, availableIntentions } = useMemo(() => {
-    let list = products;
-    if (catSel.length) {
-      list = list.filter(p => catSel.includes(p.cat));
-    }
-    if (subcatSel) {
-      list = list.filter(p => p.subcat === subcatSel);
-    }
-
-    const availMats = MATERIALS.filter(m =>
-      list.some(p => p.tags.some(t => t.toLowerCase().includes(m.toLowerCase())))
-    );
-
-    const availInts = INTENTIONS.filter(i =>
-      list.some(p => p.tags.some(t => t.toLowerCase().includes(i.toLowerCase())))
-    );
-
-    return {
-      availableMaterials: availMats,
-      availableIntentions: availInts,
-    };
-  }, [products, catSel, subcatSel]);
-
-  // Limpiar selecciones de materiales o intenciones que dejan de estar disponibles
-  useEffect(() => {
-    setMatSel(prev => prev.filter(m => availableMaterials.includes(m)));
-    setIntSel(prev => prev.filter(i => availableIntentions.includes(i)));
-  }, [availableMaterials, availableIntentions]);
+  // Todas las opciones de filtro se muestran siempre y quedan siempre activas.
+  // Si una combinación no tiene productos, la grilla muestra el estado "sin
+  // resultados" (más abajo). No se oculta ni se deshabilita ninguna opción.
 
   const filtered = useMemo(() => {
     let list = products;
@@ -126,52 +128,26 @@ export default function CatalogClient() {
     if (catSel.length) list = list.filter(p => catSel.includes(p.cat));
     if (subcatSel)     list = list.filter(p => p.subcat === subcatSel);
 
-    list = list.filter(p => p.price <= maxPrice);
+    list = list.filter(p => p.price <= priceCap);
 
-    if (matSel.length) {
-      list = list.filter(p =>
-        matSel.some(m => p.tags.some(t => t.toLowerCase().includes(m.toLowerCase())))
-      );
-    }
-    if (intSel.length) {
-      list = list.filter(p =>
-        intSel.some(i => p.tags.some(t => t.toLowerCase().includes(i.toLowerCase())))
-      );
-    }
-    if (sizeSel.length) {
-      list = list.filter(p =>
-        sizeSel.some(s => {
-          const nameLower = p.name.toLowerCase();
-          const labelLower = p.label.toLowerCase();
-          const sLower = s.toLowerCase();
-          if (sLower === 'pequeña') {
-            return nameLower.includes('pequeñ') || labelLower.includes('pequeñ') || p.tags.some(t => t.toLowerCase().includes('pequeñ'));
-          }
-          if (sLower === 'mediana') {
-            return nameLower.includes('median') || labelLower.includes('median') || p.tags.some(t => t.toLowerCase().includes('median'));
-          }
-          if (sLower === 'grande') {
-            return nameLower.includes('grand') || labelLower.includes('grand') || p.tags.some(t => t.toLowerCase().includes('grand'));
-          }
-          return false;
-        })
-      );
-    }
+    if (matSel.length)  list = list.filter(p => matSel.some(m => tagHas(p, m)));
+    if (intSel.length)  list = list.filter(p => intSel.some(i => tagHas(p, i)));
+    if (sizeSel.length) list = list.filter(p => sizeSel.some(s => matchesSize(p, s)));
     if (onlyNew) list = list.filter(p => p.new);
     if (sort === 'price-asc') list = [...list].sort((a, b) => a.price - b.price);
     if (sort === 'price-desc') list = [...list].sort((a, b) => b.price - a.price);
     if (sort === 'rating') list = [...list].sort((a, b) => b.rating - a.rating);
 
     return list;
-  }, [products, catSel, subcatSel, maxPrice, matSel, intSel, sizeSel, onlyNew, sort]);
+  }, [products, catSel, subcatSel, priceCap, matSel, intSel, sizeSel, onlyNew, sort]);
 
   const activeFilters =
-    catSel.length + (subcatSel ? 1 : 0) + (maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + sizeSel.length + (onlyNew ? 1 : 0);
+    catSel.length + (subcatSel ? 1 : 0) + (maxPrice !== null && maxPrice < absoluteMax ? 1 : 0) + matSel.length + intSel.length + sizeSel.length + (onlyNew ? 1 : 0);
 
   const clearFilters = () => {
     setCatSel([]);
     setSubcatSel('');
-    setMaxPrice(absoluteMax);
+    setMaxPrice(null);
     setMatSel([]);
     setIntSel([]);
     setSizeSel([]);
@@ -327,7 +303,7 @@ export default function CatalogClient() {
             <div className="flex justify-between items-end mb-4">
               <h4>Precio</h4>
               <span className="text-[13px] font-medium text-stone-900 bg-stone-100/80 px-2 py-0.5 rounded border border-stone-200">
-                Hasta {fmt(maxPrice)}
+                Hasta {fmt(priceCap)}
               </span>
             </div>
             <div className="relative px-1 pt-2 pb-6">
@@ -337,11 +313,11 @@ export default function CatalogClient() {
                 min={0}
                 max={absoluteMax}
                 step={500}
-                value={maxPrice}
+                value={priceCap}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 className="elite-price-slider"
-                style={{ 
-                  '--progress': `${(maxPrice / absoluteMax) * 100}%` 
+                style={{
+                  '--progress': `${(priceCap / absoluteMax) * 100}%`
                 } as React.CSSProperties}
               />
               <div className="flex justify-between mt-3 text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold">
@@ -351,57 +327,51 @@ export default function CatalogClient() {
             </div>
           </div>
 
-          {/* Material */}
-          {availableMaterials.length > 0 && (
-            <div className="filter-group">
-              <h4>Material</h4>
-              {availableMaterials.map(m => (
-                <label key={m} className="check-row">
-                  <input
-                    type="checkbox"
-                    checked={matSel.includes(m)}
-                    onChange={() => toggle(matSel, m, setMatSel)}
-                  />
-                  <span>{m}</span>
-                </label>
+          {/* Material — siempre visible, todas las opciones activas */}
+          <div className="filter-group">
+            <h4>Material</h4>
+            {materials.map(m => (
+              <label key={m} className="check-row">
+                <input
+                  type="checkbox"
+                  checked={matSel.includes(m)}
+                  onChange={() => toggle(matSel, m, setMatSel)}
+                />
+                <span>{m}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* Tamaño — siempre visible, todas las opciones activas */}
+          <div className="filter-group">
+            <h4>Tamaño</h4>
+            {sizes.map(s => (
+              <label key={s} className="check-row">
+                <input
+                  type="checkbox"
+                  checked={sizeSel.includes(s)}
+                  onChange={() => toggle(sizeSel, s, setSizeSel)}
+                />
+                <span>{s}</span>
+              </label>
+            ))}
+          </div>
+
+          {/* Intención — siempre visible, todas las opciones activas */}
+          <div className="filter-group">
+            <h4>Intención</h4>
+            <div className="chip-group">
+              {intentions.map(i => (
+                <button
+                  key={i}
+                  className={`chip capitalize${intSel.includes(i) ? ' chip-on' : ''}`}
+                  onClick={() => toggle(intSel, i, setIntSel)}
+                >
+                  {i}
+                </button>
               ))}
             </div>
-          )}
-
-          {/* Tamaño (Solo si se filtra piedras o en general si hay piedras) */}
-          {(catSel.length === 0 || catSel.includes('piedras')) && (
-            <div className="filter-group">
-              <h4>Tamaño</h4>
-              {['Pequeña', 'Mediana', 'Grande'].map(s => (
-                <label key={s} className="check-row">
-                  <input
-                    type="checkbox"
-                    checked={sizeSel.includes(s)}
-                    onChange={() => toggle(sizeSel, s, setSizeSel)}
-                  />
-                  <span>{s}</span>
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Intención */}
-          {availableIntentions.length > 0 && (
-            <div className="filter-group">
-              <h4>Intención</h4>
-              <div className="chip-group">
-                {availableIntentions.map(i => (
-                  <button
-                    key={i}
-                    className={`chip capitalize${intSel.includes(i) ? ' chip-on' : ''}`}
-                    onClick={() => toggle(intSel, i, setIntSel)}
-                  >
-                    {i}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
 
           {/* Solo novedades */}
           <div className="filter-group">
@@ -518,10 +488,10 @@ export default function CatalogClient() {
                   {i} ✕
                 </button>
               ))}
-              {maxPrice < absoluteMax && (
+              {maxPrice !== null && maxPrice < absoluteMax && (
                 <button
                   className="chip chip-on"
-                  onClick={() => setMaxPrice(absoluteMax)}
+                  onClick={() => setMaxPrice(null)}
                 >
                   Hasta {fmt(maxPrice)} ✕
                 </button>

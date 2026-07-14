@@ -2,8 +2,7 @@
 
 import { useMemo, useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { INTENTIONS, MATERIALS } from '@/lib/data';
-import { useCategories, useProducts } from '@/hooks/useApiData';
+import { useCategories, useProducts, useMaterials, useIntentions } from '@/hooks/useApiData';
 import { fmt } from '@/lib/utils';
 import Breadcrumb from '@/components/ui/Breadcrumb';
 import Icon from '@/components/ui/Icon';
@@ -29,6 +28,8 @@ function PLPInner({ cat }: PLPClientProps) {
   const sub = searchParams.get('sub');
   const categories = useCategories();
   const products = useProducts();
+  const materials = useMaterials();
+  const intentions = useIntentions();
 
   const category = categories.find(c => c.id === cat) ?? categories[0];
   const subCategory = category?.subcategories?.find(s => s.id === sub);
@@ -215,7 +216,7 @@ function PLPInner({ cat }: PLPClientProps) {
 
           <div className="filter-group">
             <h4>Material</h4>
-            {MATERIALS.map(m => (
+            {materials.map(m => (
               <label key={m} className="check-row">
                 <input
                   type="checkbox"
@@ -230,7 +231,7 @@ function PLPInner({ cat }: PLPClientProps) {
           <div className="filter-group">
             <h4>Intención</h4>
             <div className="chip-group">
-              {INTENTIONS.map(i => (
+              {intentions.map(i => (
                 <button
                   key={i}
                   className={`chip${intSel.includes(i) ? ' chip-on' : ''}`}

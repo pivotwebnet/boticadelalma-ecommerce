@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin/productos', label: 'Productos', icon: '⬡' },
   { href: '/admin/importar', label: 'Importar Excel', icon: '⇪' },
   { href: '/admin/categorias', label: 'Categorías', icon: '⊛' },
+  { href: '/admin/taxonomia', label: 'Filtros', icon: '⊟' },
   { href: '/admin/apariencia', label: 'Apariencia', icon: '✦' },
   { href: '/admin/configuracion', label: 'Configuración', icon: '⚙' },
 ]

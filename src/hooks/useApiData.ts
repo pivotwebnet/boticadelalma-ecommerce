@@ -1,9 +1,17 @@
 'use client'
 
 import { createContext, useContext, ReactNode, createElement } from 'react'
-import { CATEGORIES, PRODUCTS } from '@/lib/data'
+import { CATEGORIES, PRODUCTS, DEFAULT_MATERIALS, DEFAULT_INTENTIONS, DEFAULT_SIZES } from '@/lib/data'
 import type { Category, Product } from '@/lib/types'
 import type { ApiProduct, ApiCategory } from '@/lib/api'
+import type { Taxonomy } from '@/lib/site-settings'
+
+const DEFAULT_TAXONOMY: Taxonomy = {
+  materials: DEFAULT_MATERIALS,
+  intentions: DEFAULT_INTENTIONS,
+  sizes: DEFAULT_SIZES,
+  intentionArt: {},
+}
 
 // subcat comes from the static catalog — the backend model doesn't have this field
 const SUBCAT_MAP: Record<string, string> = {}
@@ -35,20 +43,23 @@ function mapApiProduct(api: ApiProduct): Product {
 type ApiDataCtx = {
   categories: Category[]
   products: Product[]
+  taxonomy: Taxonomy
 }
 
 const ApiDataContext = createContext<ApiDataCtx>({
   categories: CATEGORIES,
   products: [],
+  taxonomy: DEFAULT_TAXONOMY,
 })
 
 type ProviderProps = {
   children: ReactNode
   initialCategories?: ApiCategory[]
   initialProducts?: ApiProduct[]
+  initialTaxonomy?: Taxonomy
 }
 
-export function ApiDataProvider({ children, initialCategories = [], initialProducts = [] }: ProviderProps) {
+export function ApiDataProvider({ children, initialCategories = [], initialProducts = [], initialTaxonomy = DEFAULT_TAXONOMY }: ProviderProps) {
   // La base de datos es la única fuente de verdad: la web muestra exactamente
   // los productos que hay en la base. Si no hay ninguno (activo), la tienda
   // queda vacía — ya no se usa ningún catálogo de demostración de respaldo.
@@ -62,7 +73,7 @@ export function ApiDataProvider({ children, initialCategories = [], initialProdu
     count: catCountMap[c.id] ?? c.count,
   }))
 
-  return createElement(ApiDataContext.Provider, { value: { categories, products } }, children)
+  return createElement(ApiDataContext.Provider, { value: { categories, products, taxonomy: initialTaxonomy } }, children)
 }
 
 export function useCategories(): Category[] {
@@ -71,4 +82,24 @@ export function useCategories(): Category[] {
 
 export function useProducts(): Product[] {
   return useContext(ApiDataContext).products
+}
+
+export function useTaxonomy(): Taxonomy {
+  return useContext(ApiDataContext).taxonomy
+}
+
+export function useMaterials(): string[] {
+  return useContext(ApiDataContext).taxonomy.materials
+}
+
+export function useIntentions(): string[] {
+  return useContext(ApiDataContext).taxonomy.intentions
+}
+
+export function useSizes(): string[] {
+  return useContext(ApiDataContext).taxonomy.sizes
+}
+
+export function useIntentionArt() {
+  return useContext(ApiDataContext).taxonomy.intentionArt
 }

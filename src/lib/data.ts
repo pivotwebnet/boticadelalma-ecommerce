@@ -367,11 +367,14 @@ export const CATEGORIES: Category[] = CATEGORY_DEFS.map(c => ({
   count: PRODUCTS.filter(p => p.cat === c.id).length,
 }));
 
-export const MATERIALS = [
+// Listas por defecto de la taxonomía de filtros. Son el punto de partida: la
+// dueña puede editarlas desde el panel (Filtros) y lo elegido se guarda en
+// site-settings.json. Si nunca las tocó, la tienda usa estas.
+export const DEFAULT_MATERIALS = [
   'Plata', 'Acero quirúrgico', 'Acero dorado', 'Acero blanco', 'Alpaca', 'Gamuza', 'Hilos',
 ];
 
-export const INTENTIONS = [
+export const DEFAULT_INTENTIONS = [
   'crecimiento personal',
   'amor',
   'abundancia',
@@ -382,3 +385,5 @@ export const INTENTIONS = [
   'comunicación',
   'sanación y procesos',
 ];
+
+export const DEFAULT_SIZES = ['Pequeña', 'Mediana', 'Grande'];

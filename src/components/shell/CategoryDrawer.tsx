@@ -3,8 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
-import { INTENTIONS } from '@/lib/data';
-import { useCategories } from '@/hooks/useApiData';
+import { useCategories, useIntentions } from '@/hooks/useApiData';
 import Icon from '@/components/ui/Icon';
 import Image from 'next/image';
 import SearchBox from './SearchBox';
@@ -26,6 +25,7 @@ export default function CategoryDrawer() {
   const drawerOpen = useStore(s => s.drawerOpen);
   const setDrawerOpen = useStore(s => s.setDrawerOpen);
   const categories = useCategories();
+  const intentions = useIntentions();
   const cart = useStore(s => s.cart);
   const cartCount = cart.reduce((sum, i) => sum + i.qty, 0);
 
@@ -225,7 +225,7 @@ export default function CategoryDrawer() {
             onToggle={() => toggleGroup('intencion')}
           >
             <div className="intention-grid">
-              {INTENTIONS.map(intent => (
+              {intentions.map(intent => (
                 <button
                   key={intent}
                   className="intention-pill"

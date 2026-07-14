@@ -11,6 +11,7 @@ import Toast from '@/components/ui/Toast';
 import FloatingActions from '@/components/ui/FloatingActions';
 import { ApiDataProvider } from '@/hooks/useApiData';
 import { getCategories, getProducts } from '@/lib/api';
+import { readTaxonomy } from '@/lib/site-settings';
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION } from '@/lib/site';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -51,11 +52,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     getCategories(),
     getProducts(),
   ]);
+  // Taxonomía de filtros (listas editables desde el panel), resuelta con defaults.
+  const taxonomy = readTaxonomy();
 
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${cormorant.variable} ${jetbrains.variable}`}>
       <body>
-        <ApiDataProvider initialCategories={categories} initialProducts={products}>
+        <ApiDataProvider initialCategories={categories} initialProducts={products} initialTaxonomy={taxonomy}>
           <ThemeApplier />
           <Header />
           {children}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef, CSSProperties, MouseEvent as ReactMouseEvent } from 'react'
 import { ApiProduct, ApiCategory } from '@/lib/api'
 import { buildProductContent } from '@/lib/product-content'
-import { MATERIALS, INTENTIONS } from '@/lib/data'
+import { useMaterials, useIntentions } from '@/hooks/useApiData'
 
 const MAX_IMAGES = 6
 // Productos por página en la tabla del panel (cómodo para revisar de a poco).
@@ -269,12 +269,14 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 // Selección de tags por casillas: se elige de las listas fijas de materiales e
 // intenciones (nada de tipear). Así los filtros del catálogo funcionan siempre.
 function TagPicker({ selected, onChange }: { selected: string[]; onChange: (tags: string[]) => void }) {
+  const materials = useMaterials()
+  const intentions = useIntentions()
   const toggle = (v: string) =>
     onChange(selected.includes(v) ? selected.filter(x => x !== v) : [...selected, v])
 
   // Tags ya cargados que no están en las listas conocidas (ej. viejos): se
   // muestran aparte para poder verlos y quitarlos, sin perderlos en silencio.
-  const known = new Set<string>([...MATERIALS, ...INTENTIONS])
+  const known = new Set<string>([...materials, ...intentions])
   const otros = selected.filter(t => !known.has(t))
 
   const Chip = ({ value }: { value: string }) => {
@@ -304,8 +306,8 @@ function TagPicker({ selected, onChange }: { selected: string[]; onChange: (tags
       <label style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--fg-soft)' }}>
         Tags <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--fg-muted)' }}>· elegí los que apliquen</span>
       </label>
-      <Group title="Materiales" options={MATERIALS} />
-      <Group title="Intenciones" options={INTENTIONS} />
+      <Group title="Materiales" options={materials} />
+      <Group title="Intenciones" options={intentions} />
       {otros.length > 0 && <Group title="Otros (ya cargados)" options={otros} />}
     </div>
   )
@@ -377,6 +379,7 @@ function Pagination({ page, totalPages, total, onPage }: {
 }
 
 export default function ProductosPage() {
+  const materials = useMaterials()
   const [products, setProducts] = useState<ApiProduct[]>([])
   const [categories, setCategories] = useState<ApiCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -618,7 +621,7 @@ export default function ProductosPage() {
   // Opciones de etiqueta: "tipo · material" según la categoría elegida.
   const catName = categories.find(c => c.id === form.categoryId)?.name ?? ''
   const tipo = categoryType(form.categoryId, catName)
-  const labelOptions = MATERIALS.map(m => {
+  const labelOptions = materials.map(m => {
     const v = `${tipo} · ${m.toLowerCase()}`
     return { value: v, label: v }
   })
