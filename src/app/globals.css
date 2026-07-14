@@ -124,27 +124,6 @@ h3 { font-size: 18px; line-height: 1.3; font-family: var(--font-sans); font-weig
 h4 { font-size: 13px; font-family: var(--font-sans); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-muted); }
 em { font-style: italic; color: var(--accent-ink); }
 
-/* ─── Golden Line Animations ─── */
-@keyframes goldGlimmer {
-  0% { transform: scaleX(0); opacity: 0; }
-  50% { transform: scaleX(1); opacity: 1; }
-  100% { transform: scaleX(0); opacity: 0; }
-}
-
-.gold-line-anim {
-  position: relative;
-  overflow: hidden;
-}
-.gold-line-anim::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);     
-  transform-origin: center;
-  animation: goldGlimmer 6s infinite ease-in-out;
-}
-
 .glow-orange-text {
   transition: text-shadow 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
@@ -237,9 +216,6 @@ em { font-style: italic; color: var(--accent-ink); }
 }
 
 /* ─── Header ─── */
-.site-header { position: sticky; top: 0; z-index: 100; background: var(--bg); border-bottom: 1px solid var(--line-soft); transition: transform 0.3s ease; }       
-.site-header.scrolled { box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-
 .announcebar {
   display: flex; align-items: center;
   height: 32px; background: #2A5E36; color: var(--bg);
@@ -257,12 +233,6 @@ em { font-style: italic; color: var(--accent-ink); }
   to   { transform: translateX(-50%); }
 }
 
-.header-main {
-  max-width: var(--max-w); margin: 0 auto;
-  padding: 16px var(--gutter);
-  display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 24px;
-}
-
 .menu-btn {
   width: auto; padding: 0 14px 0 12px; gap: 8px;
   border-radius: 999px; font-size: 13px; font-weight: 500;
@@ -273,8 +243,6 @@ em { font-style: italic; color: var(--accent-ink); }
 .brand-name { display: flex; flex-direction: column; line-height: 1; text-align: left; }
 .brand-line1 { font-family: var(--font-serif); font-size: 22px; font-style: italic; letter-spacing: 0; }
 .brand-line2 { font-family: var(--font-serif); font-size: 22px; letter-spacing: 0.02em; color: var(--fg-muted); }
-
-.header-search { max-width: 460px; width: 100%; justify-self: end; }
 
 .header-actions { display: flex; gap: 4px; align-items: center; }
 .hdr-link {
@@ -430,7 +398,6 @@ em { font-style: italic; color: var(--accent-ink); }
 .drawer-nav::-webkit-scrollbar { display: none; }
 .drawer-nav ul { list-style: none; margin: 0; padding: 0; }
 
-.drawer-item-group { display: flex; flex-direction: column; }
 .submenu-wrapper {
   display: grid; grid-template-rows: 0fr;
   transition: grid-template-rows 0.3s var(--ease-premium), opacity 0.3s ease;
@@ -456,7 +423,6 @@ em { font-style: italic; color: var(--accent-ink); }
   text-shadow: 0 0 10px rgba(232, 99, 21, 0.4); 
 }
 
-.drawer-divider { padding: 24px 28px 8px; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-soft); font-weight: 500; }
 .drawer-foot { padding: 20px 28px; border-top: 1px solid var(--line-soft); display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--fg-muted); letter-spacing: 0.06em; }
 
 /* ─── CategoryDrawer 3-level ─── */
@@ -561,17 +527,6 @@ em { font-style: italic; color: var(--accent-ink); }
   max-width: 460px; margin: 0 0 6px;
 }
 .featured-empty-msg em { font-style: italic; color: var(--accent-ink); }
-
-/* ─── Grids & Categories ─── */
-.cat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px 32px; }
-.cat-tile { display: flex; flex-direction: column; gap: 20px; text-decoration: none; cursor: pointer; }
-.cat-media { 
-  border-radius: var(--card-radius); overflow: hidden; background: var(--surface-2);
-  transition: transform 0.6s var(--ease-premium), box-shadow 0.6s var(--ease-premium);
-}
-.cat-tile:hover .cat-media { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
-.cat-name { font-family: var(--font-serif); font-size: 28px; font-style: italic; color: var(--fg); transition: color 0.3s ease; }
-.cat-tile:hover .cat-name { color: var(--brand-orange); }
 
 /* ─── Product Card ─── */
 .product-grid { display: grid; gap: 40px 32px; grid-template-columns: repeat(4, 1fr); }
@@ -1123,46 +1078,6 @@ em { font-style: italic; color: var(--accent-ink); }
   justify-content: center;
 }
 
-/* ─── Hero marquee ─── */
-@keyframes hero-marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-
-.hero-marquee-wrap {
-  width: 100%;
-  background: #2A5E36;
-  padding: 14px 0;
-  overflow: hidden;
-  border-top: 1px solid rgba(255,255,255,0.04);
-  border-bottom: 1px solid #1a3d22;
-}
-.hero-marquee-track {
-  display: flex;
-  width: max-content;
-  animation: hero-marquee 35s linear infinite;
-}
-.hero-marquee-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 18px;
-  padding: 0 24px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.35em;
-  color: rgba(255,255,255,0.55);
-  font-weight: 500;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.hero-marquee-dot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.22);
-  flex-shrink: 0;
-}
-
 .intent-card-elite {
   height: 290px; border-radius: 24px; background-color: var(--card-bg, #F7F1E7);
   border: 1px solid rgba(0,0,0,0.04); position: relative; overflow: hidden;
@@ -1359,15 +1274,10 @@ em { font-style: italic; color: var(--accent-ink); }
 }
 .comment-gate--done svg { color: var(--success); }
 
-/* ─── Footer ─── */
-.site-footer { margin-top: 72px; background: #2A5E36; color: #fff; padding: 60px 0 40px; }
-.footer-grid { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--gutter); display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.4fr; gap: 40px; }
-
 .filters-toggle-btn { display: none; }
 
 /* ─── Responsive ─── */
 @media (max-width: 1024px) {
-  .header-main { grid-template-columns: auto 1fr auto; }
   .product-grid { grid-template-columns: repeat(3, 1fr); }
   .plp-body { grid-template-columns: 1fr; gap: 24px; }
   
@@ -1497,7 +1407,6 @@ em { font-style: italic; color: var(--accent-ink); }
 
 @media (max-width: 640px) {
   :root { --gutter: 16px; }
-  .cat-grid { grid-template-columns: 1fr; }
 }
 
 /* ─── Paginación Bootstrap Premium ─── */
